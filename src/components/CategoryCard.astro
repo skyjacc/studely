@@ -1,0 +1,72 @@
+---
+import type { Category } from '../data/categories';
+import Icon from './Icon.astro';
+
+interface Props { category: Category; count?: number; index?: number; }
+const { category, count, index } = Astro.props;
+const idx = index !== undefined ? String(index).padStart(2, '0') : '';
+---
+
+<a class="cat-row" href={`/category/${category.slug}`} style={`--cat: ${category.accent}`}>
+  <span class="cat-idx">{idx}</span>
+  <span class="cat-ico-tile"><Icon category={category.slug} /></span>
+  <span class="cat-body">
+    <span class="cat-name">{category.name}</span>
+    <span class="cat-desc">{category.description}</span>
+  </span>
+  {count !== undefined && (
+    <span class="cat-meta"><span class="cat-count">{count}</span> {count === 1 ? 'offer' : 'offers'}</span>
+  )}
+  <svg class="cat-arrow" width="20" height="20" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M8.90954 9.09046L9 3L2.90954 3.09046L2.90213 4.32367L6.86437 4.25391L2.55914 8.55914L3.44086 9.44086L7.74609 5.13563L7.68708 9.10862L8.90954 9.09046Z"/></svg>
+</a>
+
+<style>
+  .cat-row {
+    position: relative; display: grid; align-items: center;
+    grid-template-columns: 2.6rem 46px minmax(0, 1fr) auto 1.4rem;
+    gap: clamp(0.9rem, 0.5rem + 1.2vw, 1.9rem);
+    padding: clamp(1.1rem, 0.85rem + 0.9vw, 1.6rem) clamp(0.85rem, 0.3rem + 1.2vw, 1.6rem);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden; isolation: isolate;
+  }
+  /* left→right highlight wipe on hover (matches the navbar) */
+  .cat-row::before {
+    content: ''; position: absolute; inset: 0; z-index: -1;
+    background: var(--surface); transform: scaleX(0); transform-origin: left center;
+    transition: transform .55s cubic-bezier(0.2, 1, 0.36, 1);
+  }
+  .cat-row:hover::before { transform: scaleX(1); }
+  .cat-row:hover { border-bottom-color: var(--border-strong); }
+
+  .cat-idx { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); letter-spacing: 0.05em; transition: color .4s var(--ease-out); }
+  .cat-row:hover .cat-idx { color: var(--ink); }
+
+  .cat-ico-tile {
+    display: grid; place-items: center; width: 46px; height: 46px; border-radius: 11px;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted);
+    transition: background .4s var(--ease-out), color .4s var(--ease-out), border-color .4s var(--ease-out);
+  }
+  .cat-row:hover .cat-ico-tile { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .cat-ico-tile :global(.cat-ico) { width: 22px; height: 22px; }
+
+  .cat-body { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; transition: transform .5s var(--ease-out); }
+  .cat-row:hover .cat-body { transform: translateX(6px); }
+  .cat-name {
+    font-family: var(--font-display); font-weight: 500; color: var(--ink);
+    font-size: clamp(1.35rem, 0.9rem + 1.7vw, 2.05rem); letter-spacing: -0.035em; line-height: 1.02;
+  }
+  .cat-desc { color: var(--text-muted); font-size: var(--step--1); line-height: 1.4; }
+
+  .cat-meta { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; letter-spacing: 0.02em; }
+  .cat-count { color: var(--ink); font-weight: 500; }
+
+  .cat-arrow { color: var(--text-muted); opacity: 0; transform: translate(-6px, 6px); transition: opacity .45s var(--ease-out), transform .45s var(--ease-out), color .4s var(--ease-out); }
+  .cat-row:hover .cat-arrow { opacity: 1; transform: translate(0, 0); color: var(--ink); }
+
+  @media (max-width: 800px) {
+    .cat-row { grid-template-columns: 42px minmax(0, 1fr) auto; gap: 0.85rem; }
+    .cat-idx, .cat-arrow { display: none; }
+    .cat-ico-tile { width: 42px; height: 42px; }
+    .cat-name { font-size: clamp(1.15rem, 1rem + 2vw, 1.6rem); }
+  }
+</style>

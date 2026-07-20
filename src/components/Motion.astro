@@ -1,0 +1,155 @@
+---
+// Site-wide motion layer: Lenis smooth scroll + GSAP scroll reveals, re-wired
+// for Astro View Transitions (runs on every astro:page-load). Degrades fully:
+// prefers-reduced-motion disables Lenis and all animation; content stays visible.
+---
+<script>
+  import { gsap } from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  import { CustomEase } from 'gsap/CustomEase';
+  import Lenis from 'lenis';
+
+  gsap.registerPlugin(ScrollTrigger, CustomEase);
+  // Exact eases reverse-engineered from bymonolog.com
+  CustomEase.create('ease-primary', '0.55, 0, 0.7, 0');
+  CustomEase.create('ease-secondary', '0.31, 0.75, 0.22, 1');
+  CustomEase.create('ease-fade', '0.76, 0, 0.24, 1');
+  CustomEase.create('ease-transition', '0.22, 1, 0.36, 1');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Lenis is created once and persists across client-side navigations.
+  let lenis: any = null;
+  function initLenis() {
+    if (reduce || lenis) return;
+    lenis = new Lenis({ lerp: 0.09, smoothWheel: true, wheelMultiplier: 1, touchMultiplier: 1.6 });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add((t: number) => lenis.raf(t * 1000));
+    gsap.ticker.lagSmoothing(0);
+    document.documentElement.classList.add('lenis', 'lenis-smooth');
+  }
+
+  // A new page must start at the top. Astro resets scroll itself, but Lenis keeps its
+  // own virtual offset and writes it back on the next frame — so the incoming page
+  // lands wherever the previous one was scrolled. Reset BOTH, and once more next frame
+  // to beat any late restoration. Skipped for back/forward and hash links, where the
+  // restored position is exactly what the user wants.
+  let navDirection = 'forward';
+  document.addEventListener('astro:before-preparation', (e: any) => {
+    navDirection = e.direction ?? 'forward';
+  });
+
+  function resetScrollTop() {
+    if (navDirection !== 'forward' || location.hash) return;
+    window.scrollTo(0, 0);
+    if (lenis) { lenis.resize(); lenis.scrollTo(0, { immediate: true, force: true }); }
+  }
+
+  // Clicking a link to the page you're ALREADY on (the logo while on "/", "All offers"
+  // while on /offers) otherwise triggers a full ClientRouter swap: the DOM is replaced,
+  // the whole entrance animation replays and scroll snaps to 0 — it reads as a reload.
+  // Glide to the top instead. Bound once on document (survives view transitions).
+  document.addEventListener(
+    'click',
+    (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = (e.target as HTMLElement)?.closest?.('a') as HTMLAnchorElement | null;
+      if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+      if (!a.getAttribute('href')) return;
+      let url: URL;
+      try { url = new URL(a.href); } catch { return; }
+      // let cross-origin links, in-page anchors and real navigations through
+      if (url.origin !== location.origin || url.hash) return;
+      if (url.pathname !== location.pathname || url.search !== location.search) return;
+      e.preventDefault();
+      e.stopPropagation(); // keep the ClientRouter's own click handler from swapping
+      if (lenis) lenis.scrollTo(0, { duration: 0.9 });
+      else window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    },
+    { capture: true },
+  );
+
+  function setupPage() {
+    if (reduce) return;
+
+    // hero reveals play ON LOAD, staggered by DOM order → orchestrated entrance
+    const heroReveals = gsap.utils.toArray<HTMLElement>('[data-hero] [data-reveal]');
+    const heroIndex = (el: HTMLElement) => Math.max(0, heroReveals.indexOf(el));
+
+    // single reveals (CSS sets the hidden initial state under html.js-motion)
+    gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach((el) => {
+      const inHero = el.closest('[data-hero]');
+      gsap.to(el, { opacity: 1, y: 0, filter: 'blur(0px)', ease: 'ease-transition', overwrite: true,
+        // hero elements: play on load with a stagger-by-DOM delay (orchestrated feel);
+        // everything else: reveal on scroll.
+        duration: inHero ? 1.05 : 1.0,
+        delay: inHero ? 0.25 + heroIndex(el) * 0.12 : 0,
+        ...(inHero ? {} : { scrollTrigger: { trigger: el, start: 'top 88%', once: true } }) });
+    });
+
+    // staggered groups (grid children)
+    gsap.utils.toArray<HTMLElement>('[data-reveal-group]').forEach((group) => {
+      gsap.to(group.children, { opacity: 1, y: 0, duration: 0.7, ease: 'ease-transition', stagger: 0.06, overwrite: true,
+        scrollTrigger: { trigger: group, start: 'top 86%', once: true } });
+    });
+
+    // masked split-text reveal — words rise from behind a clip mask
+    gsap.utils.toArray<HTMLElement>('[data-split]').forEach((el) => {
+      if (el.dataset.splitDone) { el.style.visibility = 'visible'; return; }
+      el.dataset.splitDone = '1';
+      const words = (el.textContent || '').trim().split(/\s+/);
+      el.innerHTML = words.map((w) => `<span class="split-mask"><span class="split-word">${w}</span></span>`).join(' ');
+      const wordEls = el.querySelectorAll('.split-word');
+      gsap.set(wordEls, { yPercent: 118 });
+      el.style.visibility = 'visible';
+      if (el.closest('[data-hero]')) {
+        // hero title rises on load (right after the globe), no scroll needed
+        gsap.to(wordEls, { yPercent: 0, duration: 1.05, ease: 'ease-transition', stagger: 0.05, delay: 0.2 });
+      } else {
+        gsap.to(wordEls, { yPercent: 0, duration: 1.05, ease: 'ease-transition', stagger: 0.055,
+          scrollTrigger: { trigger: el, start: 'top 90%', once: true } });
+      }
+    });
+
+    // magnetic buttons
+    gsap.utils.toArray<HTMLElement>('[data-magnetic]').forEach((btn) => {
+      const s = 0.28;
+      btn.addEventListener('pointermove', (e) => {
+        const r = btn.getBoundingClientRect();
+        gsap.to(btn, { x: (e.clientX - (r.left + r.width / 2)) * s, y: (e.clientY - (r.top + r.height / 2)) * s, duration: 0.3, ease: 'power3.out' });
+      });
+      btn.addEventListener('pointerleave', () => gsap.to(btn, { x: 0, y: 0, duration: 0.5, ease: 'elastic.out(1, 0.5)' }));
+    });
+
+    ScrollTrigger.refresh();
+  }
+
+  // Astro fires astro:page-load on initial load AND after every client navigation.
+  document.addEventListener('astro:page-load', () => {
+    try {
+      initLenis();
+      if (lenis) document.documentElement.classList.add('lenis', 'lenis-smooth');
+      resetScrollTop();
+      setupPage();
+      (window as any).__motionReady = true; // tells the head failsafe the bundle booted
+    } catch (e) {
+      console.warn('motion failed to init', e);
+      document.documentElement.classList.remove('js-motion'); // un-hide content
+    }
+  });
+  // Before the DOM swaps: kill triggers, and stamp the incoming <html> with the
+  // motion/lenis classes *before paint* so reveals start hidden (no flash) and
+  // Lenis styling survives the navigation.
+  document.addEventListener('astro:before-swap', (e: any) => {
+    ScrollTrigger.getAll().forEach((st) => st.kill());
+    if (!reduce && e.newDocument) e.newDocument.documentElement.classList.add('js-motion', 'lenis', 'lenis-smooth');
+  });
+  // After the DOM swaps: the <body> element persists across View Transitions, so a
+  // leftover scroll lock (e.g. the mobile filter sheet's overflow:hidden) can freeze
+  // the next page. Clear it, and re-measure Lenis so scrolling isn't stuck until the
+  // next resize (the "hangs then unfreezes" symptom).
+  document.addEventListener('astro:after-swap', () => {
+    document.body.style.overflow = '';
+    resetScrollTop();
+    requestAnimationFrame(resetScrollTop); // after the router's own scroll handling
+  });
+</script>

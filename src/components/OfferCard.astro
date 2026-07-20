@@ -1,0 +1,74 @@
+---
+import type { Offer } from '../lib/offers';
+import { isExpiringSoon, offerTypeLabel, scoreTier } from '../lib/offers';
+import { getCategory } from '../data/categories';
+import Badge from './Badge.astro';
+import Icon from './Icon.astro';
+import Logo from './Logo.astro';
+
+interface Props { offer: Offer; }
+const { offer } = Astro.props;
+const d = offer.data;
+const cat = getCategory(d.category);
+const href = `/offers/${offer.id}`;
+const expiring = isExpiringSoon(offer);
+---
+
+<article class="card offer" style={`--cat: ${cat?.accent ?? 'var(--accent)'}`}>
+  <div class="top">
+    <span class="logo-tile"><Logo provider={d.provider} /></span>
+    <span class={`score score-${scoreTier(d.score)}`} title="Claimly score (1–10)">{d.score}</span>
+  </div>
+
+  <h3 class="title"><a href={href}>{d.title}</a></h3>
+
+  <div class="meta">
+    <span class="value">{d.value}</span>
+    <Badge variant={d.offerType} label={offerTypeLabel[d.offerType] ?? d.offerType} />
+    {d.sponsored && <Badge variant="sponsored" label="Sponsored" />}
+    {expiring && <Badge variant="expiring" label="Ending soon" />}
+  </div>
+
+  <p class="summary muted">{d.summary}</p>
+
+  <div class="foot">
+    <a class="chip" href={`/category/${d.category}`}><Icon category={d.category} /> {cat?.name ?? d.category}</a>
+    <span class="verify muted" title="How to prove eligibility">✓ {d.verification}</span>
+  </div>
+</article>
+
+<style>
+  /* compact, whole-card clickable (stretched link on the title) */
+  .offer { position: relative; display: flex; flex-direction: column; gap: 0.45rem; padding: 1rem 1.05rem; }
+
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+  .logo-tile { width: 40px; height: 40px; flex: none; color: var(--ink); background: color-mix(in srgb, var(--cat) 14%, var(--surface)); border-radius: 9px; }
+  .score {
+    display: inline-grid; place-items: center; min-width: 30px; height: 30px; padding: 0 0.35rem;
+    font-family: var(--font-display); font-weight: 600; font-size: 1.02rem; line-height: 1;
+    border: 1px solid var(--border); border-radius: 8px;
+  }
+
+  .title { font-size: 1.06rem; line-height: 1.2; letter-spacing: -0.02em; margin-top: 0.15rem; }
+  /* stretched link: covers the whole card so a click anywhere opens the offer */
+  .title a { color: var(--ink); transition: color .2s var(--ease-out); }
+  .title a::after { content: ''; position: absolute; inset: 0; z-index: 0; }
+  .offer:hover .title a { color: var(--accent-ink); }
+
+  .meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem 0.5rem; }
+  .value { font-family: var(--font-display); font-weight: 600; font-size: 0.92rem; color: color-mix(in srgb, var(--cat) 55%, var(--ink)); }
+
+  /* clamp summary to 2 lines → uniform, compact cards */
+  .summary {
+    font-size: var(--step--1); line-height: 1.4; flex: 1;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  .foot { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; margin-top: 0.3rem; font-size: 0.78rem; }
+  /* chip stays clickable above the stretched link */
+  .chip { position: relative; z-index: 1; padding: 0.22em 0.6em; }
+  .chip :global(.cat-ico) { width: 1em; height: 1em; color: color-mix(in srgb, var(--cat) 70%, var(--ink)); }
+  .chip:hover { border-color: var(--cat); }
+  /* let eligibility/verify wrap to 2 lines instead of cutting a word mid-string */
+  .verify { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 58%; line-height: 1.32; text-align: right; }
+</style>

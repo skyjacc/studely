@@ -1,0 +1,62 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+import CategoryCard from '../components/CategoryCard.astro';
+import { categories } from '../data/categories';
+import { site } from '../data/site';
+import { isExpired } from '../lib/offers';
+
+const all = (await getCollection('offers')).filter((o) => !isExpired(o));
+const counts = new Map<string, number>();
+for (const o of all) counts.set(o.data.category, (counts.get(o.data.category) ?? 0) + 1);
+
+// Busiest first — an empty category at the top would read as a dead directory.
+const ranked = [...categories]
+  .map((c) => ({ c, n: counts.get(c.slug) ?? 0 }))
+  .sort((a, b) => b.n - a.n || a.c.name.localeCompare(b.c.name));
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: `Student offer categories · ${site.name}`,
+  description: 'Every category of free student tools, credits, courses and discounts.',
+  url: new URL('/categories', site.url).href,
+  mainEntity: {
+    '@type': 'ItemList',
+    numberOfItems: ranked.length,
+    itemListElement: ranked.map((r, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: r.c.name,
+      url: new URL(`/category/${r.c.slug}`, site.url).href,
+    })),
+  },
+};
+---
+
+<Layout
+  title="Categories"
+  description="Browse every category of student perks: developer tools, design, cloud credits, AI, courses, domains and more. Each offer human-verified and re-checked."
+  jsonLd={jsonLd}
+>
+  <section class="section">
+    <div class="wrap">
+      <p class="eyebrow">The directory</p>
+      <h1>Categories</h1>
+      <p class="lead" style="max-width:52ch">
+        {ranked.length} departments, {all.length} verified perks. Pick where to start, or
+        <a href="/offers">browse everything</a>.
+      </p>
+    </div>
+
+    <div class="wrap cats" data-reveal-group>
+      {ranked.map((r, i) => <CategoryCard category={r.c} count={r.n} index={i + 1} />)}
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .cats { margin-top: clamp(1.75rem, 1rem + 2vw, 2.75rem); border-top: 1px solid var(--border); }
+  .lead a { color: var(--ink); border-bottom: 1px solid var(--border-strong); }
+  .lead a:hover { border-color: var(--ink); }
+</style>

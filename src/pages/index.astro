@@ -1,0 +1,123 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+import CategoryExplorer from '../components/CategoryExplorer.astro';
+import Pipeline from '../components/Pipeline.astro';
+import OfferCard from '../components/OfferCard.astro';
+import AdSlot from '../components/AdSlot.astro';
+import Hero3D from '../components/Hero3D.astro';
+import { categories } from '../data/categories';
+import { site } from '../data/site';
+import { sortOffers, isExpired } from '../lib/offers';
+
+const all = (await getCollection('offers')).filter((o) => !isExpired(o));
+const counts = new Map<string, number>();
+for (const o of all) counts.set(o.data.category, (counts.get(o.data.category) ?? 0) + 1);
+
+const featured = sortOffers(all.filter((o) => o.data.featured || o.data.sponsored)).slice(0, 6);
+const featuredList = featured.length >= 3 ? featured : sortOffers(all).slice(0, 6);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: site.name,
+  description: site.description,
+  url: site.url,
+};
+---
+
+<Layout jsonLd={jsonLd}>
+  <!-- Hero — MONOLOG-style: centered mission over drifting smoke, giant wordmark -->
+  <section class="hero hero-mono">
+    <Hero3D />
+    <div class="wrap hero-inner" data-hero>
+      <svg class="hero-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true" data-reveal>
+        <circle cx="24" cy="24" r="15" />
+        <ellipse cx="24" cy="24" rx="15" ry="6" />
+        <ellipse class="meridian" cx="24" cy="24" rx="6" ry="15" />
+        <line x1="9" y1="24" x2="39" y2="24" />
+      </svg>
+      <h1 class="hero-title" data-split>Every student freebie, in one place.</h1>
+      <p class="hero-sub" data-reveal>Free tools, credits and courses for students. Every link verified.</p>
+      <div class="hero-cta" data-reveal>
+        <a href="/offers" class="btn btn-primary" data-magnetic>Browse all offers ↗</a>
+        <a href="/methodology" class="btn btn-ghost">How we verify</a>
+      </div>
+    </div>
+    <div class="hero-wordmark" aria-hidden="true">{site.name}</div>
+  </section>
+
+  <!-- Categories -->
+  <section id="categories" class="section">
+    <div class="wrap">
+      <header class="sec-head" data-reveal>
+        <h2 data-split>Browse by department</h2>
+        <a href="/categories" class="btn btn-ghost" data-magnetic>All categories ↗</a>
+      </header>
+      <CategoryExplorer counts={counts} />
+    </div>
+  </section>
+
+  <div class="wrap"><AdSlot format="leaderboard" /></div>
+
+  <!-- Featured -->
+  <section class="section">
+    <div class="wrap">
+      <header class="sec-head" data-reveal>
+        <h2 data-split>Featured this week</h2>
+        <a href="/offers" class="btn btn-ghost" data-magnetic>See all {all.length} ↗</a>
+      </header>
+      <div class="grid grid-offers" data-reveal-group>
+        {featuredList.map((o) => <OfferCard offer={o} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- Pipeline: how every offer gets here -->
+  <section class="section">
+    <div class="wrap">
+      <header class="sec-head" data-reveal>
+        <div>
+          <h2 data-split>How every offer gets here</h2>
+          <p class="muted">Sourced widely. Verified by a human. Re-checked forever.</p>
+        </div>
+      </header>
+      <Pipeline />
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .hero-mono {
+    position: relative; isolation: isolate; overflow: hidden;
+    min-height: 100svh; display: grid; align-items: center;
+    background: #080807; color: var(--ink);
+    border-bottom: 1px solid var(--border);
+  }
+  /* dark scrim keeps the centered text readable over the dot field */
+  .hero-mono::after {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(58% 54% at 50% 52%, rgba(8, 8, 7, 0.85), rgba(8, 8, 7, 0.4) 54%, transparent 80%);
+  }
+  .hero-inner { position: relative; z-index: 2; text-align: center; padding-block: clamp(4rem, 3rem + 6vw, 8rem); }
+  .hero-mark { width: 46px; height: 46px; margin: 0 auto 1.75rem; color: var(--text-muted); opacity: 0.9; }
+  .hero-title {
+    max-width: 20ch; margin: 0.6rem auto 0; font-weight: 500;
+    font-size: clamp(1.9rem, 1.3rem + 2.6vw, 3.1rem); letter-spacing: -0.025em; line-height: 1.12;
+    color: #f6f3ee;
+  }
+  .hero-sub { max-width: 46ch; margin: 1.4rem auto 0; color: var(--text-muted); font-size: var(--step-0); }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin-top: 2rem; }
+  /* giant clipped wordmark — the MONOLOG signature */
+  .hero-wordmark {
+    position: absolute; left: 50%; bottom: -0.06em; transform: translateX(-50%); z-index: 1;
+    font-family: var(--font-display); font-weight: 500; letter-spacing: -0.05em; white-space: nowrap;
+    font-size: clamp(5rem, 27vw, 24rem); line-height: 0.78;
+    color: rgba(232, 232, 227, 0.17); pointer-events: none; user-select: none;
+  }
+
+  .cat-index { border-top: 1px solid var(--border); }
+  .sec-head { display: flex; align-items: end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.9rem; }
+  .sec-head p { max-width: 42ch; }
+  .sec-head p.muted { margin-top: 0.5rem; }
+</style>

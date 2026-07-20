@@ -1,0 +1,158 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import OfferCard from '../../components/OfferCard.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import Badge from '../../components/Badge.astro';
+import Logo from '../../components/Logo.astro';
+import { getCategory } from '../../data/categories';
+import { site } from '../../data/site';
+import { offerTypeLabel, isExpiringSoon, isExpired, sortOffers, formatDate, scoreTier } from '../../lib/offers';
+
+export async function getStaticPaths() {
+  const offers = await getCollection('offers');
+  return offers.map((offer) => ({ params: { id: offer.id }, props: { offer } }));
+}
+
+const { offer } = Astro.props;
+const d = offer.data;
+const cat = getCategory(d.category);
+const { Content } = await render(offer);
+
+const related = sortOffers(
+  (await getCollection('offers')).filter(
+    (o) => o.data.category === d.category && o.id !== offer.id && !isExpired(o),
+  ),
+).slice(0, 3);
+
+const rel = d.affiliate ? 'sponsored nofollow noopener' : 'nofollow noopener';
+
+const pageUrl = new URL(`/offers/${offer.id}`, site.url).href;
+// Product + nested Offer is an eligible rich result (a bare Offer is not); add a BreadcrumbList.
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Product',
+      name: d.title,
+      description: d.summary,
+      brand: { '@type': 'Brand', name: d.provider },
+      category: cat?.name ?? d.category,
+      offers: {
+        '@type': 'Offer',
+        url: pageUrl,
+        priceCurrency: 'USD',
+        price: d.offerType === 'free' ? '0' : undefined,
+        availability: isExpired(offer) ? 'https://schema.org/Discontinued' : 'https://schema.org/InStock',
+      },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Offers', item: new URL('/offers', site.url).href },
+        { '@type': 'ListItem', position: 2, name: cat?.name ?? d.category, item: new URL(`/category/${d.category}`, site.url).href },
+        { '@type': 'ListItem', position: 3, name: d.title, item: pageUrl },
+      ],
+    },
+  ],
+};
+---
+
+<Layout title={d.title} description={d.summary} jsonLd={jsonLd} noindex={isExpired(offer)}>
+  <article class="section">
+    <div class="wrap layout">
+      <div class="main">
+        <nav class="crumbs muted">
+          <a href="/offers">Offers</a> ›
+          <a href={`/category/${d.category}`}>{cat?.name ?? d.category}</a>
+        </nav>
+
+        <div class="head" style={`--cat:${cat?.accent ?? 'var(--accent)'}`}>
+          <span class="logo logo-tile"><Logo provider={d.provider} /></span>
+          <div>
+            <p class="provider muted">{d.provider}</p>
+            <h1>{d.title}</h1>
+          </div>
+        </div>
+
+        <div class="badges">
+          <Badge variant={d.offerType} label={offerTypeLabel[d.offerType] ?? d.offerType} />
+          {d.discountPercent && <Badge variant="discount" label={`${d.discountPercent}% off`} />}
+          {d.sponsored && <Badge variant="sponsored" label="Sponsored" />}
+          {isExpiringSoon(offer) && <Badge variant="expiring" label="Ending soon" />}
+        </div>
+
+        <p class="lead summary">{d.summary}</p>
+
+        <div class="prose body">
+          <Content />
+        </div>
+
+        <div class="in-article"><AdSlot format="in-article" /></div>
+
+        {related.length > 0 && (
+          <section class="related">
+            <h2>More in {cat?.name ?? d.category}</h2>
+            <div class="grid grid-offers">
+              {related.map((o) => <OfferCard offer={o} />)}
+            </div>
+          </section>
+        )}
+      </div>
+
+      <aside class="side">
+        <div class="card facts">
+          <div class="scorerow">
+            <span class={`score score-${scoreTier(d.score)}`}>{d.score}</span>
+            <span class="muted">/10 · Claimly score</span>
+          </div>
+          <p class="value" style={`--cat:${cat?.accent ?? 'var(--accent)'}`}>{d.value}</p>
+          <a class="btn btn-primary go" href={d.url} target="_blank" rel={rel}>Get this offer ↗</a>
+          <dl>
+            <div><dt>Type</dt><dd>{offerTypeLabel[d.offerType] ?? d.offerType}</dd></div>
+            <div><dt>Verify with</dt><dd>{d.verification}</dd></div>
+            <div><dt>Who's eligible</dt><dd>{d.eligibility}</dd></div>
+            <div><dt>Expires</dt><dd>{d.expires === 'ongoing' ? 'Ongoing' : d.expires}</dd></div>
+            <div><dt>Last checked</dt><dd>{formatDate(d.lastChecked)}</dd></div>
+          </dl>
+          {d.affiliate && <p class="aff muted">Partner link. We may earn a commission.</p>}
+        </div>
+      </aside>
+    </div>
+  </article>
+</Layout>
+
+<style>
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 2.5rem; align-items: start; }
+  .crumbs { font-size: var(--step--1); margin-bottom: 1rem; }
+  .crumbs a:hover { color: var(--accent-ink); }
+  .head { display: flex; gap: 1rem; align-items: center; }
+  .head .logo {
+    width: 66px; height: 66px; flex: none; color: var(--ink);
+    border-radius: 16px; background: color-mix(in srgb, var(--cat) 14%, var(--surface));
+  }
+  .provider { font-weight: 600; letter-spacing: 0.02em; }
+  .badges { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1.1rem; }
+  .summary { margin-top: 1rem; max-width: 60ch; }
+  .body { margin-top: 1.5rem; }
+  .in-article { margin: 2.5rem 0; }
+  .related { margin-top: 3rem; }
+  .related h2 { font-size: var(--step-2); margin-bottom: 1.25rem; }
+
+  .side { position: sticky; top: 84px; }
+  .facts { padding: 1.4rem; }
+  .scorerow { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.85rem; font-size: var(--step--1); }
+  .scorerow .score { display: inline-grid; place-items: center; min-width: 42px; height: 42px; padding: 0 0.4rem; font-family: var(--font-display); font-weight: 600; font-size: 1.4rem; line-height: 1; border: 1px solid var(--border); border-radius: 10px; }
+  .facts .value { font-family: var(--font-display); font-weight: 600; font-size: 1.5rem; color: var(--ink); }
+  .go { width: 100%; justify-content: center; margin-top: 1rem; }
+  .facts dl { margin-top: 1.25rem; display: grid; gap: 0.85rem; }
+  .facts dl div { display: grid; gap: 0.15rem; }
+  .facts dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+  .facts dd { font-weight: 500; }
+  .aff { font-size: var(--step--1); margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .side { position: static; order: -1; }
+  }
+</style>

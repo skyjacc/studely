@@ -1,0 +1,33 @@
+name: Check offer links
+
+# Auto re-checks every offer URL weekly (and on demand). This is the
+# "auto-updating" heartbeat: dead or expired offers surface as a failed run
+# plus an uploaded link-report.json artifact.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # every Monday 06:00 UTC
+  workflow_dispatch: {}
+  push:
+    paths:
+      - 'src/content/offers/**'
+      - 'scripts/check-links.mjs'
+
+jobs:
+  check-links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Check links & expiry
+        run: npm run check-links
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: link-report
+          path: link-report.json

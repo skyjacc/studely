@@ -1,0 +1,29 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { site } from '../data/site';
+---
+
+<Layout title="How we verify offers" description="How Claimly curates, verifies and re-checks every student offer.">
+  <section class="section">
+    <div class="wrap prose">
+      <p class="eyebrow">Trust &amp; methodology</p>
+      <h1>How we verify offers</h1>
+      <p class="lead">Anyone can paste a list of links. We keep ours honest with a repeatable process, re-run automatically.</p>
+
+      <h2>1. Curation</h2>
+      <p>Every offer is added by hand. We only list perks from named, reputable providers, with a clear student-eligibility path. No “free trials” dressed up as freebies.</p>
+
+      <h2>2. Verification</h2>
+      <p>For each offer we record exactly how you prove you’re a student: a <code>.edu</code> email, SheerID, ISIC, or the GitHub Student Pack. If we can’t confirm the path, it doesn’t go live.</p>
+
+      <h2>3. Automatic re-checking</h2>
+      <p>A weekly job re-checks every link and flags anything that 404s, redirects to a dead page, or has expired, so we can review and remove it. Each listing shows its <strong>last checked</strong> date so you can see how fresh it is.</p>
+
+      <h2>4. Honesty about money</h2>
+      <p>{site.affiliateDisclosure} Sponsored placements are always labelled <strong>Sponsored</strong>. A payment never buys a better review, only a position.</p>
+
+      <h2>Found something wrong?</h2>
+      <p>Offers change fast. If a deal is dead or the terms moved, tell us and we’ll re-check within a day. Always confirm current terms on the provider’s own site before relying on an offer.</p>
+    </div>
+  </section>
+</Layout>

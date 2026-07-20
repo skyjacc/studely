@@ -1,0 +1,570 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import OfferCard from '../../components/OfferCard.astro';
+import Logo from '../../components/Logo.astro';
+import Icon from '../../components/Icon.astro';
+import Badge from '../../components/Badge.astro';
+import { categories, getCategory } from '../../data/categories';
+import { isExpired, verifyGroup, scoreTier, offerTypeLabel } from '../../lib/offers';
+
+const all = (await getCollection('offers')).filter((o) => !isExpired(o));
+// Default order = score high→low, then most recently checked.
+const sorted = [...all].sort(
+  (a, b) => b.data.score - a.data.score || b.data.lastChecked.getTime() - a.data.lastChecked.getTime(),
+);
+
+const catFacets = categories
+  .map((c) => ({ ...c, n: all.filter((o) => o.data.category === c.slug).length }))
+  .filter((c) => c.n > 0);
+
+const TYPES = ['free', 'discount', 'credit', 'trial'] as const;
+const typeFacets = TYPES.map((t) => ({ t, label: offerTypeLabel[t], n: all.filter((o) => o.data.offerType === t).length })).filter((x) => x.n > 0);
+
+const verifyFacets = [...new Set(all.map((o) => verifyGroup(o.data.verification)))]
+  .map((g) => ({ g, n: all.filter((o) => verifyGroup(o.data.verification) === g).length }))
+  .sort((a, b) => b.n - a.n);
+
+const dataAttrs = (o: (typeof sorted)[number]) => ({
+  'data-cat': o.data.category,
+  'data-type': o.data.offerType,
+  'data-verify': verifyGroup(o.data.verification),
+  'data-score': String(o.data.score),
+  'data-checked': String(o.data.lastChecked.getTime()),
+  'data-name': o.data.title.toLowerCase(),
+  'data-text': `${o.data.title} ${o.data.provider} ${o.data.summary} ${o.data.tags.join(' ')} ${getCategory(o.data.category)?.name ?? ''}`.toLowerCase(),
+});
+---
+
+<Layout title="All student offers" description="Browse every verified free tool, credit, course and student discount. Filter by category, type and verification, sorted by our editorial score.">
+  <section class="section">
+    <div class="wrap">
+      <p class="eyebrow">The directory</p>
+      <h1>All offers</h1>
+      <p class="lead" style="max-width:52ch">{all.length} verified perks, scored and re-checked. Filter it down.</p>
+    </div>
+
+    <div class="dir-wrap">
+      <div class="dir">
+        <!-- Faceted sidebar -->
+        <aside class="rail" id="filter-rail" aria-label="Filters">
+          <div class="rail-inner">
+            <button class="rail-close" type="button" aria-label="Close filters">Done</button>
+            <div class="fgroup">
+              <label class="flabel" for="sort" id="sort-label">Sort by</label>
+              <div class="sel" data-select>
+                <select id="sort" class="select">
+                  <option value="score">Score: high → low</option>
+                  <option value="checked">Recently checked</option>
+                  <option value="az">Name: A → Z</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="fgroup">
+              <label class="flabel" for="q">Search</label>
+              <input id="q" class="input" type="search" placeholder="Figma, cloud, .edu…" autocomplete="off" />
+            </div>
+
+            <fieldset class="fgroup">
+              <legend class="flabel">Category</legend>
+              {catFacets.map((c) => (
+                <label class="check">
+                  <input type="checkbox" data-facet="cat" value={c.slug} />
+                  <span class="box" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2.4 6.3 4.7 8.6 9.6 3.7"/></svg></span>
+                  <span class="cico"><Icon category={c.slug} /></span>
+                  <span class="ctxt">{c.name}</span>
+                  <span class="cn">{c.n}</span>
+                </label>
+              ))}
+            </fieldset>
+
+            <fieldset class="fgroup">
+              <legend class="flabel">Type</legend>
+              {typeFacets.map((t) => (
+                <label class="check">
+                  <input type="checkbox" data-facet="type" value={t.t} />
+                  <span class="box" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2.4 6.3 4.7 8.6 9.6 3.7"/></svg></span>
+                  <span class="ctxt">{t.label}</span>
+                  <span class="cn">{t.n}</span>
+                </label>
+              ))}
+            </fieldset>
+
+            <fieldset class="fgroup">
+              <legend class="flabel">Verify with</legend>
+              {verifyFacets.map((v) => (
+                <label class="check">
+                  <input type="checkbox" data-facet="verify" value={v.g} />
+                  <span class="box" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2.4 6.3 4.7 8.6 9.6 3.7"/></svg></span>
+                  <span class="ctxt">{v.g}</span>
+                  <span class="cn">{v.n}</span>
+                </label>
+              ))}
+            </fieldset>
+
+            <button id="reset" class="btn btn-ghost btn-sm" type="button">Reset filters</button>
+          </div>
+        </aside>
+        <div class="rail-backdrop" hidden></div>
+
+        <!-- Results -->
+        <div class="results">
+          <div class="toolbar">
+            <button id="filter-toggle" class="filter-toggle" type="button" aria-expanded="false" aria-controls="filter-rail">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+              Filter &amp; sort
+            </button>
+            <p id="count" class="count" aria-live="polite">{all.length} offers</p>
+            <div class="views" role="group" aria-label="View">
+              <button id="view-cards" class="vbtn is-active" type="button" aria-pressed="true" aria-label="Card view">▦ Cards</button>
+              <button id="view-table" class="vbtn" type="button" aria-pressed="false" aria-label="Table view">▤ Table</button>
+            </div>
+          </div>
+
+          <div id="cards" class="grid grid-offers">
+            {sorted.map((o) => (
+              <div class="item" {...dataAttrs(o)}><OfferCard offer={o} /></div>
+            ))}
+          </div>
+
+          <div id="table" class="tablewrap" hidden>
+            <table>
+              <thead>
+                <tr><th>Score</th><th>Offer</th><th>Category</th><th>Type</th><th>Value</th><th>Verify</th><th></th></tr>
+              </thead>
+              <tbody>
+                {sorted.map((o) => {
+                  const cat = getCategory(o.data.category);
+                  return (
+                    <tr class="item" {...dataAttrs(o)}>
+                      <td><span class={`tscore score-${scoreTier(o.data.score)}`}>{o.data.score}</span></td>
+                      <td class="tname">
+                        <span class="tlogo logo-tile"><Logo provider={o.data.provider} /></span>
+                        <a href={`/offers/${o.id}`}>{o.data.title}</a>
+                      </td>
+                      <td><a class="tcat" href={`/category/${o.data.category}`}>{cat?.name ?? o.data.category}</a></td>
+                      <td><Badge variant={o.data.offerType} label={offerTypeLabel[o.data.offerType] ?? o.data.offerType} /></td>
+                      <td class="tval">{o.data.value}</td>
+                      <td class="muted">{o.data.verification}</td>
+                      <td><a class="tgo" href={o.data.url} target="_blank" rel="nofollow noopener">Get ↗</a></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <p id="empty" class="empty muted" hidden>No offers match. Loosen the filters.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<script is:inline>
+  function setupOffersDir() {
+    const cards = document.getElementById('cards');
+    if (!cards || cards.dataset.bound) return; // only on /offers, once per page instance
+    cards.dataset.bound = '1';
+    const tbody = document.querySelector('#table tbody');
+    const countEl = document.getElementById('count');
+    const emptyEl = document.getElementById('empty');
+    const q = document.getElementById('q');
+    const sortEl = document.getElementById('sort');
+    const state = { q: '', sort: 'score', cat: new Set(), type: new Set(), verify: new Set() };
+
+    // hydrate search from ?q= (header/hero search deep-links here)
+    const q0 = (new URLSearchParams(location.search).get('q') || '').trim();
+    if (q0) { q.value = q0; state.q = q0.toLowerCase(); }
+
+    const facetSet = (facet) => {
+      const s = new Set();
+      document.querySelectorAll(`input[data-facet="${facet}"]:checked`).forEach((el) => s.add(el.value));
+      return s;
+    };
+
+    const show = (el) => {
+      if (state.q && !(el.dataset.text || '').includes(state.q)) return false;
+      if (state.cat.size && !state.cat.has(el.dataset.cat)) return false;
+      if (state.type.size && !state.type.has(el.dataset.type)) return false;
+      if (state.verify.size && !state.verify.has(el.dataset.verify)) return false;
+      return true;
+    };
+
+    const cmp = (a, b) => {
+      if (state.sort === 'checked') return +b.dataset.checked - +a.dataset.checked;
+      if (state.sort === 'az') return (a.dataset.name || '').localeCompare(b.dataset.name || '');
+      return +b.dataset.score - +a.dataset.score; // score default
+    };
+
+    const sortIn = (container) => {
+      if (!container) return;
+      [...container.children].sort(cmp).forEach((el) => container.appendChild(el));
+    };
+
+    // Live facet counts. A group is counted against every OTHER active filter but NOT its
+    // own selection — otherwise picking one category would zero out the rest of that group
+    // and you could never OR a second one in.
+    const FACETS = ['cat', 'type', 'verify'];
+    const matchesExcept = (el, skip) => {
+      if (state.q && !(el.dataset.text || '').includes(state.q)) return false;
+      if (skip !== 'cat' && state.cat.size && !state.cat.has(el.dataset.cat)) return false;
+      if (skip !== 'type' && state.type.size && !state.type.has(el.dataset.type)) return false;
+      if (skip !== 'verify' && state.verify.size && !state.verify.has(el.dataset.verify)) return false;
+      return true;
+    };
+
+    const updateFacets = () => {
+      const items = [...cards.children];
+      FACETS.forEach((facet) => {
+        const pool = items.filter((el) => matchesExcept(el, facet));
+        const inputs = [...document.querySelectorAll(`input[data-facet="${facet}"]`)];
+        let anyVisible = false;
+        inputs.forEach((input) => {
+          const n = pool.filter((el) => el.dataset[facet] === input.value).length;
+          const label = input.closest('.check');
+          const cn = label.querySelector('.cn');
+          if (cn) cn.textContent = n;
+          // never hide a checked option — you'd have no way to switch it back off
+          const hide = n === 0 && !input.checked;
+          label.hidden = hide;
+          if (!hide) anyVisible = true;
+        });
+        const group = inputs[0] && inputs[0].closest('.fgroup');
+        if (group) group.hidden = !anyVisible; // drop the whole group if nothing is left
+      });
+    };
+
+    const apply = () => {
+      document.querySelectorAll('.item').forEach((el) => { el.hidden = !show(el); });
+      sortIn(cards);
+      sortIn(tbody);
+      const shown = [...cards.children].filter((c) => !c.hidden).length;
+      countEl.textContent = `${shown} offer${shown === 1 ? '' : 's'}`;
+      emptyEl.hidden = shown !== 0;
+      updateFacets();
+    };
+
+    q.addEventListener('input', () => { state.q = q.value.trim().toLowerCase(); apply(); });
+    sortEl.addEventListener('change', () => { state.sort = sortEl.value; apply(); });
+    document.querySelectorAll('input[data-facet]').forEach((el) =>
+      el.addEventListener('change', () => {
+        state.cat = facetSet('cat'); state.type = facetSet('type'); state.verify = facetSet('verify'); apply();
+      }),
+    );
+    document.getElementById('reset').addEventListener('click', () => {
+      state.q = ''; q.value = '';
+      document.querySelectorAll('input[data-facet]').forEach((el) => (el.checked = false));
+      state.cat.clear(); state.type.clear(); state.verify.clear();
+      state.sort = 'score'; sortEl.value = 'score';
+      apply();
+    });
+
+    // view toggle
+    const vCards = document.getElementById('view-cards');
+    const vTable = document.getElementById('view-table');
+    const table = document.getElementById('table');
+    const setView = (isTable) => {
+      table.hidden = !isTable; cards.hidden = isTable;
+      vTable.classList.toggle('is-active', isTable);
+      vCards.classList.toggle('is-active', !isTable);
+      vTable.setAttribute('aria-pressed', String(isTable));
+      vCards.setAttribute('aria-pressed', String(!isTable));
+    };
+    vCards.addEventListener('click', () => setView(false));
+    vTable.addEventListener('click', () => setView(true));
+
+    // mobile filter bottom-sheet
+    const dir = document.querySelector('.dir');
+    const ftoggle = document.getElementById('filter-toggle');
+    const backdrop = document.querySelector('.rail-backdrop');
+    const railClose = document.querySelector('.rail-close');
+    const setFilters = (open) => {
+      if (!dir) return;
+      dir.classList.toggle('filters-open', open);
+      if (ftoggle) ftoggle.setAttribute('aria-expanded', String(open));
+      if (backdrop) backdrop.hidden = !open;
+      document.body.style.overflow = open ? 'hidden' : '';
+    };
+    if (ftoggle) ftoggle.addEventListener('click', () => setFilters(!dir.classList.contains('filters-open')));
+    if (backdrop) backdrop.addEventListener('click', () => setFilters(false));
+    if (railClose) railClose.addEventListener('click', () => setFilters(false));
+    if (!window.__offEsc) {
+      window.__offEsc = true;
+      document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        const d = document.querySelector('.dir');
+        if (d && d.classList.contains('filters-open')) {
+          d.classList.remove('filters-open');
+          document.body.style.overflow = '';
+          const b = document.querySelector('.rail-backdrop'); if (b) b.hidden = true;
+        }
+      });
+    }
+
+    // Build a styled listbox on top of each native <select>. The native element stays
+    // the source of truth (and the no-JS fallback) — we mirror it and fire `change`,
+    // so the filtering logic above needs no changes.
+    document.querySelectorAll('[data-select]').forEach((wrap) => {
+      const sel = wrap.querySelector('select');
+      if (!sel || wrap.dataset.enh) return;
+      wrap.dataset.enh = '1';
+      sel.classList.add('sel-native');
+      sel.tabIndex = -1;
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'sel-btn';
+      btn.id = sel.id + '-btn';
+      btn.setAttribute('aria-haspopup', 'listbox');
+      btn.setAttribute('aria-expanded', 'false');
+      const lbl = document.getElementById(sel.id + '-label');
+      if (lbl) btn.setAttribute('aria-labelledby', lbl.id + ' ' + btn.id);
+      btn.innerHTML =
+        '<span class="sel-val"></span><svg class="sel-chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5"/></svg>';
+
+      const list = document.createElement('ul');
+      list.className = 'sel-list';
+      list.setAttribute('role', 'listbox');
+      if (lbl) list.setAttribute('aria-labelledby', lbl.id);
+      list.hidden = true;
+      [...sel.options].forEach((o, i) => {
+        const li = document.createElement('li');
+        li.className = 'sel-opt';
+        li.setAttribute('role', 'option');
+        li.id = sel.id + '-opt-' + i;
+        li.textContent = o.textContent;
+        list.appendChild(li);
+      });
+      wrap.append(btn, list);
+
+      const valEl = btn.querySelector('.sel-val');
+      const items = [...list.children];
+      let open = false;
+      let active = sel.selectedIndex;
+
+      const sync = () => {
+        valEl.textContent = sel.options[sel.selectedIndex].textContent;
+        items.forEach((li, i) => {
+          const on = i === sel.selectedIndex;
+          li.setAttribute('aria-selected', String(on));
+          li.classList.toggle('is-sel', on);
+        });
+      };
+      const setActive = (i) => {
+        active = Math.max(0, Math.min(items.length - 1, i));
+        items.forEach((li, n) => li.classList.toggle('is-active', n === active));
+        btn.setAttribute('aria-activedescendant', items[active].id);
+        items[active].scrollIntoView({ block: 'nearest' });
+      };
+      const onDocClick = (e) => { if (!wrap.contains(e.target)) setOpen(false); };
+      function setOpen(v) {
+        open = v;
+        list.hidden = !v;
+        btn.setAttribute('aria-expanded', String(v));
+        wrap.classList.toggle('is-open', v);
+        if (v) { setActive(sel.selectedIndex); document.addEventListener('click', onDocClick, true); }
+        else { btn.removeAttribute('aria-activedescendant'); document.removeEventListener('click', onDocClick, true); }
+      }
+      const choose = (i) => {
+        sel.selectedIndex = i;
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+        sync();
+        setOpen(false);
+        btn.focus();
+      };
+
+      btn.addEventListener('click', () => setOpen(!open));
+      list.addEventListener('click', (e) => {
+        const li = e.target.closest('.sel-opt');
+        if (li) choose(items.indexOf(li));
+      });
+      list.addEventListener('mousemove', (e) => {
+        const li = e.target.closest('.sel-opt');
+        if (li) setActive(items.indexOf(li));
+      });
+      btn.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (!open) { setOpen(true); return; }
+          if (e.key === 'ArrowDown') setActive(active + 1);
+          else if (e.key === 'ArrowUp') setActive(active - 1);
+          else choose(active);
+        } else if (e.key === 'Escape' && open) { e.preventDefault(); setOpen(false); }
+        else if (e.key === 'Home' && open) { e.preventDefault(); setActive(0); }
+        else if (e.key === 'End' && open) { e.preventDefault(); setActive(items.length - 1); }
+      });
+      sel.addEventListener('change', sync);
+      sync();
+    });
+
+    apply();
+  }
+  document.addEventListener('astro:page-load', setupOffersDir);
+</script>
+
+<style>
+  /* full-page-width directory (breaks out of the centered .wrap) */
+  .dir-wrap { width: 100%; max-width: 1800px; margin-inline: auto; margin-top: 1.75rem; padding-inline: clamp(1rem, 0.4rem + 2vw, 2.5rem); }
+  .dir { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 1.75rem; align-items: start; }
+  /* denser results grid → more columns across the wide area */
+  .results .grid-offers { grid-template-columns: repeat(auto-fill, minmax(min(100%, 258px), 1fr)); grid-auto-rows: 1fr; }
+  /* every card fills its (equal-height) row so the footer lines up across the grid.
+     min-width:0 lets the flex items shrink to the grid track (else content min-width overflows). */
+  .item { display: flex; min-width: 0; }
+  .item > :global(.offer) { flex: 1; min-width: 0; }
+  .rail-inner { position: sticky; top: 84px; display: flex; flex-direction: column; gap: 1.25rem; }
+  .fgroup { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+  .flabel { font-family: var(--font-display); font-weight: 500; font-size: 0.95rem; letter-spacing: -0.01em; }
+  .select, .input {
+    width: 100%; font: inherit; font-weight: 500; color: var(--text);
+    padding: 0.55em 0.7em; border-radius: 10px; border: 1px solid var(--border-control); background: var(--surface);
+  }
+  /* facet rows — highlight wipes in from the left on hover (same mechanic as the navbar) */
+  .check {
+    position: relative; isolation: isolate;
+    display: flex; align-items: center; gap: 0.55rem; cursor: pointer;
+    font-size: var(--step--1); font-weight: 500; color: var(--text-muted);
+    padding: 0.32rem 0.5rem; border-radius: 8px;
+    transition: color 0.25s var(--ease-out);
+  }
+  .check::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
+    background: #393632; transform: scaleX(0); transform-origin: right center;
+    transition: transform 0.45s cubic-bezier(0.2, 1, 0.36, 1);
+  }
+  .check:hover::before { transform: scaleX(1); transform-origin: left center; }
+  .check:hover, .check:has(input:checked) { color: var(--ink); }
+  /* native input stays focusable but invisible; the .box is the visual control */
+  .check input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+  .box {
+    flex: none; width: 17px; height: 17px; display: grid; place-items: center;
+    border: 1px solid var(--border-control); border-radius: 5px;
+    transition: background 0.25s var(--ease-out), border-color 0.25s var(--ease-out);
+  }
+  .box svg {
+    width: 11px; height: 11px; fill: none; stroke: var(--bg); stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 13; stroke-dashoffset: 13;
+    transition: stroke-dashoffset 0.32s var(--ease-out);
+  }
+  .check input:checked + .box { background: var(--ink); border-color: var(--ink); }
+  .check input:checked + .box svg { stroke-dashoffset: 0; }
+  .check input:focus-visible + .box { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  /* custom sort dropdown — the wrapper and native <select> live in the template, so they
+     scope normally. Its button/listbox are built by JS and are styled in the is:global
+     block below (JS-created nodes carry no astro scope id, so scoped rules can't match). */
+  .sel { position: relative; }
+  .sel .sel-native { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+  .cico { display: inline-grid; place-items: center; color: var(--text-muted); }
+  .cico :global(.cat-ico) { width: 16px; height: 16px; }
+  .ctxt { flex: 1; }
+  .cn { color: var(--text-muted); font-variant-numeric: tabular-nums; font-weight: 600; }
+  #reset { align-self: start; }
+
+  .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+  .count { font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; }
+  .views { display: inline-flex; gap: 0; border: 1px solid var(--border-control); border-radius: var(--radius-pill); overflow: hidden; }
+  .vbtn { font: inherit; font-size: var(--step--1); font-weight: 500; cursor: pointer; padding: 0.4em 0.85em; background: var(--surface); color: var(--text-muted); border: 0; }
+  .vbtn.is-active { background: var(--ink); color: var(--bg); }
+
+  /* mobile filter-sheet controls (shown only <=860) */
+  .filter-toggle {
+    align-items: center; gap: 0.4rem; font: inherit; font-size: var(--step--1); font-weight: 500;
+    cursor: pointer; padding: 0.45em 0.9em; border-radius: var(--radius-pill);
+    border: 1px solid var(--border-control); background: var(--surface); color: var(--ink);
+  }
+  .rail-close {
+    margin-left: auto; align-items: center; font: inherit; font-weight: 600; cursor: pointer;
+    padding: 0.4em 1.1em; border-radius: var(--radius-pill); border: 0; background: var(--ink); color: var(--bg);
+  }
+  .filter-toggle, .rail-close { display: none; }
+  .rail-backdrop { position: fixed; inset: 0; z-index: 69; background: rgba(0, 0, 0, 0.55); }
+
+  .empty { margin-top: 2rem; font-size: var(--step-1); }
+  .item[hidden] { display: none; }
+  /* facet rows/groups carry display:flex, which beats the UA [hidden] rule */
+  .check[hidden], .fgroup[hidden] { display: none; }
+
+  /* table view */
+  .tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); background: var(--surface); }
+  table { width: 100%; border-collapse: collapse; font-size: var(--step--1); }
+  thead th { text-align: left; font-family: var(--font-display); font-weight: 500; padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tbody td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: 0; }
+  .tscore { display: inline-grid; place-items: center; min-width: 34px; height: 30px; font-family: var(--font-display); font-weight: 500; border: 1px solid var(--border); border-radius: 8px; }
+  .tname { display: flex; align-items: center; gap: 0.6rem; min-width: 200px; font-weight: 600; }
+  .tname a:hover { color: var(--accent-ink); }
+  .tlogo { width: 34px; height: 34px; flex: none; color: var(--ink); }
+  .tcat:hover { color: var(--accent-ink); }
+  .tval { font-weight: 600; white-space: nowrap; }
+  .tgo { font-weight: 500; color: var(--ink); white-space: nowrap; }
+
+  @media (max-width: 860px) {
+    .dir { grid-template-columns: 1fr; }
+    .filter-toggle, .rail-close { display: inline-flex; }
+    /* filters become a bottom sheet; results render first (rail is out of flow) */
+    .rail {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
+      max-height: 82vh; overflow-y: auto;
+      background: var(--surface); border-top: 1px solid var(--border);
+      border-radius: 18px 18px 0 0; padding: 1.1rem 1.25rem 1.6rem;
+      transform: translateY(101%); transition: transform 0.38s var(--ease-out);
+      box-shadow: 0 -20px 60px -20px rgba(0, 0, 0, 0.7);
+    }
+    .dir.filters-open .rail { transform: translateY(0); }
+    .rail-inner { position: static; gap: 1.1rem; }
+    .fgroup { flex-flow: row wrap; align-items: center; }
+    .fgroup .flabel { width: 100%; }
+    .check { border: 1px solid var(--border-soft); border-radius: var(--radius-pill); padding: 0.3rem 0.6rem; }
+  }
+</style>
+
+<!-- The dropdown's button/listbox are created at runtime by the script above, so they
+     carry no astro scope id and scoped rules never match them. Global, but every
+     selector is namespaced under .sel / .sel-* which exist only here. -->
+<style is:global>
+  .sel .sel-btn {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+    font: inherit; font-weight: 500; font-size: var(--step--1); color: var(--ink);
+    text-align: left; cursor: pointer;
+    padding: 0.55em 0.7em; border-radius: 10px;
+    border: 1px solid var(--border-control); background: var(--surface);
+    transition: border-color 0.25s var(--ease-out);
+  }
+  .sel .sel-btn:hover, .sel.is-open .sel-btn { border-color: var(--ink); }
+  .sel .sel-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .sel .sel-val { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sel .sel-chev {
+    width: 12px; height: 12px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6;
+    stroke-linecap: round; stroke-linejoin: round; transition: transform 0.35s var(--ease-out);
+  }
+  .sel.is-open .sel-chev { transform: rotate(180deg); }
+
+  .sel .sel-list {
+    position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; right: 0;
+    margin: 0; padding: 0.3rem; list-style: none; max-height: 260px; overflow-y: auto;
+    background: var(--surface-2); border: 1px solid var(--border-control); border-radius: 12px;
+    box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.8);
+    animation: sel-in 0.22s var(--ease-out) both;
+  }
+  @keyframes sel-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+  .sel .sel-opt {
+    position: relative; isolation: isolate;
+    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+    padding: 0.45em 0.6em; border-radius: 8px; cursor: pointer;
+    font-size: var(--step--1); font-weight: 500; color: var(--text-muted);
+    transition: color 0.2s var(--ease-out);
+  }
+  .sel .sel-opt::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
+    background: #393632; transform: scaleX(0); transform-origin: right center;
+    transition: transform 0.4s cubic-bezier(0.2, 1, 0.36, 1);
+  }
+  .sel .sel-opt:hover::before, .sel .sel-opt.is-active::before { transform: scaleX(1); transform-origin: left center; }
+  .sel .sel-opt:hover, .sel .sel-opt.is-active, .sel .sel-opt.is-sel { color: var(--ink); }
+  .sel .sel-opt.is-sel::after { content: '✓'; font-size: 0.85em; opacity: 0.9; }
+</style>

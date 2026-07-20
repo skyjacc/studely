@@ -1,0 +1,40 @@
+---
+import { brandLogos } from '../lib/brand-logos';
+
+interface Props { provider: string; }
+const { provider } = Astro.props;
+
+// Map an offer's `provider` string to a simple-icons logo key.
+const KEY: Record<string, string> = {
+  github: 'github',
+  jetbrains: 'jetbrains',
+  figma: 'figma',
+  canva: 'canva',
+  microsoft: 'microsoftazure',
+  'google cloud': 'googlecloud',
+  perplexity: 'perplexity',
+  spotify: 'spotify',
+  notion: 'notion',
+  namecheap: 'namecheap',
+  apple: 'apple',
+  coursera: 'coursera',
+  autodesk: 'autodesk',
+};
+
+const key = KEY[provider.toLowerCase()];
+const logo = key ? brandLogos[key] : undefined;
+const monogram = provider
+  .replace(/[^A-Za-z0-9 ]/g, '')
+  .split(/\s+/)
+  .map((w) => w[0])
+  .join('')
+  .slice(0, 2)
+  .toUpperCase();
+---
+{logo ? (
+  <svg viewBox={logo.viewBox} fill="currentColor" role="img" aria-label={`${provider} logo`}>
+    <path d={logo.path} />
+  </svg>
+) : (
+  <span class="mono" aria-hidden="true">{monogram}</span>
+)}

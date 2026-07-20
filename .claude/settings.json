@@ -1,0 +1,13 @@
+{
+  "enabledPlugins": {
+    "example-skills@anthropic-agent-skills": true,
+    "marketing-skills@marketingskills": true,
+    "pitch-agent@claude-for-financial-services": true,
+    "legal@knowledge-work-plugins": true,
+    "data@knowledge-work-plugins": true,
+    "rampstack-skills@rampstack": true,
+    "superpowers@superpowers-marketplace": true,
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true,
+    "context7@context7-marketplace": true
+  }
+}

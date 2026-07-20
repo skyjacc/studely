@@ -1,0 +1,186 @@
+---
+import { getCollection } from 'astro:content';
+import { site } from '../data/site';
+import { categories } from '../data/categories';
+import { isExpired } from '../lib/offers';
+import Wordmark from './Wordmark.astro';
+
+const year = new Date().getFullYear();
+const topCats = categories.slice(0, 6);
+const offerCount = (await getCollection('offers')).filter((o) => !isExpired(o)).length;
+
+// Big footer nav — real destinations only (no 404 stubs). "Suggest a deal" is a
+// mailto so it works before a /submit page exists.
+const nav = [
+  { label: 'All offers', href: '/offers' },
+  { label: 'Categories', href: '/categories' },
+  { label: 'How we verify', href: '/methodology' },
+  { label: 'Suggest a deal', href: `mailto:${site.email}?subject=Deal%20suggestion` },
+];
+
+// Only render socials that are actually set — empty entries stay hidden.
+const socials = [
+  { label: 'Twitter / X', url: site.social.twitter },
+  { label: 'GitHub', url: site.social.github },
+  { label: 'Reddit', url: site.social.reddit },
+].filter((s) => s.url);
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <!-- TOP: eyebrow + big nav -->
+    <div class="footer-top">
+      <div class="f-eyebrow"><span class="dot" aria-hidden="true"></span><span>Navigation</span></div>
+      <nav class="f-nav" aria-label="Footer">
+        <ul>
+          {nav.map((n) => (
+            <li>
+              <a href={n.href}>
+                <span class="fn-label">{n.label}</span>
+                <span class="fn-arrow" aria-hidden="true">→</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </div>
+
+    <!-- ASIDE: three detail columns with mono paren labels -->
+    <div class="footer-aside">
+      <div class="f-detail">
+        <span class="f-label">(the directory)</span>
+        <a href="/" class="brand" aria-label={`${site.name} home`}><Wordmark class="footer-logo" /></a>
+        <p class="f-about">Free tools, credits and courses for students. Verified by a human, re-checked weekly.</p>
+        <a class="f-email" href={`mailto:${site.email}`}>{site.email}</a>
+      </div>
+
+      <div class="f-detail">
+        <span class="f-label">(categories)</span>
+        <ul class="f-links">
+          {topCats.map((c) => (
+            <li><a href={`/category/${c.slug}`}>{c.name}</a></li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="f-detail">
+        <span class="f-label">(elsewhere)</span>
+        <ul class="f-links">
+          <li><a href="/methodology">How we verify</a></li>
+          <li><a href="/offers">Browse all {offerCount}</a></li>
+          {socials.map((s) => (
+            <li><a href={s.url} target="_blank" rel="me noopener">{s.label} <span aria-hidden="true">↗</span></a></li>
+          ))}
+        </ul>
+      </div>
+    </div>
+
+    <!-- BOTTOM bar -->
+    <div class="footer-bottom">
+      <div class="fb-status">
+        <span class="fb-strong">{offerCount} offers live</span>
+        <span>Re-checked weekly</span>
+      </div>
+      <div class="fb-mid">
+        <a class="to-top" href="#top">Back to top <span class="tt-arrow" aria-hidden="true">↑</span></a>
+        <span class="fb-avail">{site.availability}</span>
+      </div>
+      <div class="fb-brand">
+        <span>© {year} {site.name}</span>
+        <span class="muted">Not affiliated with listed providers.</span>
+      </div>
+    </div>
+
+    <div class="fmeta">
+      <p class="disclosure muted">{site.affiliateDisclosure}</p>
+      <p class="muted">Offers change often. Always confirm terms on the provider’s site.</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--border);
+    background: var(--bg-alt);
+    padding-block: clamp(2.5rem, 2rem + 2vw, 4rem);
+    margin-top: 3rem;
+  }
+
+  /* TOP — eyebrow + big nav */
+  .footer-top {
+    display: grid; grid-template-columns: minmax(0, 9rem) 1fr;
+    gap: 1.5rem 2rem; align-items: start;
+  }
+  .f-eyebrow { display: inline-flex; align-items: center; gap: 0.55em; padding-top: 0.6rem; }
+  .f-eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink); flex: none; }
+  .f-eyebrow span:last-child {
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--text-muted);
+  }
+  .f-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.2rem 2.2rem; }
+  .f-nav a { display: inline-flex; align-items: baseline; gap: 0.4rem; color: var(--text-muted); transition: color 0.3s var(--ease-out); }
+  .fn-label {
+    font-family: var(--font-display); font-weight: 500; letter-spacing: -0.03em; line-height: 1.06;
+    font-size: clamp(1.5rem, 1.1rem + 1.7vw, 2.5rem);
+    transition: transform 0.45s var(--ease-out);
+  }
+  .fn-arrow {
+    font-family: var(--font-display); font-size: clamp(1.1rem, 0.9rem + 0.9vw, 1.7rem);
+    opacity: 0; transform: translateX(-0.35em);
+    transition: opacity 0.45s var(--ease-out), transform 0.45s var(--ease-out);
+  }
+  .f-nav a:hover { color: var(--ink); }
+  .f-nav a:hover .fn-label { transform: translateX(0.12em); }
+  .f-nav a:hover .fn-arrow { opacity: 1; transform: translateX(0); }
+
+  /* ASIDE — three detail columns */
+  .footer-aside {
+    display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 2rem 1.75rem;
+    margin-top: clamp(2.5rem, 1.5rem + 4vw, 4.5rem);
+    padding-top: 1.6rem; border-top: 1px solid var(--border);
+  }
+  .f-label {
+    display: block; margin-bottom: 1rem;
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; color: var(--text-muted);
+  }
+  .footer-logo { height: 22px; color: var(--ink); }
+  .brand { display: inline-flex; }
+  .f-about { margin-top: 0.9rem; color: var(--text-muted); font-size: var(--step--1); line-height: 1.55; max-width: 34ch; }
+  .f-email { display: inline-block; margin-top: 1rem; color: var(--ink); border-bottom: 1px solid var(--border-strong); padding-bottom: 1px; transition: border-color 0.3s var(--ease-out); }
+  .f-email:hover { border-color: var(--ink); }
+  .f-links { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.55rem; }
+  .f-links a { color: var(--text-muted); transition: color 0.25s var(--ease-out); }
+  .f-links a:hover { color: var(--ink); }
+
+  /* BOTTOM bar */
+  .footer-bottom {
+    display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem 1.5rem; align-items: center;
+    margin-top: clamp(2.5rem, 1.5rem + 4vw, 4.5rem);
+    padding-top: 1.5rem; border-top: 1px solid var(--border);
+    font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted);
+  }
+  .fb-status { display: flex; flex-direction: column; gap: 0.15rem; }
+  .fb-strong { color: var(--ink); }
+  .fb-mid { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; text-align: center; }
+  .to-top { display: inline-flex; align-items: center; gap: 0.4em; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.25s var(--ease-out); }
+  .to-top:hover { color: var(--ink); }
+  .tt-arrow { transition: transform 0.3s var(--ease-out); }
+  .to-top:hover .tt-arrow { transform: translateY(-3px); }
+  .fb-brand { display: flex; flex-direction: column; gap: 0.15rem; text-align: right; }
+
+  /* legal / disclosure */
+  .fmeta { margin-top: 2rem; padding-top: 1.3rem; border-top: 1px solid var(--border); display: grid; gap: 0.6rem; }
+  .disclosure { font-size: var(--step--1); max-width: 80ch; }
+  .fmeta p { font-size: var(--step--1); }
+
+  @media (max-width: 820px) {
+    .footer-top { grid-template-columns: 1fr; }
+    .footer-aside { grid-template-columns: 1fr 1fr; }
+    .footer-bottom { grid-template-columns: 1fr; gap: 1.25rem; }
+    .fb-mid { align-items: flex-start; text-align: left; }
+    .fb-brand { text-align: left; }
+  }
+  @media (max-width: 520px) {
+    .footer-aside { grid-template-columns: 1fr; gap: 2rem; }
+  }
+</style>

@@ -1,0 +1,98 @@
+---
+import '@fontsource-variable/schibsted-grotesk';
+import '@fontsource-variable/inter';
+import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Motion from '../components/Motion.astro';
+import Cursor from '../components/Cursor.astro';
+import { site } from '../data/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Path-relative or absolute OG image. */
+  image?: string;
+  /** Structured data object rendered as JSON-LD. */
+  jsonLd?: Record<string, unknown>;
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = site.description,
+  image = '/og-default.png',
+  jsonLd,
+  noindex = false,
+} = Astro.props;
+
+const fullTitle = title ? `${title} · ${site.name}` : `${site.name} · ${site.tagline}`;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://claimly.com').href;
+const ogImage = new URL(image, Astro.site ?? 'https://claimly.com').href;
+---
+
+<!doctype html>
+<html lang={site.locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <!-- Open Graph / Twitter -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#0b0a09" />
+
+    <!-- Seamless client-side page transitions (Barba-equivalent) -->
+    <ClientRouter />
+
+
+    <!-- enable motion before first paint so reveals start hidden (no flash) -->
+    <script is:inline>
+      try {
+        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          var de = document.documentElement;
+          de.classList.add('js-motion');
+          // failsafe: if the motion bundle never boots, un-hide content so the page can't stay blank
+          setTimeout(function () { if (!window.__motionReady) de.classList.remove('js-motion'); }, 2500);
+        }
+      } catch (e) {}
+    </script>
+
+    {jsonLd && (
+      <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    )}
+
+    {site.adsense.enabled && site.adsense.client && (
+      <script
+        async
+        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${site.adsense.client}`}
+        crossorigin="anonymous"
+      ></script>
+    )}
+  </head>
+  <body id="top">
+    <a href="#main" class="sr-only skip-link">Skip to content</a>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    <Cursor />
+    <Motion />
+  </body>
+</html>

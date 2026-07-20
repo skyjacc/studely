@@ -1,0 +1,43 @@
+---
+// Custom cursor — MONOLOG-accurate: the native cursor stays everywhere. A text
+// "bubble" appears ONLY over elements that opt in via [data-cursor-hover] /
+// [data-cursor-text] (e.g. media previews). No global cursor hiding.
+---
+<div id="cursor" class="cursor" aria-hidden="true" transition:persist>
+  <span class="cursor-label"></span>
+</div>
+
+<script>
+  const ok = matchMedia('(hover: hover) and (pointer: fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cursor = document.getElementById('cursor');
+  const label = cursor?.querySelector('.cursor-label') as HTMLElement | null;
+
+  if (ok && cursor && label && !(cursor as any)._init) {
+    (cursor as any)._init = true;
+    let x = innerWidth / 2, y = innerHeight / 2, tx = x, ty = y;
+    addEventListener('pointermove', (e) => { tx = e.clientX; ty = e.clientY; }, { passive: true });
+    const raf = () => {
+      x += (tx - x) * 0.22; y += (ty - y) * 0.22;
+      cursor.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+      requestAnimationFrame(raf);
+    };
+    requestAnimationFrame(raf);
+
+    const sel = '[data-cursor-hover], [data-cursor-text]';
+    document.addEventListener('pointerover', (e) => {
+      const t = (e.target as Element).closest?.(sel);
+      if (!t) return;
+      const txt = t.getAttribute('data-cursor-text');
+      label.textContent = txt || '';
+      cursor.classList.add('is-active');
+      cursor.classList.toggle('has-label', !!txt);
+      (t as HTMLElement).style.cursor = 'none'; // hide native only over this element
+    });
+    document.addEventListener('pointerout', (e) => {
+      const t = (e.target as Element).closest?.(sel);
+      if (!t) return;
+      const to = (e.relatedTarget as Element)?.closest?.(sel);
+      if (!to) { cursor.classList.remove('is-active', 'has-label'); label.textContent = ''; }
+    });
+  }
+</script>

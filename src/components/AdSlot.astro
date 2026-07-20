@@ -1,0 +1,47 @@
+---
+import { site } from '../data/site';
+
+interface Props {
+  /** AdSense ad slot id (from your AdSense dashboard). */
+  slot?: string;
+  /** Layout hint for placeholder sizing. */
+  format?: 'leaderboard' | 'rectangle' | 'in-article';
+  label?: string;
+}
+const { slot = '', format = 'rectangle', label = 'Advertisement' } = Astro.props;
+const live = site.adsense.enabled && site.adsense.client && slot;
+---
+
+{live ? (
+  <ins
+    class={`adsbygoogle ad-${format}`}
+    style="display:block"
+    data-ad-client={site.adsense.client}
+    data-ad-slot={slot}
+    data-ad-format="auto"
+    data-full-width-responsive="true"
+  ></ins>
+  <script is:inline>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+) : (
+  <div class={`ad-ph ad-${format}`} role="complementary" aria-label={label}>
+    <span>{label}</span>
+    <small>Ad slot. Connect AdSense in <code>src/data/site.ts</code></small>
+  </div>
+)}
+
+<style>
+  .ad-ph {
+    display: grid; place-content: center; gap: 0.25rem; text-align: center;
+    background:
+      repeating-linear-gradient(45deg, var(--surface-2), var(--surface-2) 10px, transparent 10px, transparent 20px),
+      var(--surface);
+    border: 1px dashed var(--border); border-radius: var(--radius);
+    color: var(--text-muted);
+  }
+  .ad-ph span { font-weight: 600; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; }
+  .ad-ph small { font-size: 0.72rem; }
+  .ad-ph code { font-family: var(--font-mono); font-size: 0.9em; }
+  .ad-leaderboard { min-height: 100px; }
+  .ad-rectangle { min-height: 250px; }
+  .ad-in-article { min-height: 160px; }
+</style>

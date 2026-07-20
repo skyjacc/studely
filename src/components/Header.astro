@@ -1,0 +1,237 @@
+---
+import { site } from '../data/site';
+import Wordmark from './Wordmark.astro';
+
+const links = [
+  { href: '/categories', label: 'Categories' },
+  { href: '/methodology', label: 'How we verify' },
+];
+---
+
+<header class="site-header">
+  <div class="wrap bar">
+    <!-- left cluster: logotype + links (MONOLOG groups these) -->
+    <div class="nav-left">
+      <span class="nav-mask">
+        <a href="/" class="brand" data-nav-item aria-label={`${site.name} home`}>
+          <Wordmark class="brand-logo" />
+        </a>
+      </span>
+
+      <nav class="nav" aria-label="Primary">
+        {links.map((l) => (
+          <span class="nav-mask">
+            <a href={l.href} class="nav-roll" data-nav-item>{l.label}</a>
+          </span>
+        ))}
+      </nav>
+    </div>
+
+    <!-- right cluster: sound tile + filled CTA -->
+    <div class="actions">
+      <form class="nav-search" role="search" action="/offers" method="get">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <span class="search-field">
+          <input type="search" name="q" placeholder=" " aria-label="Search perks" autocomplete="off" />
+          <span class="search-shimmer" aria-hidden="true">Search perks…</span>
+        </span>
+      </form>
+      <span class="nav-mask">
+        <button class="sound-btn" data-nav-item type="button" aria-label="Toggle sound" aria-pressed="false">
+          <span class="sound-tile">
+            <svg viewBox="0 0 26 26" fill="none" aria-hidden="true">
+              <path class="curve" style="--l:7.435" d="M17 10.002C17.6491 10.8674 18 11.9201 18 13.002C18 14.0838 17.6491 15.1365 17 16.002" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path class="curve" style="--l:15.137" d="M20.364 6.63794C21.1998 7.47367 21.8627 8.46583 22.315 9.55776C22.7673 10.6497 23.0001 11.82 23.0001 13.0019C23.0001 14.1838 22.7673 15.3542 22.315 16.4461C21.8627 17.5381 21.1998 18.5302 20.364 19.3659" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path class="cross" d="M23 10.002L17 16.002" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path class="cross" d="M17 10.002L23 16.002" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 5.70398C11.9998 5.56469 11.9583 5.42859 11.8809 5.31284C11.8034 5.19709 11.6934 5.10688 11.5647 5.05361C11.436 5.00033 11.2944 4.98637 11.1577 5.01349C11.0211 5.04061 10.8956 5.10759 10.797 5.20598L7.413 8.58898C7.2824 8.72036 7.12703 8.82451 6.95589 8.89541C6.78475 8.9663 6.60124 9.00252 6.416 9.00198H4C3.73478 9.00198 3.48043 9.10734 3.29289 9.29487C3.10536 9.48241 3 9.73676 3 10.002V16.002C3 16.2672 3.10536 16.5216 3.29289 16.7091C3.48043 16.8966 3.73478 17.002 4 17.002H6.416C6.60124 17.0014 6.78475 17.0377 6.95589 17.1086C7.12703 17.1795 7.2824 17.2836 7.413 17.415L10.796 20.799C10.8946 20.8978 11.0203 20.9651 11.1572 20.9924C11.2941 21.0196 11.436 21.0057 11.5649 20.9522C11.6939 20.8988 11.804 20.8083 11.8815 20.6922C11.959 20.5761 12.0002 20.4396 12 20.3V5.70398Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </button>
+      </span>
+
+      <span class="nav-mask">
+        <a href="/offers" class="cta-btn" data-nav-item>
+          <span class="cta-text-clip"><span class="cta-text">Browse deals</span></span>
+          <span class="cta-arrow" aria-hidden="true">
+            <span class="cta-arrow-bg"></span>
+            <svg class="cta-arrow-svg" viewBox="0 0 12 12" fill="currentColor"><path d="M8.90954 9.09046L9 3L2.90954 3.09046L2.90213 4.32367L6.86437 4.25391L2.55914 8.55914L3.44086 9.44086L7.74609 5.13563L7.68708 9.10862L8.90954 9.09046Z"/></svg>
+            <svg class="cta-arrow-svg is-dup" viewBox="0 0 12 12" fill="currentColor"><path d="M8.90954 9.09046L9 3L2.90954 3.09046L2.90213 4.32367L6.86437 4.25391L2.55914 8.55914L3.44086 9.44086L7.74609 5.13563L7.68708 9.10862L8.90954 9.09046Z"/></svg>
+          </span>
+        </a>
+      </span>
+    </div>
+  </div>
+</header>
+
+<script>
+  // MONOLOG-style UI sound — synth tick on hover, toggled by the sound button.
+  let enabled = (window as any).__sfx ?? false;
+  let ctx: AudioContext | null = null;
+  function tick(freq = 880) {
+    if (!enabled) return;
+    try {
+      ctx = ctx || new (window.AudioContext || (window as any).webkitAudioContext)();
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.05, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.07);
+      o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 0.07);
+    } catch (e) {}
+  }
+  function bind() {
+    const btn = document.querySelector('.sound-btn');
+    if (btn && !(btn as any)._b) {
+      (btn as any)._b = true;
+      btn.classList.toggle('is-on', enabled);
+      btn.setAttribute('aria-pressed', String(enabled));
+      btn.addEventListener('click', () => {
+        enabled = !enabled; (window as any).__sfx = enabled;
+        btn.classList.toggle('is-on', enabled);
+        btn.setAttribute('aria-pressed', String(enabled));
+        if (enabled) tick(660);
+      });
+    }
+    document.querySelectorAll('.nav-roll, .cta-btn').forEach((el) => {
+      if ((el as any)._h) return; (el as any)._h = true;
+      el.addEventListener('pointerenter', () => tick(880));
+    });
+  }
+  document.addEventListener('astro:page-load', bind);
+  bind();
+</script>
+
+<style>
+  /* MONOLOG: fixed + fully transparent, overlaid on everything (site is uniformly dark). */
+  .site-header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    background: transparent; border-bottom: 0;
+  }
+  /* MONOLOG: space-between — logo+links left, actions right */
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; min-height: 64px; }
+  .nav-left { display: flex; align-items: center; gap: clamp(1.4rem, 0.6rem + 3vw, 3rem); }
+  .actions { display: flex; align-items: center; gap: 0.6rem; }
+
+  /* header search — deep-links to /offers?q= (works with no JS) */
+  .nav-search {
+    display: flex; align-items: center; gap: 0.4rem; padding: 0.34rem 0.7rem;
+    border: 1px solid var(--border-control); border-radius: var(--radius-pill);
+    color: var(--text-muted); transition: border-color .2s var(--ease-out), color .2s var(--ease-out);
+  }
+  .nav-search:focus-within { border-color: var(--ink); color: var(--ink); }
+  .nav-search svg { flex: none; }
+  .nav-search input { width: 8.5rem; background: none; border: 0; outline: none; color: var(--ink); font: inherit; font-size: var(--step--1); }
+  .nav-search input::placeholder { color: transparent; }
+  @media (max-width: 960px) { .nav-search { display: none; } }
+
+  /* shimmering "Search perks…" — a light band sweeps across the text (footer-highlight vibe) */
+  .search-field { position: relative; display: inline-flex; align-items: center; }
+  .search-shimmer {
+    position: absolute; left: 0; top: 50%; transform: translateY(-50%); pointer-events: none; white-space: nowrap;
+    font-size: var(--step--1); font-weight: 500;
+    background: linear-gradient(105deg, var(--text-muted) 22%, var(--ink) 50%, var(--text-muted) 78%);
+    background-size: 220% 100%;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+    /* delayed so the first sweep begins after the entrance settles (~search box lands), not over it */
+    animation: search-shimmer 3.8s ease-out 1.3s infinite;
+    transition: opacity .2s var(--ease-out);
+  }
+  .nav-search input:focus + .search-shimmer,
+  .nav-search input:not(:placeholder-shown) + .search-shimmer { opacity: 0; }
+  /* one clean left→right pass, then hold (no back-and-forth oscillation) */
+  @keyframes search-shimmer {
+    0% { background-position: 140% 0; }
+    30% { background-position: -60% 0; }
+    100% { background-position: -60% 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .search-shimmer { animation: none; -webkit-text-fill-color: var(--text-muted); color: var(--text-muted); }
+  }
+
+  /* logotype: geometric mark + tight wordmark */
+  .brand { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--ink); }
+  /* :global — the SVG carries Wordmark's astro cid, so a scoped `.brand-logo` never matches it */
+  .brand :global(.brand-logo) { height: 25px; }
+  /* the brand's rise-mask hugs the logo exactly (no line-box slack) so translateY(125%)
+     fully hides it at the start of nav-rise — same emerge-from-mask as the nav links */
+  .nav-left > .nav-mask { line-height: 0; padding-block: 0; }
+
+  /* nav — prominent ink links (MONOLOG h5 weight, not muted grey) */
+  .nav { display: flex; align-items: center; gap: 0.15rem; }
+  .nav-mask { display: inline-block; overflow: hidden; vertical-align: middle; padding-block: 0.14em; }
+
+  /* text-shadow marquee roll (exact MONOLOG g_btn_text mechanic) */
+  /* MONOLOG nav hover: a highlight wipes IN from the left, and OUT to the right
+     (origin flips), via a scaleX pseudo-element. No fade, no roll. */
+  .nav-roll {
+    position: relative; display: block; padding: 0.42rem 0.7rem; border-radius: 0.3rem;
+    color: var(--ink); font-size: 1.02rem; font-weight: 500; letter-spacing: -0.01em;
+  }
+  .nav-roll::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
+    background: #393632;
+    transform: scaleX(0); transform-origin: right center;
+    transition: transform 0.55s cubic-bezier(0.2, 1, 0.36, 1);
+  }
+  .nav-roll:hover::before { transform: scaleX(1); transform-origin: left center; }
+
+  /* sound — filled square tile (2em, card fill, radius-small) */
+  .sound-btn { display: block; width: 2.1em; height: 2.1em; padding: 0; background: none; border: 0; cursor: pointer; }
+  .sound-tile {
+    display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden;
+    border-radius: 0.32rem; background: rgba(232, 232, 227, 0.08); color: var(--ink);
+    transition: background .25s var(--ease-out);
+  }
+  .sound-btn:hover .sound-tile { background: rgba(232, 232, 227, 0.15); }
+  .sound-tile svg { width: 20px; height: 20px; }
+  /* MONOLOG stroke-draw: waves draw in (dash-offset) with a blur; cross draws out */
+  .sound-tile .curve {
+    stroke-dasharray: var(--l); stroke-dashoffset: var(--l); opacity: 0; filter: blur(1px);
+    transition: stroke-dashoffset .55s var(--ease-out), opacity .4s var(--ease-out), filter .4s var(--ease-out);
+  }
+  .sound-tile .cross {
+    stroke-dasharray: 9.5; stroke-dashoffset: 0; opacity: 1; filter: blur(0);
+    transition: stroke-dashoffset .5s var(--ease-out), opacity .4s var(--ease-out), filter .4s var(--ease-out);
+  }
+  .sound-btn.is-on .sound-tile .curve { stroke-dashoffset: 0; opacity: 1; filter: blur(0); }
+  .sound-btn.is-on .sound-tile .cross { stroke-dashoffset: 9.5; opacity: 0; filter: blur(1px); }
+
+  /* CTA — rounded RECT (not pill), marquee text + arrow aside-box */
+  .cta-btn {
+    display: inline-flex; align-items: stretch; gap: 0.5em;
+    background: var(--ink); color: var(--bg);
+    /* concentric corners: inner arrow-box radius = --btn-r − --btn-pad */
+    --btn-r: 0.55rem; --btn-pad: 0.25rem;
+    border-radius: var(--btn-r); padding: var(--btn-pad) var(--btn-pad) var(--btn-pad) 0.95em;
+    font-weight: 500; font-size: 1.0rem; letter-spacing: -0.01em;
+    transition: opacity .2s var(--ease-out);
+  }
+  /* natural height (NOT stretched) + line-height == marquee offset, else shadow copy leaks */
+  .cta-text-clip { display: grid; align-self: center; overflow: clip; line-height: 1.2; }
+  .cta-text {
+    grid-area: 1 / 1; line-height: 1.2; text-shadow: 0 1.2em 0 currentColor;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.35, 1);
+  }
+  .cta-btn:hover .cta-text { transform: translateY(-1.2em); }
+
+  .cta-arrow {
+    position: relative; display: grid; place-items: center; flex: none;
+    width: 1.7em; align-self: stretch; border-radius: calc(var(--btn-r) - var(--btn-pad)); overflow: hidden;
+  }
+  .cta-arrow-bg {
+    position: absolute; inset: 0; background: rgba(8, 8, 7, 0.22); border-radius: inherit;
+    transition: transform 0.65s cubic-bezier(0.16, 1, 0.35, 1);
+  }
+  .cta-btn:hover .cta-arrow-bg { transform: scale(0.82); }
+  .cta-arrow-svg { grid-area: 1 / 1; position: relative; z-index: 1; width: 0.85em; height: 0.85em;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.35, 1); }
+  .cta-arrow-svg.is-dup { transform: translate(-125%, 125%); }
+  .cta-btn:hover .cta-arrow-svg:not(.is-dup) { transform: translate(125%, -125%); }
+  .cta-btn:hover .cta-arrow-svg.is-dup { transform: translate(0, 0); }
+
+  @media (max-width: 780px) {
+    .nav { display: none; }
+    .cta-text-clip { display: none; }
+    .cta-btn { padding: 0.25em; }
+  }
+</style>

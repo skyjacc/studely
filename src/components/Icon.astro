@@ -1,0 +1,18 @@
+---
+import { categoryIcons } from '../lib/category-icons';
+
+interface Props { category: string; class?: string; }
+const { category, class: cls = '' } = Astro.props;
+const inner = categoryIcons[category] ?? '';
+---
+<svg
+  class={`cat-ico ${cls}`}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+  set:html={inner}
+/>

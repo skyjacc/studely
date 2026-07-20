@@ -1,0 +1,125 @@
+---
+// Interactive category explorer: a list of departments on the left, a large live
+// preview panel on the right that swaps to the hovered/focused item. Agency-style.
+import { categories } from '../data/categories';
+import Icon from './Icon.astro';
+
+interface Props { counts: Map<string, number>; }
+const { counts } = Astro.props;
+const items = categories.map((c, i) => ({ ...c, i, idx: String(i + 1).padStart(2, '0'), n: counts.get(c.slug) ?? 0 }));
+---
+
+<div class="cat-explorer" data-reveal>
+  <ul class="cat-list">
+    {items.map((c) => (
+      <li>
+        <a class={`cat-link ${c.i === 0 ? 'is-active' : ''}`} href={`/category/${c.slug}`} data-cat={c.i}>
+          <span class="cat-num">{c.idx}</span>
+          <span class="cat-main">
+            <span class="cat-title">{c.name}</span>
+            <span class="cat-desc-m">{c.description}</span>
+          </span>
+          <span class="cat-n">{c.n}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+
+  <aside class="cat-preview" aria-hidden="true">
+    {items.map((c) => (
+      <div class={`cat-card ${c.i === 0 ? 'is-active' : ''}`} data-card={c.i} style={`--cat:${c.accent}`}>
+        <div class="pv-top">
+          <span class="pv-ico"><Icon category={c.slug} /></span>
+          <span class="pv-num">{c.idx}</span>
+        </div>
+        <div class="pv-btm">
+          <span class="pv-name">{c.name}</span>
+          <span class="pv-desc">{c.description}</span>
+          <span class="pv-meta">{c.n} {c.n === 1 ? 'offer' : 'offers'} <span class="pv-go">Browse ↗</span></span>
+        </div>
+      </div>
+    ))}
+  </aside>
+</div>
+
+<script>
+  function setupCatExplorer() {
+    const root = document.querySelector('.cat-explorer');
+    if (!root || (root as any).dataset.bound) return;
+    (root as any).dataset.bound = '1';
+    const links = root.querySelectorAll<HTMLElement>('.cat-link');
+    const cards = root.querySelectorAll<HTMLElement>('.cat-card');
+    const activate = (i: number) => {
+      cards.forEach((c) => c.classList.toggle('is-active', Number(c.dataset.card) === i));
+      links.forEach((l) => l.classList.toggle('is-active', Number(l.dataset.cat) === i));
+    };
+    links.forEach((l) => {
+      const i = Number(l.dataset.cat);
+      l.addEventListener('mouseenter', () => activate(i));
+      l.addEventListener('focus', () => activate(i));
+    });
+  }
+  document.addEventListener('astro:page-load', setupCatExplorer);
+</script>
+
+<style>
+  .cat-explorer {
+    display: grid; grid-template-columns: 1.1fr 1fr;
+    gap: clamp(2rem, 1rem + 4vw, 5rem); align-items: start;
+  }
+
+  /* left list */
+  .cat-list { list-style: none; padding: 0; margin: 0; }
+  .cat-list li { border-top: 1px solid var(--border); }
+  .cat-list li:last-child { border-bottom: 1px solid var(--border); }
+  .cat-link {
+    display: grid; grid-template-columns: 2.4rem 1fr auto; align-items: center; gap: 1rem;
+    padding: clamp(0.85rem, 0.6rem + 0.7vw, 1.25rem) 0.3rem;
+    color: var(--ink); transition: opacity .3s var(--ease-out), padding-left .45s var(--ease-out);
+  }
+  .cat-num { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.05em; }
+  .cat-main { min-width: 0; }
+  .cat-title { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.4rem, 1rem + 1.7vw, 2.3rem); letter-spacing: -0.035em; line-height: 1.02; }
+  .cat-desc-m { display: none; }
+  .cat-n { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); }
+  /* hovering the list dims the rest, the active pops + nudges right */
+  .cat-list:hover .cat-link { opacity: 0.38; }
+  .cat-list:hover .cat-link:hover { opacity: 1; }
+  .cat-link.is-active { opacity: 1; padding-left: 0.9rem; }
+  .cat-list:hover .cat-link.is-active:not(:hover) { opacity: 0.38; padding-left: 0.3rem; }
+
+  /* right live preview */
+  .cat-preview {
+    position: sticky; top: 100px; height: clamp(340px, 32vw, 480px);
+    border: 1px solid var(--border); border-radius: 18px; overflow: hidden; background: var(--surface); isolation: isolate;
+  }
+  .cat-card {
+    position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between;
+    padding: clamp(1.5rem, 1rem + 2vw, 2.6rem);
+    opacity: 0; transform: scale(1.03); transition: opacity .5s var(--ease-out), transform .6s var(--ease-out);
+    pointer-events: none;
+  }
+  .cat-card.is-active { opacity: 1; transform: scale(1); }
+  .cat-card::after {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: radial-gradient(120% 90% at 85% 8%, color-mix(in srgb, var(--cat) 12%, transparent), transparent 60%);
+  }
+  .pv-top { display: flex; align-items: flex-start; justify-content: space-between; }
+  .pv-ico { display: inline-grid; place-items: center; color: var(--ink); }
+  .pv-ico :global(.cat-ico) { width: 56px; height: 56px; stroke-width: 1.4; }
+  .pv-num { font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted); letter-spacing: 0.08em; }
+  .pv-btm { display: flex; flex-direction: column; gap: 0.7rem; }
+  .pv-name { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.8rem, 1.2rem + 2.4vw, 3rem); letter-spacing: -0.04em; line-height: 1; color: var(--ink); }
+  .pv-desc { color: var(--text-muted); font-size: var(--step-0); line-height: 1.45; max-width: 34ch; }
+  .pv-meta { display: flex; align-items: center; gap: 0.8rem; margin-top: 0.4rem; font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-muted); }
+  .pv-go { color: var(--ink); }
+
+  @media (max-width: 860px) {
+    .cat-explorer { grid-template-columns: 1fr; gap: 0; }
+    .cat-preview { display: none; }
+    .cat-link { grid-template-columns: 2rem 1fr auto; align-items: start; padding-block: 1rem; }
+    .cat-link.is-active { padding-left: 0.3rem; }
+    .cat-title { font-size: clamp(1.2rem, 1rem + 2vw, 1.6rem); }
+    .cat-desc-m { display: block; margin-top: 0.3rem; color: var(--text-muted); font-size: var(--step--1); line-height: 1.4; }
+  }
+</style>
