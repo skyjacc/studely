@@ -28,8 +28,10 @@ const {
 } = Astro.props;
 
 const fullTitle = title ? `${title} · ${site.name}` : `${site.name} · ${site.tagline}`;
-const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://claimly.com').href;
-const ogImage = new URL(image, Astro.site ?? 'https://claimly.com').href;
+// Astro.site comes from astro.config, which resolves to the Vercel host in
+// production. The fallback only matters in dev — never a domain we do not own.
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;
+const ogImage = new URL(image, Astro.site ?? Astro.url.origin).href;
 ---
 
 <!doctype html>

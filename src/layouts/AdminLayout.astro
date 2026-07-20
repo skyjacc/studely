@@ -1,0 +1,130 @@
+---
+import '@fontsource-variable/schibsted-grotesk';
+import '@fontsource-variable/inter';
+import '../styles/global.css';
+import Wordmark from '../components/Wordmark.astro';
+
+// Deliberately NOT the public Layout: no ClientRouter, no GSAP/Lenis, no WebGL,
+// no custom cursor. An operator tool should be instant and dense, and none of
+// the marketing motion earns its bytes here.
+
+interface Props {
+  title: string;
+  /** Shown under the page title — one line of context, no marketing copy. */
+  subtitle?: string;
+  /** Populated by the middleware; undefined only on the signed-out login screen. */
+  handle?: string;
+  role?: string;
+  /** Login screen hides the sidebar. */
+  chrome?: boolean;
+}
+
+const { title, subtitle, handle, role, chrome = true } = Astro.props;
+const path = Astro.url.pathname;
+
+const nav = [
+  { href: '/admin', label: 'Overview', exact: true },
+  { href: '/admin/offers', label: 'Offers' },
+  { href: '/admin/submissions', label: 'Submissions' },
+  { href: '/admin/comments', label: 'Comments' },
+];
+const active = (item: (typeof nav)[number]) =>
+  item.exact ? path === item.href : path.startsWith(item.href);
+---
+
+<!doctype html>
+<html lang="en" data-admin>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · Claimly admin</title>
+    <!-- an operator tool must never be indexed -->
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#0b0a09" />
+  </head>
+  <body class="admin">
+    {chrome ? (
+      <div class="shell">
+        <aside class="side">
+          <a href="/" class="brand" aria-label="Claimly home"><Wordmark class="side-logo" /></a>
+          <span class="side-tag">admin</span>
+
+          <nav class="side-nav" aria-label="Admin">
+            {nav.map((item) => (
+              <a href={item.href} class:list={['side-link', { 'is-active': active(item) }]}>{item.label}</a>
+            ))}
+          </nav>
+
+          <div class="side-foot">
+            {handle && <p class="who">{handle}<span class="role">{role}</span></p>}
+            <a class="side-link" href="/" target="_blank" rel="noopener">View site ↗</a>
+            <form method="POST" action="/admin/auth/signout"><button class="signout" type="submit">Sign out</button></form>
+          </div>
+        </aside>
+
+        <main class="main">
+          <header class="head">
+            <h1>{title}</h1>
+            {subtitle && <p class="sub">{subtitle}</p>}
+          </header>
+          <slot />
+        </main>
+      </div>
+    ) : (
+      <main class="bare"><slot /></main>
+    )}
+  </body>
+</html>
+
+<style>
+  .admin { background: var(--bg); color: var(--text); min-height: 100vh; }
+  .shell { display: grid; grid-template-columns: 216px minmax(0, 1fr); min-height: 100vh; }
+
+  .side {
+    position: sticky; top: 0; align-self: start; height: 100vh;
+    display: flex; flex-direction: column; gap: 0.35rem;
+    padding: 1.1rem 0.9rem; border-right: 1px solid var(--border); background: var(--bg-alt);
+  }
+  .brand { display: inline-flex; }
+  .side :global(.side-logo) { height: 20px; color: var(--ink); }
+  .side-tag {
+    font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.1rem;
+  }
+  .side-nav { display: grid; gap: 0.15rem; }
+  .side-link {
+    display: block; padding: 0.42rem 0.6rem; border-radius: 7px;
+    font-size: var(--step--1); font-weight: 500; color: var(--text-muted);
+    transition: background 0.18s var(--ease-out), color 0.18s var(--ease-out);
+  }
+  .side-link:hover { background: rgba(232, 232, 227, 0.06); color: var(--ink); }
+  .side-link.is-active { background: rgba(232, 232, 227, 0.11); color: var(--ink); }
+
+  .side-foot { margin-top: auto; display: grid; gap: 0.3rem; }
+  .who {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem;
+    padding: 0.4rem 0.6rem; font-size: var(--step--1); color: var(--ink);
+  }
+  .role { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+  .signout {
+    width: 100%; text-align: left; font: inherit; font-size: var(--step--1); font-weight: 500;
+    padding: 0.42rem 0.6rem; border: 0; border-radius: 7px; cursor: pointer;
+    background: none; color: var(--text-muted);
+  }
+  .signout:hover { background: rgba(232, 232, 227, 0.06); color: var(--ink); }
+
+  .main { padding: 1.5rem clamp(1rem, 0.5rem + 1.5vw, 2rem) 4rem; min-width: 0; }
+  .head { padding-bottom: 1.1rem; margin-bottom: 1.4rem; border-bottom: 1px solid var(--border); }
+  .head h1 { font-size: clamp(1.35rem, 1.1rem + 0.9vw, 1.8rem); letter-spacing: -0.02em; }
+  .sub { margin-top: 0.3rem; color: var(--text-muted); font-size: var(--step--1); }
+
+  .bare { display: grid; place-items: center; min-height: 100vh; padding: 1.5rem; }
+
+  @media (max-width: 760px) {
+    .shell { grid-template-columns: 1fr; }
+    .side { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border); }
+    .side-nav { grid-auto-flow: column; overflow-x: auto; }
+    .side-foot { margin-top: 0.8rem; }
+  }
+</style>

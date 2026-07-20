@@ -1,0 +1,110 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { createSupabaseServer } from '../../lib/supabase';
+
+const { profile } = Astro.locals;
+const supabase = createSupabaseServer(Astro.request, Astro.cookies);
+
+const countOf = async (
+  table: string,
+  build: (q: any) => any = (q) => q,
+): Promise<number | null> => {
+  const { count, error } = await build(supabase.from(table).select('*', { count: 'exact', head: true }));
+  return error ? null : (count ?? 0);
+};
+
+const staleCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+const [pendingSubs, pendingComments, drafts, published, expired, stale] = await Promise.all([
+  countOf('submissions', (q) => q.eq('status', 'pending')),
+  countOf('comments', (q) => q.eq('status', 'pending')),
+  countOf('offers', (q) => q.eq('visibility', 'draft')),
+  countOf('offers', (q) => q.eq('visibility', 'published')),
+  countOf('offers', (q) => q.eq('status', 'expired')),
+  countOf('offers', (q) => q.lt('last_checked', staleCutoff)),
+]);
+
+// null means the query failed — almost always "tables not created yet".
+const schemaMissing = pendingSubs === null && published === null;
+
+// Queues first: these are things a human must act on. Library stats come after.
+const queues = [
+  { label: 'Submissions waiting', n: pendingSubs, href: '/admin/submissions' },
+  { label: 'Comments to moderate', n: pendingComments, href: '/admin/comments' },
+  { label: 'Drafts unpublished', n: drafts, href: '/admin/offers?visibility=draft' },
+  { label: 'Not checked in 7 days', n: stale, href: '/admin/offers?stale=1' },
+];
+const library = [
+  { label: 'Published offers', n: published },
+  { label: 'Expired', n: expired },
+];
+---
+
+<AdminLayout
+  title={`Overview`}
+  subtitle={`Signed in as ${profile.handle}`}
+  handle={profile.handle}
+  role={profile.role}
+>
+  {schemaMissing && (
+    <p class="setup">
+      Connected to Supabase, but the tables are missing. Run
+      <code>supabase/migrations/0001_init.sql</code> in the SQL editor.
+    </p>
+  )}
+
+  <h2 class="hd">Needs attention</h2>
+  <div class="tiles">
+    {queues.map((q) => (
+      <a class:list={['tile', { 'is-hot': (q.n ?? 0) > 0 }]} href={q.href}>
+        <span class="n">{q.n ?? '—'}</span>
+        <span class="l">{q.label}</span>
+      </a>
+    ))}
+  </div>
+
+  <h2 class="hd">Library</h2>
+  <div class="tiles">
+    {library.map((s) => (
+      <div class="tile is-quiet">
+        <span class="n">{s.n ?? '—'}</span>
+        <span class="l">{s.label}</span>
+      </div>
+    ))}
+  </div>
+</AdminLayout>
+
+<style>
+  .hd {
+    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--text-muted); font-weight: 500;
+    margin: 1.6rem 0 0.75rem;
+  }
+  .hd:first-of-type { margin-top: 0; }
+  .tiles { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); }
+  .tile {
+    display: flex; flex-direction: column; gap: 0.3rem;
+    padding: 1rem 1.1rem; border-radius: 12px;
+    border: 1px solid var(--border); background: var(--surface);
+    transition: border-color 0.2s var(--ease-out), background 0.2s var(--ease-out);
+  }
+  a.tile:hover { border-color: var(--ink); background: var(--surface-2); }
+  /* a queue with work in it should look different from an empty one at a glance */
+  .tile.is-hot { border-color: var(--border-strong); }
+  .tile.is-hot .n { color: var(--ink); }
+  .tile .n {
+    font-family: var(--font-display); font-weight: 500; font-size: 1.9rem;
+    line-height: 1; letter-spacing: -0.03em; color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .tile.is-quiet .n { color: var(--ink); }
+  .tile .l { font-size: var(--step--1); color: var(--text-muted); }
+  .setup {
+    padding: 0.8rem 1rem; margin-bottom: 1.4rem; border-radius: 10px;
+    border: 1px solid var(--border-strong); background: var(--surface-2);
+    font-size: var(--step--1); color: var(--ink);
+  }
+  code { font-family: var(--font-mono); font-size: 0.9em; }
+</style>

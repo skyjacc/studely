@@ -1,0 +1,121 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { createSupabaseServer, supabaseConfigured } from '../../lib/supabase';
+
+const url = Astro.url;
+let error = '';
+let sent = false;
+
+// Signed in, but the profile has no staff role. Said plainly — sign-up is open
+// (comments need accounts), the admin is not.
+const denied = url.searchParams.get('denied') === '1';
+const nextPath = url.searchParams.get('next') ?? '/admin';
+
+if (Astro.request.method === 'POST' && supabaseConfigured) {
+  const form = await Astro.request.formData();
+  const email = String(form.get('email') ?? '').trim();
+
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    error = 'Enter a valid email address.';
+  } else {
+    const supabase = createSupabaseServer(Astro.request, Astro.cookies);
+    const redirectTo = new URL('/admin/auth/callback', url.origin);
+    redirectTo.searchParams.set('next', nextPath);
+
+    const { error: authError } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        // auth-js defaults this to true, which would make the ADMIN login form an
+        // unauthenticated account-creation endpoint. Staff accounts are invited,
+        // never self-served. Public sign-up (for comments) gets its own route.
+        shouldCreateUser: false,
+        emailRedirectTo: redirectTo.href,
+      },
+    });
+
+    // Deliberately not distinguishing "unknown address" — that would let anyone
+    // probe which emails have accounts.
+    if (authError) error = 'Could not send the link. Try again in a moment.';
+    else sent = true;
+  }
+}
+---
+
+<AdminLayout title="Sign in" chrome={false}>
+  <div class="card">
+    <p class="eyebrow">Claimly admin</p>
+
+    {!supabaseConfigured ? (
+      <>
+        <h2>Not configured yet</h2>
+        <p class="note">
+          Copy <code>.env.example</code> to <code>.env</code> and fill in your Supabase project URL
+          and keys, then restart the dev server.
+        </p>
+      </>
+    ) : sent ? (
+      <>
+        <h2>Check your email</h2>
+        <p class="note">
+          A one-time sign-in link is on its way. It expires shortly, and opening it brings you
+          straight back here.
+        </p>
+      </>
+    ) : (
+      <>
+        <h2>Sign in</h2>
+        <p class="note">We email you a one-time link. There is no password to forget or leak.</p>
+
+        {denied && (
+          <p class="alert">That account exists but has no admin access.</p>
+        )}
+        {error && <p class="alert">{error}</p>}
+
+        <form method="POST" class="form">
+          <label class="lbl" for="email">Email</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            autocomplete="email"
+            placeholder="you@example.com"
+            class="input"
+          />
+          <button class="btn btn-primary" type="submit">Email me a link</button>
+        </form>
+      </>
+    )}
+
+    <a class="back" href="/">← Back to site</a>
+  </div>
+</AdminLayout>
+
+<style>
+  .card {
+    width: min(100%, 380px);
+    border: 1px solid var(--border); border-radius: 16px; background: var(--surface);
+    padding: clamp(1.4rem, 1rem + 1.5vw, 2rem);
+  }
+  h2 { margin-top: 0.5rem; font-size: 1.4rem; letter-spacing: -0.02em; }
+  .note { margin-top: 0.6rem; color: var(--text-muted); font-size: var(--step--1); line-height: 1.55; }
+  .alert {
+    margin-top: 0.9rem; padding: 0.6rem 0.75rem; border-radius: 9px;
+    border: 1px solid var(--border-strong); background: var(--surface-2);
+    color: var(--ink); font-size: var(--step--1);
+  }
+  .form { display: grid; gap: 0.5rem; margin-top: 1.3rem; }
+  .lbl { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+  .input {
+    width: 100%; font: inherit; color: var(--ink);
+    padding: 0.6em 0.75em; border-radius: 10px;
+    border: 1px solid var(--border-control); background: var(--bg);
+  }
+  .input:focus { outline: 2px solid var(--ink); outline-offset: 1px; border-color: var(--ink); }
+  .form button { margin-top: 0.4rem; justify-content: center; }
+  code { font-family: var(--font-mono); font-size: 0.85em; color: var(--ink); }
+  .back { display: inline-block; margin-top: 1.4rem; font-size: var(--step--1); color: var(--text-muted); }
+  .back:hover { color: var(--ink); }
+</style>

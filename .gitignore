@@ -27,3 +27,6 @@ link-report.json
 Thumbs.db
 .vscode/
 .idea/
+
+# vercel adapter output
+.vercel/

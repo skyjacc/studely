@@ -311,3 +311,25 @@ end $$;
 
 create trigger comments_gate before insert on comments
 for each row execute function set_comment_status();
+
+-- ---------------------------------------------------------------- auth wiring
+
+-- Signing up creates a row in auth.users but nothing in profiles, so every RLS
+-- policy keyed on profiles would fail and even the owner could not reach /admin.
+-- This keeps the two in step. New accounts are plain users; staff is granted by
+-- updating the row, never by anything the client can send.
+create or replace function handle_new_user() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.profiles (id, handle)
+  values (
+    new.id,
+    coalesce(nullif(split_part(new.email, '@', 1), ''), 'user') || '-' || substr(new.id::text, 1, 6)
+  )
+  on conflict (id) do nothing;
+  return new;
+end $$;
+
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function handle_new_user();

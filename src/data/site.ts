@@ -5,8 +5,9 @@ export const site = {
   tagline: 'Claim what’s free for students.',
   description:
     'A verified directory of free tools, cloud credits, courses and student discounts. Auto-checked, so dead links get pulled fast.',
-  /** Derived from astro.config `site` so it can't drift; literal is only a dev fallback. */
-  url: import.meta.env.SITE ?? 'https://claimly.com',
+  /** Derived from astro.config `site` so it can't drift; literal is only a dev fallback.
+   *  No custom domain is owned yet — astro.config resolves this from Vercel's host. */
+  url: import.meta.env.SITE ?? 'http://localhost:4321',
   locale: 'en',
   author: 'Claimly',
   /**
