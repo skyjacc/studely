@@ -30,3 +30,5 @@ Thumbs.db
 
 # vercel adapter output
 .vercel/
+
+.vercel
