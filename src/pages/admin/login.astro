@@ -37,10 +37,25 @@ if (Astro.request.method === 'POST' && supabaseConfigured) {
       },
     });
 
-    // Deliberately not distinguishing "unknown address" — that would let anyone
-    // probe which emails have accounts.
-    if (authError) error = 'Could not send the link. Try again in a moment.';
-    else sent = true;
+    if (authError) {
+      // Always record the precise cause for the operator. Swallowing it entirely
+      // once sent a real debugging session chasing SMTP when the API had actually
+      // answered 422 otp_disabled.
+      console.error('[admin-login] signInWithOtp failed', {
+        code: (authError as { code?: string }).code,
+        status: authError.status,
+        message: authError.message,
+      });
+
+      // Shown to the visitor: still no yes/no on whether that specific address has
+      // an account, but it names the actual rule instead of implying an outage.
+      error =
+        (authError as { code?: string }).code === 'otp_disabled'
+          ? 'No link sent. Admin accounts are invited, not self-served.'
+          : 'Could not send the link. Try again in a moment.';
+    } else {
+      sent = true;
+    }
   }
 }
 ---
