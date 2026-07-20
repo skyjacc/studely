@@ -1,4 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <rect width="64" height="64" rx="14" fill="#080807"/>
-  <path d="M46 23 A14.5 14.5 0 1 0 46 41" fill="none" stroke="#e8e8e3" stroke-width="9.5" stroke-linecap="butt"/>
+  <!-- "s" drawn as two opposed arcs so it renders identically everywhere,
+       with no dependency on a font being available to the favicon renderer -->
+  <path d="M44 24 A9.5 9.5 0 0 0 25 24 A9.5 9.5 0 0 0 34.5 33 A9.5 9.5 0 0 1 44 42 A9.5 9.5 0 0 1 25 42"
+        fill="none" stroke="#e8e8e3" stroke-width="8" stroke-linecap="round"/>
 </svg>

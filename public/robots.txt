@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://claimly.com/sitemap-index.xml

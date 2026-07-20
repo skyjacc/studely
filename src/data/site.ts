@@ -1,15 +1,15 @@
 // Global site configuration. Change these values to rebrand the whole site.
 
 export const site = {
-  name: 'Claimly',
+  name: 'Studely',
   tagline: 'Claim what’s free for students.',
   description:
     'A verified directory of free tools, cloud credits, courses and student discounts. Auto-checked, so dead links get pulled fast.',
   /** Derived from astro.config `site` so it can't drift; literal is only a dev fallback.
-   *  No custom domain is owned yet — astro.config resolves this from Vercel's host. */
+   *  Production resolves to studely.app via PUBLIC_SITE_URL / the Vercel host. */
   url: import.meta.env.SITE ?? 'http://localhost:4321',
   locale: 'en',
-  author: 'Claimly',
+  author: 'Studely',
   /**
    * Google AdSense. When your account is approved, set `client` to your
    * publisher id (ca-pub-XXXXXXXXXXXXXXXX) and flip `enabled` to true.
@@ -25,7 +25,7 @@ export const site = {
   affiliateDisclosure:
     'Some links are partner or referral links. If you sign up through them we may earn a commission at no extra cost to you. This never affects whether an offer is listed.',
   /** Contact address shown in the footer. Swap for your real inbox. */
-  email: 'hello@claimly.com',
+  email: 'hello@studely.app',
   /** Short status line shown in the footer bottom bar. */
   availability: 'New perks added weekly',
   /** Fill any of these to show a social link in the footer; empty ones are hidden. */

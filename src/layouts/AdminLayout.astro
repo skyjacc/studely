@@ -3,6 +3,7 @@ import '@fontsource-variable/schibsted-grotesk';
 import '@fontsource-variable/inter';
 import '../styles/global.css';
 import Wordmark from '../components/Wordmark.astro';
+import { site } from '../data/site';
 
 // Deliberately NOT the public Layout: no ClientRouter, no GSAP/Lenis, no WebGL,
 // no custom cursor. An operator tool should be instant and dense, and none of
@@ -37,7 +38,7 @@ const active = (item: (typeof nav)[number]) =>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title} · Claimly admin</title>
+    <title>{title} · {site.name} admin</title>
     <!-- an operator tool must never be indexed -->
     <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -47,7 +48,7 @@ const active = (item: (typeof nav)[number]) =>
     {chrome ? (
       <div class="shell">
         <aside class="side">
-          <a href="/" class="brand" aria-label="Claimly home"><Wordmark class="side-logo" /></a>
+          <a href="/" class="brand" aria-label={`${site.name} home`}><Wordmark class="side-logo" /></a>
           <span class="side-tag">admin</span>
 
           <nav class="side-nav" aria-label="Admin">
@@ -87,7 +88,7 @@ const active = (item: (typeof nav)[number]) =>
     padding: 1.1rem 0.9rem; border-right: 1px solid var(--border); background: var(--bg-alt);
   }
   .brand { display: inline-flex; }
-  .side :global(.side-logo) { height: 20px; color: var(--ink); }
+  .side :global(.side-logo) { font-size: 24px; color: var(--ink); }
   .side-tag {
     font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.16em;
     text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.1rem;

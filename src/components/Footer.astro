@@ -143,7 +143,9 @@ const socials = [
     display: block; margin-bottom: 1rem;
     font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; color: var(--text-muted);
   }
-  .footer-logo { height: 22px; color: var(--ink); }
+  /* :global — the wordmark is rendered by Wordmark.astro and carries its cid, so a
+     plain scoped rule never matched it (the old height silently did nothing) */
+  .brand :global(.footer-logo) { font-size: 26px; color: var(--ink); }
   .brand { display: inline-flex; }
   .f-about { margin-top: 0.9rem; color: var(--text-muted); font-size: var(--step--1); line-height: 1.55; max-width: 34ch; }
   .f-email { display: inline-block; margin-top: 1rem; color: var(--ink); border-bottom: 1px solid var(--border-strong); padding-bottom: 1px; transition: border-color 0.3s var(--ease-out); }
