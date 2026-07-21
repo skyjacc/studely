@@ -1,20 +1,219 @@
 ---
 import Layout from '../layouts/Layout.astro';
+
+// A 404 on a link directory is an awkward moment: the whole promise of the site is
+// that its links work. So the page owns it rather than shrugging — it names the
+// broken URL back to the reader and points at the three real ways out.
+//
+// Visually it is the homepage hero, degraded: the same dot field on a coarser grid
+// with the dots dimmed, and the giant clipped wordmark replaced by a giant clipped
+// 404. Nothing new is invented, which is the point.
 ---
-<Layout title="Page not found" noindex={true}>
-  <section class="section">
-    <div class="wrap center">
-      <p class="eyebrow">404</p>
-      <h1>This offer wandered off.</h1>
-      <p class="lead">The page you’re after doesn’t exist or expired. Try the full directory.</p>
-      <div class="cta">
-        <a href="/offers" class="btn btn-primary">Browse all offers</a>
-        <a href="/" class="btn btn-ghost">Back home</a>
-      </div>
+
+<Layout
+  title="Page not found"
+  description="That page is not in the Studely directory. Browse the full list of verified student offers instead."
+  noindex={true}
+>
+  <section class="nf">
+    <div class="nf-field" aria-hidden="true">
+      <canvas id="nf-canvas"></canvas>
     </div>
+
+    <div class="wrap nf-inner" data-hero>
+      <p class="nf-eyebrow" data-reveal>
+        <span class="nf-dot" aria-hidden="true"></span>
+        <span>404 / not found</span>
+      </p>
+
+      <h1 class="nf-title" data-split>Dead link.</h1>
+
+      <p class="nf-lead" data-reveal>
+        We re-check every offer link weekly. This one is not an offer: it moved, expired,
+        or was never here.
+      </p>
+
+      <!-- Filled in by script from location.pathname, so it stays correct on a
+           statically generated page. Hidden until then: an empty box helps nobody. -->
+      <div class="nf-path" data-reveal hidden>
+        <span class="nf-path-label">(requested)</span>
+        <code class="nf-path-url" data-nf-path></code>
+      </div>
+
+      <nav class="nf-nav" aria-label="Ways out" data-reveal>
+        <ul>
+          <li>
+            <a href="/offers">
+              <span class="nf-nav-label">All offers</span>
+              <span class="nf-nav-arrow" aria-hidden="true">→</span>
+            </a>
+          </li>
+          <li>
+            <a href="/categories">
+              <span class="nf-nav-label">All categories</span>
+              <span class="nf-nav-arrow" aria-hidden="true">→</span>
+            </a>
+          </li>
+          <li>
+            <a href="/">
+              <span class="nf-nav-label">Back home</span>
+              <span class="nf-nav-arrow" aria-hidden="true">→</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="nf-glyph" aria-hidden="true">404</div>
   </section>
 </Layout>
+
+<script>
+  import { initDotField, dotFieldAllowed, type DotFieldConfig } from '../lib/dot-field';
+
+  // The hero field, degraded: a coarser grid and dimmer dots so the surface reads as
+  // something that has fallen apart rather than something being shown off.
+  const CFG: DotFieldConfig = {
+    pixelSize: 7, gooeyness: 0.5, contrast: 1.0, bias: 0.0, invert: 0,
+    amplitude: 1.1, timeSpeed: 0.16,
+    bg: [0.031, 0.031, 0.027], fg: [0.34, 0.33, 0.30],
+    cloud: [0.16, 0.155, 0.14], cloudStrength: 0.9,
+    waveFrequency: 2.2, waveAmplitude: 0.06, waveTimeSpeed: 0.22,
+    revealDuration: 1.8, maxDpr: 1.25,
+  };
+
+  let destroy: (() => void) | null = null;
+
+  function showRequestedPath() {
+    const el = document.querySelector<HTMLElement>('[data-nf-path]');
+    if (!el) return;
+    // textContent, never innerHTML — the path is attacker-controlled input.
+    let path = location.pathname + location.search;
+    try { path = decodeURIComponent(path); } catch { /* malformed escape: show it raw */ }
+    el.textContent = path.length > 120 ? path.slice(0, 119) + '…' : path;
+    el.closest<HTMLElement>('.nf-path')?.removeAttribute('hidden');
+  }
+
+  function boot() {
+    showRequestedPath();
+    const canvas = document.getElementById('nf-canvas') as HTMLCanvasElement | null;
+    if (!canvas || destroy || !dotFieldAllowed()) return;
+    const start = () =>
+      initDotField(canvas, CFG)
+        .then((d) => { destroy = d; })
+        .catch((e) => console.warn('404 field skipped', e));
+    if ('requestIdleCallback' in window) (window as any).requestIdleCallback(start, { timeout: 1400 });
+    else setTimeout(start, 500);
+  }
+
+  document.addEventListener('astro:page-load', boot);
+  document.addEventListener('astro:before-swap', () => { if (destroy) { destroy(); destroy = null; } });
+</script>
+
 <style>
-  .center { text-align: center; max-width: 44ch; margin-inline: auto; padding-block: 3rem; }
-  .cta { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem; }
+  .nf {
+    position: relative; isolation: isolate; overflow: hidden;
+    min-height: calc(100svh - var(--nav-h));
+    display: grid; align-items: center;
+    background: #080807; color: var(--ink);
+    border-bottom: 1px solid var(--border);
+  }
+  .nf-field { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: #080807; }
+  .nf-field::before {
+    content: ''; position: absolute; inset: -10%;
+    background: radial-gradient(60% 60% at 50% 42%, rgba(28, 26, 23, 0.8), transparent 70%), #080807;
+    filter: blur(4px);
+  }
+  #nf-canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    opacity: 0; transition: opacity 1.2s ease;
+  }
+  #nf-canvas.is-live { opacity: 1; }
+  /* scrim: the copy has to stay readable whatever the field is doing underneath */
+  .nf::after {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(60% 56% at 50% 46%, rgba(8, 8, 7, 0.88), rgba(8, 8, 7, 0.45) 56%, transparent 82%);
+  }
+
+  .nf-inner {
+    position: relative; z-index: 2;
+    padding-block: clamp(3.5rem, 2.5rem + 6vw, 7rem);
+    max-width: 62ch;
+  }
+
+  .nf-eyebrow { display: inline-flex; align-items: center; gap: 0.55em; }
+  .nf-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink); flex: none; }
+  .nf-eyebrow span:last-child {
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--text-muted);
+  }
+
+  .nf-title {
+    margin: 1.1rem 0 0; font-weight: 500; color: #f6f3ee;
+    font-size: clamp(2.4rem, 1.6rem + 4vw, 4.6rem);
+    letter-spacing: -0.035em; line-height: 1.02;
+  }
+  .nf-lead {
+    max-width: 44ch; margin-top: 1.2rem;
+    color: var(--text-muted); font-size: var(--step-0); line-height: 1.6;
+  }
+
+  .nf-path {
+    display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap;
+    margin-top: 1.75rem; padding: 0.65rem 0.9rem;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: rgba(232, 232, 227, 0.03);
+  }
+  .nf-path[hidden] { display: none; }
+  .nf-path-label {
+    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em;
+    color: var(--text-muted); flex: none;
+  }
+  .nf-path-url {
+    font-family: var(--font-mono); font-size: var(--step--1); color: var(--ink);
+    /* a pasted path can be arbitrarily long and must not blow out the layout */
+    min-width: 0; overflow-wrap: anywhere;
+  }
+
+  /* Same interaction as the footer nav: the label nudges, the arrow arrives. */
+  .nf-nav { margin-top: clamp(2rem, 1.4rem + 2vw, 3rem); }
+  .nf-nav ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.1rem; }
+  .nf-nav a {
+    display: inline-flex; align-items: baseline; gap: 0.4rem;
+    color: var(--text-muted); transition: color 0.3s var(--ease-out);
+  }
+  .nf-nav-label {
+    font-family: var(--font-display); font-weight: 500; letter-spacing: -0.03em; line-height: 1.12;
+    font-size: clamp(1.4rem, 1.05rem + 1.5vw, 2.3rem);
+    transition: transform 0.45s var(--ease-out);
+  }
+  .nf-nav-arrow {
+    font-family: var(--font-display); font-size: clamp(1rem, 0.85rem + 0.8vw, 1.6rem);
+    opacity: 0; transform: translateX(-0.35em);
+    transition: opacity 0.45s var(--ease-out), transform 0.45s var(--ease-out);
+  }
+  .nf-nav a:hover { color: var(--ink); }
+  .nf-nav a:hover .nf-nav-label { transform: translateX(0.12em); }
+  .nf-nav a:hover .nf-nav-arrow { opacity: 1; transform: translateX(0); }
+  /* keyboard parity: the arrow must not be a mouse-only affordance */
+  .nf-nav a:focus-visible { color: var(--ink); }
+  .nf-nav a:focus-visible .nf-nav-arrow { opacity: 1; transform: translateX(0); }
+
+  /* The homepage signature, reused: an oversized glyph clipped by the section edge.
+     Right-aligned here so it never sits behind the left-aligned copy. */
+  .nf-glyph {
+    position: absolute; right: -0.04em; bottom: -0.09em; z-index: 1; pointer-events: none;
+    font-family: var(--font-display); font-weight: 500; letter-spacing: -0.05em;
+    font-size: clamp(7rem, 26vw, 22rem); line-height: 0.74;
+    color: rgba(232, 232, 227, 0.045);
+    user-select: none;
+  }
+
+  @media (max-width: 860px) {
+    .nf-glyph { font-size: clamp(6rem, 34vw, 12rem); opacity: 0.75; }
+  }
+  @media (max-width: 520px) {
+    /* below this the glyph starts fighting the copy for the same pixels */
+    .nf-glyph { display: none; }
+  }
 </style>
