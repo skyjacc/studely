@@ -109,6 +109,50 @@ if (Astro.request.method === 'POST' && supabaseConfigured) {
   </div>
 </AdminLayout>
 
+<script>
+  // Progressive enhancement: submit without a full page reload.
+  //
+  // The response states (sent / error / denied) are rendered by the server, so we
+  // post the same form and swap in the server's own markup rather than duplicating
+  // those strings here — one source of truth for the copy and the rules.
+  // With JS off, or on any failure, the plain form POST still works.
+  function bindLoginForm() {
+    const card = document.querySelector<HTMLElement>('.card');
+    const form = card?.querySelector<HTMLFormElement>('form.form');
+    if (!card || !form || form.dataset.bound) return;
+    form.dataset.bound = '1';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+      const label = btn?.textContent ?? '';
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+
+      try {
+        const res = await fetch(location.href, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { Accept: 'text/html' },
+        });
+        const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+        const fresh = doc.querySelector('.card');
+        if (!fresh) throw new Error('unexpected response');
+
+        card.classList.add('is-swapping');
+        // let the fade-out paint before replacing the contents
+        await new Promise((r) => setTimeout(r, 120));
+        card.innerHTML = fresh.innerHTML;
+        card.classList.remove('is-swapping');
+        bindLoginForm(); // the error state renders the form again
+      } catch {
+        if (btn) { btn.disabled = false; btn.textContent = label; }
+        form.submit(); // hand it back to the browser
+      }
+    });
+  }
+  bindLoginForm();
+</script>
+
 <style>
   .card {
     position: relative; z-index: 1;   /* above the fixed dot field */
@@ -119,7 +163,11 @@ if (Astro.request.method === 'POST' && supabaseConfigured) {
     backdrop-filter: blur(14px);
     box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.9);
     padding: clamp(1.5rem, 1rem + 1.5vw, 2rem);
+    transition: opacity 0.14s var(--ease-out);
   }
+  /* brief fade while the server's response is swapped in */
+  .card.is-swapping { opacity: 0.35; }
+  .form button[disabled] { opacity: 0.6; cursor: default; }
   /* :global — the SVG carries Wordmark's own astro cid, so a scoped rule misses it */
   .card :global(.mark) { height: 20px; color: var(--ink); }
   h2 { margin-top: 1.1rem; font-size: 1.3rem; letter-spacing: -0.02em; }
