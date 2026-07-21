@@ -83,6 +83,6 @@ export const SEED_ATTRIBUTES: Record<string, AttributeKey[]> = {
   'apple-education-store': ['no_card_required', 'instant_verification'],
   'unidays-perks': ['many_discounts', 'instant_verification', 'discount_only'],
   // Was hand-scored 8. The card requirement is a real cost to a student with no
-  // credit card, and the credit runs out — the breakdown says 6, and it is right.
+  // credit card, and the credit runs out — the breakdown says 5, and it is right.
   'google-cloud-credits': ['credit_grant', 'instant_verification', 'card_required', 'credit_expires'],
 };
