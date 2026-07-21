@@ -2,11 +2,13 @@ import { createServerClient, parseCookieHeader } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import type { AstroCookies } from 'astro';
 
-const env = (key: string): string | undefined =>
-  (import.meta.env as Record<string, string | undefined>)[key] ?? process.env[key];
-
-const SUPABASE_URL = env('PUBLIC_SUPABASE_URL');
-const SUPABASE_ANON_KEY = env('PUBLIC_SUPABASE_ANON_KEY');
+// Read statically, never through a computed key. Vite replaces `import.meta.env.X`
+// at build time only when X is a literal; a dynamic lookup makes it hand over the
+// whole env object, which is how a secret ends up inlined in a client bundle.
+// PUBLIC_ vars are safe to inline — that is the point of the prefix.
+const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL ?? process.env.PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY =
+  import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? process.env.PUBLIC_SUPABASE_ANON_KEY;
 
 /** False until .env is filled — lets pages render a setup notice instead of crashing. */
 export const supabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
@@ -52,7 +54,10 @@ export function createSupabaseServer(request: Request, cookies: AstroCookies) {
  * never expose the key under a PUBLIC_ name.
  */
 export function createSupabaseAdmin() {
-  const serviceKey = env('SUPABASE_SERVICE_ROLE_KEY');
+  // process.env only, never import.meta.env: Vite can inline the latter into a
+  // bundle, and this key bypasses RLS. Reading it this way means a stray import
+  // from client code fails to find it rather than shipping it.
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!SUPABASE_URL || !serviceKey) {
     throw new Error('SUPABASE_SERVICE_ROLE_KEY is missing — required for build-time and admin writes');
   }

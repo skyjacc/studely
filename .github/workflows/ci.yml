@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # The auth gate lives in src/middleware.ts, which only runs for routes that
+      # are rendered on demand. An admin route that forgets `prerender = false` is
+      # prerendered at build time instead, the middleware never runs for it, and the
+      # page ships to the CDN with no session check and no way to notice.
+      # This is the single highest-risk consequence of having no tests yet.
+      - name: Every admin route must opt out of prerendering
+        run: |
+          missing=0
+          while IFS= read -r f; do
+            if ! grep -qE '^export const prerender = false' "$f"; then
+              echo "::error file=$f::missing 'export const prerender = false' — the auth gate will not run for this route"
+              missing=1
+            fi
+          done < <(find src/pages/admin -type f \( -name '*.astro' -o -name '*.ts' \))
+          if [ "$missing" -eq 1 ]; then exit 1; fi
+          echo "all admin routes opt out of prerendering"
+
+      # Catches the class of mistake that shipped a placeholder domain into every
+      # canonical URL, the sitemap and robots.txt for weeks.
+      - name: No hardcoded placeholder domain
+        run: |
+          if grep -rn 'claimly\.com' src astro.config.mjs 2>/dev/null; then
+            echo "::error::claimly.com is not a domain we own — the origin must come from PUBLIC_SITE_URL"
+            exit 1
+          fi
+          echo "no unowned domain in source"
+
+      - name: Type check
+        run: npm run check
+
+      - name: Build
+        run: npm run build
+        env:
+          # Public keys: the build inlines them, and RLS is what protects the data.
+          # Absent here on forks, in which case the build still has to succeed.
+          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
