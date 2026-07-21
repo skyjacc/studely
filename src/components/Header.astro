@@ -151,7 +151,7 @@ const links = [
   /* logotype: geometric mark + tight wordmark */
   .brand { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--ink); }
   /* :global — the wordmark carries Wordmark's astro cid, so a scoped rule never matches it */
-  .brand :global(.brand-logo) { font-size: 30px; }
+  .brand :global(.brand-logo) { height: 26px; }
   /* the brand's rise-mask hugs the logo exactly (no line-box slack) so translateY(125%)
      fully hides it at the start of nav-rise — same emerge-from-mask as the nav links */
   .nav-left > .nav-mask { line-height: 0; padding-block: 0; }

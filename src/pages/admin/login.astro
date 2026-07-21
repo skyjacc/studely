@@ -121,7 +121,7 @@ if (Astro.request.method === 'POST' && supabaseConfigured) {
     padding: clamp(1.5rem, 1rem + 1.5vw, 2rem);
   }
   /* :global — the SVG carries Wordmark's own astro cid, so a scoped rule misses it */
-  .card :global(.mark) { font-size: 23px; color: var(--ink); }
+  .card :global(.mark) { height: 20px; color: var(--ink); }
   h2 { margin-top: 1.1rem; font-size: 1.3rem; letter-spacing: -0.02em; }
   .note { margin-top: 0.6rem; color: var(--text-muted); font-size: var(--step--1); line-height: 1.55; }
   .alert {
