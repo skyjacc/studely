@@ -17,6 +17,12 @@ interface Props {
   /** Structured data object rendered as JSON-LD. */
   jsonLd?: Record<string, unknown>;
   noindex?: boolean;
+  /**
+   * Render the site header and footer. Off for standalone screens that carry
+   * their own way out (the 404). Anything that turns this off is responsible
+   * for its own navigation — without it the page is a dead end.
+   */
+  chrome?: boolean;
 }
 
 const {
@@ -25,6 +31,7 @@ const {
   image = '/og-default.png',
   jsonLd,
   noindex = false,
+  chrome = true,
 } = Astro.props;
 
 const fullTitle = title ? `${title} · ${site.name}` : `${site.name} · ${site.tagline}`;
@@ -87,13 +94,13 @@ const ogImage = new URL(image, Astro.site ?? Astro.url.origin).href;
       ></script>
     )}
   </head>
-  <body id="top">
-    <a href="#main" class="sr-only skip-link">Skip to content</a>
-    <Header />
+  <body id="top" class:list={[{ 'no-chrome': !chrome }]}>
+    {chrome && <a href="#main" class="sr-only skip-link">Skip to content</a>}
+    {chrome && <Header />}
     <main id="main">
       <slot />
     </main>
-    <Footer />
+    {chrome && <Footer />}
     <Cursor />
     <Motion />
   </body>

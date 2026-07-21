@@ -1,30 +1,35 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Wordmark from '../components/Wordmark.astro';
 
 // A 404 on a link directory is an awkward moment: the whole promise of the site is
 // that its links work. So the page owns it rather than shrugging — it names the
 // broken URL back to the reader and points at the three real ways out.
 //
-// Visually it is the homepage hero, degraded: the same dot field on a coarser grid
-// with the dots dimmed, and the giant clipped wordmark replaced by a giant clipped
-// 404. Nothing new is invented, which is the point.
+// Rendered without the site header and footer (Layout chrome={false}). A 404 is a
+// dead end, not a destination: the fastest thing to do is leave, and a full nav plus
+// a four-column footer buries that choice under thirty other links. The trade is that
+// this page owes the reader its own way out and its own way home, so it carries the
+// wordmark and three explicit destinations.
 ---
 
 <Layout
   title="Page not found"
   description="That page is not in the Studely directory. Browse the full list of verified student offers instead."
   noindex={true}
+  chrome={false}
 >
   <section class="nf">
     <div class="nf-field" aria-hidden="true">
       <canvas id="nf-canvas"></canvas>
     </div>
 
+    <a class="nf-brand" href="/" aria-label="Studely home">
+      <Wordmark class="nf-logo" />
+    </a>
+
     <div class="wrap nf-inner" data-hero>
-      <p class="nf-eyebrow" data-reveal>
-        <span class="nf-dot" aria-hidden="true"></span>
-        <span>404 / not found</span>
-      </p>
+      <p class="nf-num" aria-hidden="true" data-reveal>404</p>
 
       <h1 class="nf-title" data-split>Dead link.</h1>
 
@@ -63,8 +68,6 @@ import Layout from '../layouts/Layout.astro';
         </ul>
       </nav>
     </div>
-
-    <div class="nf-glyph" aria-hidden="true">404</div>
   </section>
 </Layout>
 
@@ -113,10 +116,9 @@ import Layout from '../layouts/Layout.astro';
 <style>
   .nf {
     position: relative; isolation: isolate; overflow: hidden;
-    min-height: calc(100svh - var(--nav-h));
+    min-height: 100svh;
     display: grid; align-items: center;
     background: #080807; color: var(--ink);
-    border-bottom: 1px solid var(--border);
   }
   .nf-field { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: #080807; }
   .nf-field::before {
@@ -132,35 +134,54 @@ import Layout from '../layouts/Layout.astro';
   /* scrim: the copy has to stay readable whatever the field is doing underneath */
   .nf::after {
     content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-    background: radial-gradient(60% 56% at 50% 46%, rgba(8, 8, 7, 0.88), rgba(8, 8, 7, 0.45) 56%, transparent 82%);
+    background: radial-gradient(62% 58% at 50% 48%, rgba(8, 8, 7, 0.9), rgba(8, 8, 7, 0.5) 58%, transparent 84%);
   }
+
+  /* With the header gone this is the only route home and the only thing naming the
+     site, so it is a real link, not decoration. */
+  .nf-brand {
+    position: absolute; z-index: 3;
+    top: clamp(1.1rem, 0.8rem + 1vw, 1.9rem);
+    left: clamp(1rem, 0.5rem + 2vw, 2.25rem);
+    display: inline-flex; color: var(--text-muted);
+    transition: color 0.3s var(--ease-out);
+  }
+  .nf-brand:hover, .nf-brand:focus-visible { color: var(--ink); }
+  /* :global — the SVG carries Wordmark's own astro cid, so a scoped rule never
+     matches it and the height silently does nothing. */
+  .nf-brand :global(.nf-logo) { height: 18px; }
 
   .nf-inner {
-    position: relative; z-index: 2;
-    padding-block: clamp(3.5rem, 2.5rem + 6vw, 7rem);
-    max-width: 62ch;
+    position: relative; z-index: 2; text-align: center;
+    /* vh, not vw: on a short window the padding is what pushes the block past the
+       fold, and a wide-but-short window is exactly where a vw-based value is worst. */
+    padding-block: clamp(2rem, 6vh, 6rem);
   }
 
-  .nf-eyebrow { display: inline-flex; align-items: center; gap: 0.55em; }
-  .nf-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink); flex: none; }
-  .nf-eyebrow span:last-child {
-    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--text-muted);
+  /* The headline act. Capped against the viewport height as well as its width: on a
+     1280x720 laptop a width-only clamp pushed the block past the fold and put a
+     scrollbar on a page whose whole job is to be read at a glance. */
+  .nf-num {
+    margin: 0; font-family: var(--font-display); font-weight: 500;
+    font-size: clamp(4.5rem, min(38vw, 34vh), 20rem);
+    line-height: 0.8; letter-spacing: -0.055em;
+    color: #f6f3ee;
   }
 
   .nf-title {
-    margin: 1.1rem 0 0; font-weight: 500; color: #f6f3ee;
-    font-size: clamp(2.4rem, 1.6rem + 4vw, 4.6rem);
-    letter-spacing: -0.035em; line-height: 1.02;
+    margin: clamp(0.75rem, 0.5rem + 1vw, 1.4rem) 0 0; font-weight: 500;
+    font-size: clamp(1.4rem, 1.1rem + 1.4vw, 2.2rem);
+    letter-spacing: -0.03em; line-height: 1.1; color: var(--ink);
   }
   .nf-lead {
-    max-width: 44ch; margin-top: 1.2rem;
+    max-width: 44ch; margin: 1rem auto 0;
     color: var(--text-muted); font-size: var(--step-0); line-height: 1.6;
   }
 
   .nf-path {
-    display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap;
-    margin-top: 1.75rem; padding: 0.65rem 0.9rem;
+    display: inline-flex; align-items: baseline; gap: 0.7rem; flex-wrap: wrap;
+    justify-content: center; max-width: 100%;
+    margin-top: 1.5rem; padding: 0.55rem 0.85rem;
     border: 1px solid var(--border); border-radius: var(--radius);
     background: rgba(232, 232, 227, 0.03);
   }
@@ -172,23 +193,27 @@ import Layout from '../layouts/Layout.astro';
   .nf-path-url {
     font-family: var(--font-mono); font-size: var(--step--1); color: var(--ink);
     /* a pasted path can be arbitrarily long and must not blow out the layout */
-    min-width: 0; overflow-wrap: anywhere;
+    min-width: 0; overflow-wrap: anywhere; text-align: left;
   }
 
   /* Same interaction as the footer nav: the label nudges, the arrow arrives. */
-  .nf-nav { margin-top: clamp(2rem, 1.4rem + 2vw, 3rem); }
-  .nf-nav ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.1rem; }
+  .nf-nav { margin-top: clamp(1.75rem, 1.2rem + 1.6vw, 2.75rem); }
+  .nf-nav ul {
+    list-style: none; margin: 0; padding: 0;
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 0.6rem clamp(1.5rem, 1rem + 2vw, 3rem);
+  }
   .nf-nav a {
-    display: inline-flex; align-items: baseline; gap: 0.4rem;
+    display: inline-flex; align-items: baseline; gap: 0.35rem;
     color: var(--text-muted); transition: color 0.3s var(--ease-out);
   }
   .nf-nav-label {
-    font-family: var(--font-display); font-weight: 500; letter-spacing: -0.03em; line-height: 1.12;
-    font-size: clamp(1.4rem, 1.05rem + 1.5vw, 2.3rem);
+    font-family: var(--font-display); font-weight: 500; letter-spacing: -0.03em; line-height: 1.15;
+    font-size: clamp(1.05rem, 0.9rem + 0.8vw, 1.5rem);
     transition: transform 0.45s var(--ease-out);
   }
   .nf-nav-arrow {
-    font-family: var(--font-display); font-size: clamp(1rem, 0.85rem + 0.8vw, 1.6rem);
+    font-family: var(--font-display); font-size: clamp(0.9rem, 0.8rem + 0.4vw, 1.15rem);
     opacity: 0; transform: translateX(-0.35em);
     transition: opacity 0.45s var(--ease-out), transform 0.45s var(--ease-out);
   }
@@ -198,22 +223,4 @@ import Layout from '../layouts/Layout.astro';
   /* keyboard parity: the arrow must not be a mouse-only affordance */
   .nf-nav a:focus-visible { color: var(--ink); }
   .nf-nav a:focus-visible .nf-nav-arrow { opacity: 1; transform: translateX(0); }
-
-  /* The homepage signature, reused: an oversized glyph clipped by the section edge.
-     Right-aligned here so it never sits behind the left-aligned copy. */
-  .nf-glyph {
-    position: absolute; right: -0.04em; bottom: -0.09em; z-index: 1; pointer-events: none;
-    font-family: var(--font-display); font-weight: 500; letter-spacing: -0.05em;
-    font-size: clamp(7rem, 26vw, 22rem); line-height: 0.74;
-    color: rgba(232, 232, 227, 0.045);
-    user-select: none;
-  }
-
-  @media (max-width: 860px) {
-    .nf-glyph { font-size: clamp(6rem, 34vw, 12rem); opacity: 0.75; }
-  }
-  @media (max-width: 520px) {
-    /* below this the glyph starts fighting the copy for the same pixels */
-    .nf-glyph { display: none; }
-  }
 </style>

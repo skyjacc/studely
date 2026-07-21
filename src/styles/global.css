@@ -104,6 +104,9 @@ p { text-wrap: pretty; }
 
 /* fixed transparent nav overlays content: pad main, pull full-bleed hero up behind nav */
 #main { padding-top: var(--nav-h); }
+/* Layout chrome={false}: there is no nav to clear, so the padding would just be
+   a band of empty page above a full-height screen. */
+body.no-chrome #main { padding-top: 0; }
 .hero-mono { margin-top: calc(-1 * var(--nav-h)); }
 .eyebrow {
   display: inline-block; font-family: var(--font-mono); font-weight: 500;
