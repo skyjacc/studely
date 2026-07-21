@@ -15,6 +15,19 @@ let sent = false;
 const denied = url.searchParams.get('denied') === '1';
 const nextPath = url.searchParams.get('next') ?? '/admin';
 
+// Why the callback sent them back. Without this the visitor sees an empty form and
+// has no idea whether the link was stale, already used, or opened in the wrong
+// browser — three different problems with three different fixes.
+const REASONS: Record<string, string> = {
+  otp_expired: 'That link has expired or was already used. Request a new one.',
+  access_denied: 'That link is no longer valid. Request a new one.',
+  exchange_failed:
+    'Could not complete sign-in. Open the link in the same browser you requested it from.',
+  missing_code: 'That link was incomplete. Request a new one.',
+};
+const reasonKey = url.searchParams.get('reason') ?? '';
+const reason = REASONS[reasonKey] ?? (reasonKey ? 'That sign-in link did not work. Request a new one.' : '');
+
 if (Astro.request.method === 'POST' && supabaseConfigured) {
   const form = await Astro.request.formData();
   const email = String(form.get('email') ?? '').trim();
@@ -87,6 +100,7 @@ if (Astro.request.method === 'POST' && supabaseConfigured) {
         {denied && (
           <p class="alert">That account exists but has no admin access.</p>
         )}
+        {reason && <p class="alert">{reason}</p>}
         {error && <p class="alert">{error}</p>}
 
         <form method="POST" class="form">

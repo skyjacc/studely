@@ -7,7 +7,13 @@ export const prerender = false;
 export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   if (supabaseConfigured) {
     const supabase = createSupabaseServer(request, cookies);
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    // Reported, not swallowed: a failed signOut leaves the session cookies in place,
+    // so the visitor lands on the login screen believing they are signed out while
+    // the session is still live. That is worth seeing in the logs.
+    if (error) {
+      console.error('[admin-signout] signOut failed', { status: error.status, message: error.message });
+    }
   }
   return redirect('/admin/login', 302);
 };

@@ -4,7 +4,12 @@ export const prerender = false;
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { createSupabaseServer } from '../../lib/supabase';
 
+// The middleware guarantees a staff profile before this page renders, but the type
+// is optional because it is genuinely unset on the sign-out side of the gate. If it
+// is ever missing here the gate did not run — which is the exact failure the CI
+// prerender check exists to catch, so fail loudly rather than render a broken page.
 const { profile } = Astro.locals;
+if (!profile) return Astro.redirect('/admin/login', 302);
 const supabase = createSupabaseServer(Astro.request, Astro.cookies);
 
 const countOf = async (
