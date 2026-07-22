@@ -477,10 +477,12 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
   .results .grid-offers { grid-template-columns: repeat(auto-fill, minmax(min(100%, 258px), 1fr)); grid-auto-rows: 1fr; }
   /* every card fills its (equal-height) row so the footer lines up across the grid.
      min-width:0 lets the flex items shrink to the grid track (else content min-width overflows). */
-  .item { display: flex; min-width: 0; }
-  .item > :global(.offer) { flex: 1; min-width: 0; }
+  /* card grid items are flex — but the SAME .item class is on the table's <tr>, so
+     scope this to #cards or the table rows become flex containers and collapse. */
+  #cards .item { display: flex; min-width: 0; }
+  #cards .item > :global(.offer) { flex: 1; min-width: 0; }
   /* in-feed ad cell fills its grid track like a card */
-  .ad-item > :global(.ad-ph) { flex: 1; min-width: 0; }
+  #cards .ad-item > :global(.ad-ph) { flex: 1; min-width: 0; }
   .rail-inner { position: sticky; top: 84px; display: flex; flex-direction: column; gap: 1.25rem; }
   .fgroup { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
   .flabel { font-family: var(--font-display); font-weight: 500; font-size: 0.95rem; letter-spacing: -0.01em; }
@@ -561,16 +563,25 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
 
   /* table view */
   .tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); background: var(--surface); }
-  table { width: 100%; border-collapse: collapse; font-size: var(--step--1); }
-  thead th { text-align: left; font-family: var(--font-display); font-weight: 500; padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  tbody td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+  /* fixed layout so 7 columns share 100% and never overflow the results column */
+  table { width: 100%; border-collapse: collapse; font-size: var(--step--1); table-layout: fixed; }
+  #table th:nth-child(1) { width: 7%; }   /* Score */
+  #table th:nth-child(2) { width: 27%; }  /* Offer */
+  #table th:nth-child(3) { width: 13%; }  /* Category */
+  #table th:nth-child(4) { width: 10%; }  /* Type */
+  #table th:nth-child(5) { width: 16%; }  /* Value */
+  #table th:nth-child(6) { width: 19%; }  /* Verify */
+  #table th:nth-child(7) { width: 8%; }   /* Get */
+  thead th { text-align: left; font-family: var(--font-display); font-weight: 500; padding: 0.85rem 0.8rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tbody td { padding: 0.7rem 0.8rem; border-bottom: 1px solid var(--border-soft); vertical-align: middle; overflow-wrap: anywhere; }
   tbody tr:last-child td { border-bottom: 0; }
   .tscore { display: inline-grid; place-items: center; min-width: 34px; height: 30px; font-family: var(--font-display); font-weight: 500; border: 1px solid var(--border); border-radius: 8px; }
-  .tname { display: flex; align-items: center; gap: 0.6rem; min-width: 200px; font-weight: 600; }
+  .tname { display: flex; align-items: center; gap: 0.6rem; min-width: 0; font-weight: 600; }
+  .tname a { min-width: 0; }
   .tname a:hover { color: var(--accent-ink); }
   .tlogo { width: 34px; height: 34px; flex: none; color: var(--ink); }
   .tcat:hover { color: var(--accent-ink); }
-  .tval { font-weight: 600; white-space: nowrap; }
+  .tval { font-weight: 600; }
   .tgo { font-weight: 500; color: var(--ink); white-space: nowrap; }
 
   @media (max-width: 860px) {
