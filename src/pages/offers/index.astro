@@ -117,8 +117,14 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
             </button>
             <p id="count" class="count" aria-live="polite">{all.length} offers</p>
             <div class="views" role="group" aria-label="View">
-              <button id="view-cards" class="vbtn is-active" type="button" aria-pressed="true" aria-label="Card view">▦ Cards</button>
-              <button id="view-table" class="vbtn" type="button" aria-pressed="false" aria-label="Table view">▤ Table</button>
+              <button id="view-cards" class="vbtn is-active" type="button" aria-pressed="true" aria-label="Card view">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+                Cards
+              </button>
+              <button id="view-table" class="vbtn" type="button" aria-pressed="false" aria-label="Table view">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                Table
+              </button>
             </div>
           </div>
 
@@ -496,7 +502,8 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
   .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
   .count { font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; }
   .views { display: inline-flex; gap: 0; border: 1px solid var(--border-control); border-radius: var(--radius-pill); overflow: hidden; }
-  .vbtn { font: inherit; font-size: var(--step--1); font-weight: 500; cursor: pointer; padding: 0.4em 0.85em; background: var(--surface); color: var(--text-muted); border: 0; }
+  .vbtn { display: inline-flex; align-items: center; gap: 0.4em; font: inherit; font-size: var(--step--1); font-weight: 500; cursor: pointer; padding: 0.4em 0.85em; background: var(--surface); color: var(--text-muted); border: 0; }
+  .vbtn svg { flex: none; }
   .vbtn.is-active { background: var(--ink); color: var(--bg); }
 
   /* mobile filter-sheet controls (shown only <=860) */

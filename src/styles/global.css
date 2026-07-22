@@ -213,7 +213,7 @@ html.js-motion .mark { --mark-scale: 0; }
 }
 .logo-tile svg { width: 56%; height: 56%; }
 .mono { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.03em; }
-.cat-ico { width: 1.4em; height: 1.4em; stroke: currentColor; fill: none; }
+.cat-ico { width: 1.4em; height: 1.4em; stroke: currentColor; fill: none; flex: none; }
 
 /* chips */
 .chip {
