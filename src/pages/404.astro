@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Wordmark from '../components/Wordmark.astro';
+import { notFound } from '../data/notFound';
 
 // A 404 on a link directory is an awkward moment: the whole promise of the site is
 // that its links work. So the page owns it rather than shrugging — it names the
@@ -11,11 +12,14 @@ import Wordmark from '../components/Wordmark.astro';
 // a four-column footer buries that choice under thirty other links. The trade is that
 // this page owes the reader its own way out and its own way home, so it carries the
 // wordmark and three explicit destinations.
+//
+// All copy and the exit links live in src/data/notFound.ts, not here.
+const { meta, status, method, code, heading, lead, exits } = notFound;
 ---
 
 <Layout
-  title="Page not found"
-  description="That page is not in the Studely directory. Browse the full list of verified student offers instead."
+  title={meta.title}
+  description={meta.description}
   noindex={true}
   chrome={false}
 >
@@ -29,42 +33,37 @@ import Wordmark from '../components/Wordmark.astro';
     </a>
 
     <div class="wrap nf-inner" data-hero>
-      <p class="nf-num" aria-hidden="true" data-reveal>404</p>
+      <!-- mono system label: always visible, no JS needed, so the error status is
+           never hidden behind a script that may not run -->
+      <p class="nf-eyebrow" data-reveal>{status.label}</p>
 
-      <h1 class="nf-title" data-split>Dead link.</h1>
+      <p class="nf-num" aria-hidden="true" data-reveal>{code}</p>
 
-      <p class="nf-lead" data-reveal>
-        We re-check every offer link weekly. This one is not an offer: it moved, expired,
-        or was never here.
-      </p>
+      <h1 class="nf-title" data-split>{heading}</h1>
 
-      <!-- Filled in by script from location.pathname, so it stays correct on a
-           statically generated page. Hidden until then: an empty box helps nobody. -->
+      <p class="nf-lead" data-reveal>{lead}</p>
+
+      <!-- Terminal-style readout. The path is filled by script from location.pathname
+           so it stays correct on a statically generated page; the whole line is hidden
+           until then, since a method and status with no path helps nobody. -->
       <div class="nf-path" data-reveal hidden>
-        <span class="nf-path-label">(requested)</span>
-        <code class="nf-path-url" data-nf-path></code>
+        <code class="nf-path-line">
+          <span class="nf-path-method">{method}</span>
+          <span class="nf-path-url" data-nf-path></span>
+          <span class="nf-path-status">— {status.code} {status.label}</span>
+        </code>
       </div>
 
       <nav class="nf-nav" aria-label="Ways out" data-reveal>
         <ul>
-          <li>
-            <a href="/offers">
-              <span class="nf-nav-label">All offers</span>
-              <span class="nf-nav-arrow" aria-hidden="true">→</span>
-            </a>
-          </li>
-          <li>
-            <a href="/categories">
-              <span class="nf-nav-label">All categories</span>
-              <span class="nf-nav-arrow" aria-hidden="true">→</span>
-            </a>
-          </li>
-          <li>
-            <a href="/">
-              <span class="nf-nav-label">Back home</span>
-              <span class="nf-nav-arrow" aria-hidden="true">→</span>
-            </a>
-          </li>
+          {exits.map((exit) => (
+            <li>
+              <a href={exit.href}>
+                <span class="nf-nav-label">{exit.label}</span>
+                <span class="nf-nav-arrow" aria-hidden="true">→</span>
+              </a>
+            </li>
+          ))}
         </ul>
       </nav>
     </div>
@@ -158,6 +157,16 @@ import Wordmark from '../components/Wordmark.astro';
     padding-block: clamp(2rem, 6vh, 6rem);
   }
 
+  /* Mono system label above the number — the "HTTP · NOT FOUND" context that names
+     this as a system state, not just a big number. Always visible (no motion gate). */
+  .nf-eyebrow {
+    margin: 0 0 clamp(0.7rem, 0.5rem + 0.7vw, 1.1rem);
+    font-family: var(--font-mono); font-weight: 500;
+    font-size: clamp(0.66rem, 0.6rem + 0.2vw, 0.78rem);
+    letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
   /* The headline act. Capped against the viewport height as well as its width: on a
      1280x720 laptop a width-only clamp pushed the block past the fold and put a
      scrollbar on a page whose whole job is to be read at a glance. */
@@ -178,23 +187,28 @@ import Wordmark from '../components/Wordmark.astro';
     color: var(--text-muted); font-size: var(--step-0); line-height: 1.6;
   }
 
+  /* Terminal-style readout: GET /the/path — 404 Not Found, in mono, so the broken
+     request reads back as a system line rather than a UI label. */
   .nf-path {
-    display: inline-flex; align-items: baseline; gap: 0.7rem; flex-wrap: wrap;
+    display: inline-flex; align-items: baseline;
     justify-content: center; max-width: 100%;
     margin-top: 1.5rem; padding: 0.55rem 0.85rem;
     border: 1px solid var(--border); border-radius: var(--radius);
     background: rgba(232, 232, 227, 0.03);
   }
   .nf-path[hidden] { display: none; }
-  .nf-path-label {
-    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em;
-    color: var(--text-muted); flex: none;
+  .nf-path-line {
+    display: inline-flex; align-items: baseline; flex-wrap: wrap;
+    justify-content: center; gap: 0.5ch;
+    font-family: var(--font-mono); font-size: var(--step--1); min-width: 0;
   }
+  .nf-path-method { color: var(--text-muted); flex: none; }
   .nf-path-url {
-    font-family: var(--font-mono); font-size: var(--step--1); color: var(--ink);
+    color: var(--ink);
     /* a pasted path can be arbitrarily long and must not blow out the layout */
     min-width: 0; overflow-wrap: anywhere; text-align: left;
   }
+  .nf-path-status { color: var(--text-muted); flex: none; }
 
   /* Same interaction as the footer nav: the label nudges, the arrow arrives. */
   .nf-nav { margin-top: clamp(1.75rem, 1.2rem + 1.6vw, 2.75rem); }
