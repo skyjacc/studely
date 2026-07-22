@@ -346,6 +346,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
       btn.id = sel.id + '-btn';
       btn.setAttribute('aria-haspopup', 'listbox');
       btn.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-controls', sel.id + '-list');
       const lbl = document.getElementById(sel.id + '-label');
       if (lbl) btn.setAttribute('aria-labelledby', lbl.id + ' ' + btn.id);
       btn.innerHTML =
@@ -353,6 +354,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
 
       const list = document.createElement('ul');
       list.className = 'sel-list';
+      list.id = sel.id + '-list';
       list.setAttribute('role', 'listbox');
       if (lbl) list.setAttribute('aria-labelledby', lbl.id);
       list.hidden = true;
@@ -578,6 +580,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
     animation: sel-in 0.22s var(--ease-out) both;
   }
   @keyframes sel-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .sel .sel-list { animation: none; } }
 
   .sel .sel-opt {
     position: relative; isolation: isolate;

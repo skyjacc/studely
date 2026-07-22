@@ -100,6 +100,10 @@ const items = categories.map((c, i) => ({ ...c, i, idx: String(i + 1).padStart(2
     pointer-events: none;
   }
   .cat-card.is-active { opacity: 1; transform: scale(1); }
+  /* the preview cross-fade/scale is decorative — swap instantly under reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .cat-card, .cat-card.is-active { transition: none; transform: none; }
+  }
   .cat-card::after {
     content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
     background: radial-gradient(120% 90% at 85% 8%, color-mix(in srgb, var(--cat) 12%, transparent), transparent 60%);
