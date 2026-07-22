@@ -220,6 +220,7 @@ html.js-motion .mark { --mark-scale: 0; }
   display: inline-flex; align-items: center; gap: 0.35rem;
   padding: 0.3em 0.7em; border-radius: var(--radius-pill);
   background: transparent; border: 1px solid var(--border-control); font-weight: 500; font-size: var(--step--1);
+  white-space: nowrap;
 }
 
 /* prose */
