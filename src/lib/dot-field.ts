@@ -190,9 +190,22 @@ export async function initDotField(canvas: HTMLCanvasElement, CFG: DotFieldConfi
   start();
   canvas.classList.add('is-live');
 
-  return () => {
+  // The gate (dotFieldAllowed) is only read at boot. If the visitor turns on
+  // Reduce Motion mid-session, tear the field down so the rAF loop stops — WCAG
+  // 2.3.3 / 2.2.2. Closes KNOWN_BUGS BUG-14 for the "reduce motion" direction.
+  const motionMq = matchMedia('(prefers-reduced-motion: reduce)');
+  let disposed = false;
+  function onMotionChange() { if (motionMq.matches) dispose(); }
+  const dispose = () => {
+    if (disposed) return;
+    disposed = true;
     running = false; cancelAnimationFrame(raf); io.disconnect();
+    motionMq.removeEventListener('change', onMotionChange);
     window.removeEventListener('resize', resize);
     quad.dispose(); fieldMat.dispose(); screenMat.dispose(); fieldRT.dispose(); renderer.dispose();
+    canvas.classList.remove('is-live');
   };
+  motionMq.addEventListener('change', onMotionChange);
+
+  return dispose;
 }

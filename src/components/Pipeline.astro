@@ -79,6 +79,12 @@ const steps = [
     transition: transform 1.15s var(--ease-out);
   }
   .steps.is-in::after { transform: scaleX(1); }
+  /* the scroll-triggered sweep and node fill bypass the global motion gate — mute
+     them for users who ask for reduced motion (the line still appears, instantly) */
+  @media (prefers-reduced-motion: reduce) {
+    .steps::after { transition: none; }
+    .node { transition: none; }
+  }
 
   .step { position: relative; padding-top: 1.9rem; }
   .node {

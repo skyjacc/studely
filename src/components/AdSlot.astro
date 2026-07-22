@@ -23,7 +23,7 @@ const live = site.adsense.enabled && site.adsense.client && slot;
   ></ins>
   <script is:inline>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 ) : (
-  <div class={`ad-ph ad-${format}`} role="complementary" aria-label={label}>
+  <div class={`ad-ph ad-${format}`} aria-label={label}>
     <span>{label}</span>
     <small>Ad slot. Connect AdSense in <code>src/data/site.ts</code></small>
   </div>

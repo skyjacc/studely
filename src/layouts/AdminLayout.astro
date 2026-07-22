@@ -47,6 +47,7 @@ const active = (item: (typeof nav)[number]) =>
   <body class="admin">
     {chrome ? (
       <div class="shell">
+        <a href="#admin-main" class="sr-only skip-link">Skip to content</a>
         <aside class="side">
           <a href="/" class="brand" aria-label={`${site.name} home`}><Wordmark class="side-logo" /></a>
           <span class="side-tag">admin</span>
@@ -64,7 +65,7 @@ const active = (item: (typeof nav)[number]) =>
           </div>
         </aside>
 
-        <main class="main">
+        <main class="main" id="admin-main">
           <header class="head">
             <h1>{title}</h1>
             {subtitle && <p class="sub">{subtitle}</p>}

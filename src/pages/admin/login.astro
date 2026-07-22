@@ -78,6 +78,7 @@ if (Astro.request.method === 'POST' && supabaseConfigured) {
 
   <div class="card">
     <Wordmark class="mark" />
+    <h1 class="sr-only">Sign in to Studely admin</h1>
 
     {!supabaseConfigured ? (
       <>
@@ -98,10 +99,10 @@ if (Astro.request.method === 'POST' && supabaseConfigured) {
     ) : (
       <>
         {denied && (
-          <p class="alert">That account exists but has no admin access.</p>
+          <p class="alert" role="alert">That account exists but has no admin access.</p>
         )}
-        {reason && <p class="alert">{reason}</p>}
-        {error && <p class="alert">{error}</p>}
+        {reason && <p class="alert" role="alert">{reason}</p>}
+        {error && <p class="alert" role="alert">{error}</p>}
 
         <form method="POST" class="form">
           <label class="lbl" for="email">Email</label>

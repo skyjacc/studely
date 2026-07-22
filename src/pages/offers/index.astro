@@ -280,27 +280,54 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
     const ftoggle = document.getElementById('filter-toggle');
     const backdrop = document.querySelector('.rail-backdrop');
     const railClose = document.querySelector('.rail-close');
+    const results = document.querySelector('.results');
+    const railInner = document.querySelector('.rail-inner');
+    // Only <=860px turns the rail into a modal bottom sheet (CSS); on desktop it is a
+    // static sidebar and the toggle is display:none, so focus management is a no-op there.
+    const isSheet = () => matchMedia('(max-width: 860px)').matches;
     const setFilters = (open) => {
       if (!dir) return;
       dir.classList.toggle('filters-open', open);
       if (ftoggle) ftoggle.setAttribute('aria-expanded', String(open));
       if (backdrop) backdrop.hidden = !open;
       document.body.style.overflow = open ? 'hidden' : '';
+      if (!isSheet()) return;
+      // Take the results out of the tab order + a11y tree behind the backdrop, move
+      // focus into the sheet on open, and hand it back to the toggle on close.
+      if (results) results.inert = open;
+      if (open) (railClose || railInner)?.focus?.();
+      else if (ftoggle) ftoggle.focus();
     };
     if (ftoggle) ftoggle.addEventListener('click', () => setFilters(!dir.classList.contains('filters-open')));
     if (backdrop) backdrop.addEventListener('click', () => setFilters(false));
     if (railClose) railClose.addEventListener('click', () => setFilters(false));
-    if (!window.__offEsc) {
-      window.__offEsc = true;
+    // One document handler, re-queried each event so it survives client-side nav.
+    // Escape closes; Tab is trapped inside the rail while the sheet is the modal.
+    if (!window.__offSheet) {
+      window.__offSheet = true;
       document.addEventListener('keydown', (e) => {
-        if (e.key !== 'Escape') return;
         const d = document.querySelector('.dir');
-        if (d && d.classList.contains('filters-open')) {
+        if (!d || !d.classList.contains('filters-open') || !matchMedia('(max-width: 860px)').matches) return;
+        if (e.key === 'Escape') {
           d.classList.remove('filters-open');
           document.body.style.overflow = '';
           const b = document.querySelector('.rail-backdrop'); if (b) b.hidden = true;
+          const r = document.querySelector('.results'); if (r) r.inert = false;
+          const t = document.getElementById('filter-toggle');
+          if (t) { t.setAttribute('aria-expanded', 'false'); t.focus?.(); }
+          return;
         }
-      });
+        if (e.key === 'Tab') {
+          const inner = document.querySelector('.rail-inner');
+          if (!inner) return;
+          const f = [...inner.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+            .filter((el) => el.offsetParent !== null);
+          if (!f.length) return;
+          const first = f[0], last = f[f.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && (document.activeElement === last || !inner.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+        }
+      }, true);
     }
 
     // Build a styled listbox on top of each native <select>. The native element stays
