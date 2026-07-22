@@ -6,6 +6,7 @@ import AdSlot from '../../components/AdSlot.astro';
 import Icon from '../../components/Icon.astro';
 import { categories, getCategory } from '../../data/categories';
 import { sortOffers, isExpired } from '../../lib/offers';
+import { adAfterIndexes } from '../../lib/ads';
 
 export async function getStaticPaths() {
   return categories.map((category) => ({ params: { category: category.slug }, props: { category } }));
@@ -15,6 +16,7 @@ const { category } = Astro.props;
 const offers = sortOffers(
   (await getCollection('offers')).filter((o) => o.data.category === category.slug && !isExpired(o)),
 );
+const adAt = new Set(adAfterIndexes(offers.length));
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -40,7 +42,12 @@ const jsonLd = {
         <>
           <p class="muted count">{offers.length} verified offer{offers.length === 1 ? '' : 's'}</p>
           <div class="grid grid-offers">
-            {offers.map((o) => <OfferCard offer={o} />)}
+            {offers.map((o, i) => (
+              <>
+                <OfferCard offer={o} />
+                {adAt.has(i) && <AdSlot format="in-feed" />}
+              </>
+            ))}
           </div>
         </>
       ) : (

@@ -5,7 +5,7 @@ interface Props {
   /** AdSense ad slot id (from your AdSense dashboard). */
   slot?: string;
   /** Layout hint for placeholder sizing. */
-  format?: 'leaderboard' | 'rectangle' | 'in-article';
+  format?: 'leaderboard' | 'rectangle' | 'in-article' | 'in-feed';
   label?: string;
 }
 const { slot = '', format = 'rectangle', label = 'Advertisement' } = Astro.props;
@@ -44,4 +44,6 @@ const live = site.adsense.enabled && site.adsense.client && slot;
   .ad-leaderboard { min-height: 100px; }
   .ad-rectangle { min-height: 250px; }
   .ad-in-article { min-height: 160px; }
+  /* sized to sit in the offer grid like a card */
+  .ad-in-feed { min-height: 230px; border-radius: var(--radius-lg); height: 100%; }
 </style>

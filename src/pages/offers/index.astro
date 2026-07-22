@@ -7,12 +7,17 @@ import Icon from '../../components/Icon.astro';
 import Badge from '../../components/Badge.astro';
 import { categories, getCategory } from '../../data/categories';
 import { isExpired, verifyGroup, scoreTier, offerTypeLabel } from '../../lib/offers';
+import AdSlot from '../../components/AdSlot.astro';
+import { adAfterIndexes } from '../../lib/ads';
 
 const all = (await getCollection('offers')).filter((o) => !isExpired(o));
 // Default order = score high→low, then most recently checked.
 const sorted = [...all].sort(
   (a, b) => b.data.score - a.data.score || b.data.lastChecked.getTime() - a.data.lastChecked.getTime(),
 );
+// In-feed ad positions for the default (score) order; the client script keeps them
+// interleaved while the grid is in its pristine state and hides them once filtered.
+const adAt = new Set(adAfterIndexes(sorted.length));
 
 const catFacets = categories
   .map((c) => ({ ...c, n: all.filter((o) => o.data.category === c.slug).length }))
@@ -129,8 +134,11 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
           </div>
 
           <div id="cards" class="grid grid-offers">
-            {sorted.map((o) => (
-              <div class="item" {...dataAttrs(o)}><OfferCard offer={o} /></div>
+            {sorted.map((o, i) => (
+              <>
+                <div class="item" {...dataAttrs(o)}><OfferCard offer={o} /></div>
+                {adAt.has(i) && <div class="item ad-item"><AdSlot format="in-feed" /></div>}
+              </>
             ))}
           </div>
 
@@ -222,7 +230,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
     };
 
     const updateFacets = () => {
-      const items = [...cards.children];
+      const items = [...cards.querySelectorAll('.item:not(.ad-item)')];
       FACETS.forEach((facet) => {
         const pool = items.filter((el) => matchesExcept(el, facet));
         const inputs = [...document.querySelectorAll(`input[data-facet="${facet}"]`)];
@@ -242,13 +250,35 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
       });
     };
 
+    // In-feed ad cadence — mirrors src/lib/ads.ts. Ads live in the cards grid only,
+    // show only in the pristine default browse, and never trail a filtered subset.
+    const AD_INTERVAL = 6;
     const apply = () => {
-      document.querySelectorAll('.item').forEach((el) => { el.hidden = !show(el); });
-      sortIn(cards);
+      // table view: rows filter + sort, never any ads
+      document.querySelectorAll('#table .item').forEach((el) => { el.hidden = !show(el); });
       sortIn(tbody);
-      const shown = [...cards.children].filter((c) => !c.hidden).length;
-      countEl.textContent = `${shown} offer${shown === 1 ? '' : 's'}`;
-      emptyEl.hidden = shown !== 0;
+
+      // cards view: filter + sort the offers, then interleave the ad cells — but only
+      // when nothing is filtered/searched and the default score sort is active
+      const adCells = [...cards.querySelectorAll('.ad-item')];
+      const offerCells = [...cards.querySelectorAll('.item:not(.ad-item)')];
+      const visible = offerCells.filter(show).sort(cmp);
+      const pristine = !state.q && !state.cat.size && !state.type.size && !state.verify.size && state.sort === 'score';
+      const frag = document.createDocumentFragment();
+      let adi = 0;
+      visible.forEach((el, i) => {
+        el.hidden = false;
+        frag.appendChild(el);
+        if (pristine && adi < adCells.length && (i + 1) % AD_INTERVAL === 0 && i + 1 < visible.length) {
+          adCells[adi].hidden = false; frag.appendChild(adCells[adi]); adi++;
+        }
+      });
+      offerCells.forEach((el) => { if (!visible.includes(el)) { el.hidden = true; frag.appendChild(el); } });
+      adCells.slice(adi).forEach((a) => { a.hidden = true; frag.appendChild(a); });
+      cards.appendChild(frag);
+
+      countEl.textContent = `${visible.length} offer${visible.length === 1 ? '' : 's'}`;
+      emptyEl.hidden = visible.length !== 0;
       updateFacets();
     };
 
@@ -449,6 +479,8 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
      min-width:0 lets the flex items shrink to the grid track (else content min-width overflows). */
   .item { display: flex; min-width: 0; }
   .item > :global(.offer) { flex: 1; min-width: 0; }
+  /* in-feed ad cell fills its grid track like a card */
+  .ad-item > :global(.ad-ph) { flex: 1; min-width: 0; }
   .rail-inner { position: sticky; top: 84px; display: flex; flex-direction: column; gap: 1.25rem; }
   .fgroup { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
   .flabel { font-family: var(--font-display); font-weight: 500; font-size: 0.95rem; letter-spacing: -0.01em; }
