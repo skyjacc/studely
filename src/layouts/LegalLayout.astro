@@ -1,0 +1,72 @@
+---
+import Layout from './Layout.astro';
+
+// Wraps a legal Markdown page in the public site chrome with a readable prose
+// column. The `.md` pages under src/pages/legal/ point their `layout:`
+// frontmatter here; Astro passes their frontmatter in and renders the body
+// into <slot>. Kept deliberately plain — a policy page is for reading.
+interface FrontMatter {
+  title: string;
+  description?: string;
+  /** Shown under the title; the body may also cite the effective date. */
+  updated?: string;
+  /** While true the page is noindex and shows a "draft, not in force" banner.
+   *  Flip to false (and set the effective date) at publish time. */
+  draft?: boolean;
+}
+
+const { frontmatter } = Astro.props as { frontmatter: FrontMatter };
+const { title, description, updated, draft = true } = frontmatter;
+---
+
+<Layout title={title} description={description} noindex={draft}>
+  <section class="legal">
+    <div class="wrap">
+      <div class="legal-inner">
+        {draft && (
+          <p class="legal-draft" role="note">
+            <strong>Draft.</strong> This policy is being finalised and is not yet in force.
+          </p>
+        )}
+        <header class="legal-head">
+          <p class="legal-eyebrow">Legal</p>
+          <h1>{title}</h1>
+          {updated && <p class="legal-updated">Last updated: {updated}</p>}
+        </header>
+        <article class="prose"><slot /></article>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .legal { padding-block: clamp(2.5rem, 1.5rem + 4vw, 5rem); }
+  .legal-inner { max-width: 72ch; margin-inline: auto; }
+
+  .legal-draft {
+    margin-bottom: 2rem; padding: 0.7rem 1rem; border-radius: var(--radius);
+    border: 1px solid var(--border-strong); background: var(--surface);
+    font-size: var(--step--1); color: var(--text-muted);
+  }
+  .legal-draft strong { color: var(--ink); }
+
+  .legal-head { margin-bottom: 2.25rem; padding-bottom: 1.4rem; border-bottom: 1px solid var(--border); }
+  .legal-eyebrow {
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.8rem;
+  }
+  .legal-head h1 { font-size: clamp(1.9rem, 1.4rem + 2.2vw, 3rem); letter-spacing: -0.02em; line-height: 1.05; }
+  .legal-updated { margin-top: 0.7rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); }
+
+  /* the global .prose class styles headings/lists/links but not tables */
+  .legal :global(.prose table) {
+    width: 100%; border-collapse: collapse; margin-block: 1.35rem;
+    font-size: var(--step--1); display: block; overflow-x: auto;
+  }
+  .legal :global(.prose th), .legal :global(.prose td) {
+    border: 1px solid var(--border); padding: 0.55rem 0.7rem; text-align: left; vertical-align: top;
+  }
+  .legal :global(.prose th) { color: var(--ink); font-weight: 600; background: var(--surface); white-space: nowrap; }
+  /* anchor targets (Section links) should clear the sticky header */
+  .legal :global(.prose h2) { scroll-margin-top: calc(var(--nav-h) + 1rem); }
+</style>

@@ -92,6 +92,12 @@ const socials = [
     </div>
 
     <div class="fmeta">
+      <nav class="f-legal" aria-label="Legal">
+        <a href="/legal/privacy">Privacy</a>
+        <a href="/legal/terms">Terms</a>
+        <a href="/legal/cookies">Cookies</a>
+        <a href="/legal/disclosure">Disclosure</a>
+      </nav>
       <p class="disclosure muted">{site.affiliateDisclosure}</p>
       <p class="muted">Offers change often. Always confirm terms on the provider’s site.</p>
     </div>
@@ -174,6 +180,9 @@ const socials = [
   .fmeta { margin-top: 2rem; padding-top: 1.3rem; border-top: 1px solid var(--border); display: grid; gap: 0.6rem; }
   .disclosure { font-size: var(--step--1); max-width: 80ch; }
   .fmeta p { font-size: var(--step--1); }
+  .f-legal { display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; margin-bottom: 0.4rem; }
+  .f-legal a { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.02em; color: var(--text-muted); transition: color 0.25s var(--ease-out); }
+  .f-legal a:hover { color: var(--ink); }
 
   @media (max-width: 820px) {
     .footer-top { grid-template-columns: 1fr; }
