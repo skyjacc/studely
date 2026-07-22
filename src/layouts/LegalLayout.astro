@@ -39,6 +39,27 @@ const { title, description, updated, draft = true } = frontmatter;
   </section>
 </Layout>
 
+<script>
+  // Wide legal tables scroll horizontally; a scroll container must be reachable by
+  // keyboard (WCAG 2.1.1 / axe scrollable-region-focusable). Only the ones that
+  // actually overflow get a tab stop, and it's re-evaluated on resize.
+  function tagScrollableTables() {
+    document.querySelectorAll('.legal .prose table').forEach((t) => {
+      if (t.scrollWidth > t.clientWidth + 1) {
+        t.setAttribute('tabindex', '0');
+        t.setAttribute('role', 'region');
+        t.setAttribute('aria-label', 'Table (scroll horizontally)');
+      } else {
+        t.removeAttribute('tabindex');
+        t.removeAttribute('role');
+        t.removeAttribute('aria-label');
+      }
+    });
+  }
+  document.addEventListener('astro:page-load', tagScrollableTables);
+  window.addEventListener('resize', tagScrollableTables);
+</script>
+
 <style>
   .legal { padding-block: clamp(2.5rem, 1.5rem + 4vw, 5rem); }
   .legal-inner { max-width: 72ch; margin-inline: auto; }
