@@ -553,6 +553,9 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
 
   .empty { margin-top: 2rem; font-size: var(--step-1); }
   .item[hidden] { display: none; }
+  /* .grid sets display:grid, which beats the UA [hidden] rule — so the Table view
+     could not actually hide the cards grid. Restore hidden = hidden. */
+  #cards[hidden] { display: none; }
   /* facet rows/groups carry display:flex, which beats the UA [hidden] rule */
   .check[hidden], .fgroup[hidden] { display: none; }
 
