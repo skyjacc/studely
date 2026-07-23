@@ -4,120 +4,73 @@ export const prerender = false;
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import Wordmark from '../../components/Wordmark.astro';
 import AuthField from '../../components/AuthField.astro';
-import { createSupabaseServer, supabaseConfigured } from '../../lib/supabase';
+import { actions } from 'astro:actions';
 
 const url = Astro.url;
-let error = '';
-let sent = false;
-let sentTo = '';
-
-// Signed in, but the profile has no staff role. Said plainly — sign-up is open
-// (comments need accounts), the admin is not.
 const denied = url.searchParams.get('denied') === '1';
 const nextPath = url.searchParams.get('next') ?? '/admin';
 
-// Why the callback sent them back. Without this the visitor sees an empty form and
-// has no idea whether the link was stale, already used, or opened in the wrong
-// browser — three different problems with three different fixes.
+// Why the callback sent them back — three different problems, three different fixes.
 const REASONS: Record<string, string> = {
   otp_expired: 'That link has expired or was already used. Request a new one.',
   access_denied: 'That link is no longer valid. Request a new one.',
-  exchange_failed:
-    'Could not complete sign-in. Open the link in the same browser you requested it from.',
+  exchange_failed: 'Could not complete sign-in. Open the link in the same browser you requested it from.',
   missing_code: 'That link was incomplete. Request a new one.',
 };
 const reasonKey = url.searchParams.get('reason') ?? '';
 const reason = REASONS[reasonKey] ?? (reasonKey ? 'That sign-in link did not work. Request a new one.' : '');
 
-if (Astro.request.method === 'POST' && supabaseConfigured) {
-  const form = await Astro.request.formData();
-  const email = String(form.get('email') ?? '').trim();
-
-  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-    error = 'Enter a valid email address.';
-  } else {
-    const supabase = createSupabaseServer(Astro.request, Astro.cookies);
-    const redirectTo = new URL('/admin/auth/callback', url.origin);
-    redirectTo.searchParams.set('next', nextPath);
-
-    const { error: authError } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        // auth-js defaults this to true, which would make the ADMIN login form an
-        // unauthenticated account-creation endpoint. Staff accounts are invited,
-        // never self-served. Public sign-up (for comments) gets its own route.
-        shouldCreateUser: false,
-        emailRedirectTo: redirectTo.href,
-      },
-    });
-
-    if (authError) {
-      // Always record the precise cause for the operator. Swallowing it entirely
-      // once sent a real debugging session chasing SMTP when the API had actually
-      // answered 422 otp_disabled.
-      console.error('[admin-login] signInWithOtp failed', {
-        code: (authError as { code?: string }).code,
-        status: authError.status,
-        message: authError.message,
-      });
-
-      // Shown to the visitor: still no yes/no on whether that specific address has
-      // an account, but it names the actual rule instead of implying an outage.
-      error =
-        (authError as { code?: string }).code === 'otp_disabled'
-          ? 'No link sent. Admin accounts are invited, not self-served.'
-          : 'Could not send the link. Try again in a moment.';
-    } else {
-      sent = true;
-      sentTo = email;
-    }
-  }
-}
+// The sign-in is now the auth.requestLink action. This form posts to it and the
+// page re-renders with the result — works with JS off, and never puts a token in JS.
+const result = Astro.getActionResult(actions.auth.requestLink);
+const sent = result?.data?.ok === true;
+const sentTo = sent && result?.data && 'email' in result.data ? result.data.email : '';
+const actionError =
+  result?.data && result.data.ok === false ? result.data.error
+  : result?.error ? 'Could not send the link. Try again in a moment.'
+  : '';
 ---
 
 <AdminLayout title="Sign in" chrome={false}>
   <AuthField />
 
   <div class="card">
-    <Wordmark class="mark" />
+    <div class="head">
+      <Wordmark class="mark" />
+      <span class="eyebrow">Admin</span>
+    </div>
     <h1 class="sr-only">Sign in to Studely admin</h1>
 
-    {!supabaseConfigured ? (
+    {sent ? (
       <>
-        <h2>Not configured yet</h2>
-        <p class="note">
-          Copy <code>.env.example</code> to <code>.env</code> and fill in your Supabase project URL
-          and keys, then restart the dev server.
-        </p>
-      </>
-    ) : sent ? (
-      <>
+        <svg class="mailicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="14" rx="2.5" />
+          <path d="m3.5 7.5 8.5 5.5 8.5-5.5" />
+        </svg>
         <h2>Check your email</h2>
         <p class="note">
-          A one-time sign-in link is on its way to <strong>{sentTo}</strong>. It expires shortly,
-          and opening it brings you straight back to the admin.
+          A one-time sign-in link is on its way to <strong>{sentTo}</strong>. It expires in about an
+          hour, and opening it brings you straight back to the admin.
         </p>
-        <a class="relink" href={`/admin/login?next=${encodeURIComponent(nextPath)}`}>← Use a different email</a>
+        <div class="foot-links">
+          <form method="POST" action={actions.auth.requestLink} class="resend">
+            <input type="hidden" name="email" value={sentTo} />
+            <input type="hidden" name="next" value={nextPath} />
+            <button class="linkbtn" type="submit">Resend link</button>
+          </form>
+          <a class="relink" href={`/admin/login?next=${encodeURIComponent(nextPath)}`}>Use a different email</a>
+        </div>
       </>
     ) : (
       <>
-        {denied && (
-          <p class="alert" role="alert">That account exists but has no admin access.</p>
-        )}
+        {denied && <p class="alert" role="alert">That account exists but has no admin access.</p>}
         {reason && <p class="alert" role="alert">{reason}</p>}
-        {error && <p class="alert" role="alert">{error}</p>}
+        {actionError && <p class="alert" role="alert">{actionError}</p>}
 
-        <form method="POST" class="form">
+        <form method="POST" action={actions.auth.requestLink} class="form" id="loginform">
+          <input type="hidden" name="next" value={nextPath} />
           <label class="lbl" for="email">Email</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autocomplete="email"
-            placeholder="you@example.com"
-            class="input"
-          />
+          <input id="email" name="email" type="email" required autocomplete="email" placeholder="you@example.com" class="input" />
           <button class="btn btn-primary" type="submit">Email me a link</button>
         </form>
       </>
@@ -128,76 +81,48 @@ if (Astro.request.method === 'POST' && supabaseConfigured) {
 </AdminLayout>
 
 <script>
-  // Progressive enhancement: submit without a full page reload.
-  //
-  // The response states (sent / error / denied) are rendered by the server, so we
-  // post the same form and swap in the server's own markup rather than duplicating
-  // those strings here — one source of truth for the copy and the rules.
-  // With JS off, or on any failure, the plain form POST still works.
-  function bindLoginForm() {
-    const card = document.querySelector<HTMLElement>('.card');
-    const form = card?.querySelector<HTMLFormElement>('form.form');
-    if (!card || !form || form.dataset.bound) return;
-    form.dataset.bound = '1';
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+  // Show the submit button as busy while the request is in flight. Enhancement
+  // only — the form posts to the action with or without this.
+  for (const form of document.querySelectorAll<HTMLFormElement>('form.form, form.resend')) {
+    form.addEventListener('submit', () => {
       const btn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
-      const label = btn?.textContent ?? '';
-      if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
-
-      try {
-        const res = await fetch(location.href, {
-          method: 'POST',
-          body: new FormData(form),
-          headers: { Accept: 'text/html' },
-        });
-        const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-        const fresh = doc.querySelector('.card');
-        if (!fresh) throw new Error('unexpected response');
-
-        card.classList.add('is-swapping');
-        // let the fade-out paint before replacing the contents
-        await new Promise((r) => setTimeout(r, 120));
-        card.innerHTML = fresh.innerHTML;
-        card.classList.remove('is-swapping');
-        bindLoginForm(); // the error state renders the form again
-      } catch {
-        if (btn) { btn.disabled = false; btn.textContent = label; }
-        form.submit(); // hand it back to the browser
-      }
+      if (btn) { btn.setAttribute('aria-busy', 'true'); btn.disabled = true; }
     });
   }
-  bindLoginForm();
 </script>
 
 <style>
   .card {
-    position: relative; z-index: 1;   /* above the fixed dot field */
+    position: relative; z-index: 1;
     width: min(100%, 360px);
     border: 1px solid var(--border-strong); border-radius: 16px;
-    /* translucent so the field reads through, blurred so the text stays crisp */
     background: rgba(18, 17, 16, 0.72);
     backdrop-filter: blur(14px);
     box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.9);
     padding: clamp(1.5rem, 1rem + 1.5vw, 2rem);
     transition: opacity 0.14s var(--ease-out);
   }
-  /* this panel reuses the global .card look but is NOT an offer card — kill the
-     hover-lift transform (global.css .card:hover) so it does not jump on hover */
+  /* NOT an offer card — kill the global .card:hover lift so it doesn't jump */
   .card:hover { transform: none; box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.9); border-color: var(--border-strong); }
-  /* brief fade while the server's response is swapped in */
-  .card.is-swapping { opacity: 0.35; }
-  .form button[disabled] { opacity: 0.6; cursor: default; }
-  /* :global — the SVG carries Wordmark's own astro cid, so a scoped rule misses it */
+
+  .head { display: flex; align-items: baseline; gap: 10px; }
   .card :global(.mark) { height: 20px; color: var(--ink); }
-  h2 { margin-top: 1.1rem; font-size: 1.3rem; letter-spacing: -0.02em; }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--text-muted);
+    border: 1px solid var(--border-strong); border-radius: 6px; padding: 2px 6px;
+  }
+
+  .mailicon { width: 34px; height: 34px; color: var(--ink); margin-top: 1.3rem; }
+  h2 { margin-top: 0.9rem; font-size: 1.3rem; letter-spacing: -0.02em; }
   .note { margin-top: 0.6rem; color: var(--text-muted); font-size: var(--step--1); line-height: 1.55; }
+  .note strong { color: var(--ink); font-weight: 500; }
   .alert {
     margin-top: 0.9rem; padding: 0.6rem 0.75rem; border-radius: 9px;
     border: 1px solid var(--border-strong); background: var(--surface-2);
     color: var(--ink); font-size: var(--step--1);
   }
+
   .form { display: grid; gap: 0.5rem; margin-top: 1.4rem; }
   .lbl { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
   .input {
@@ -207,10 +132,24 @@ if (Astro.request.method === 'POST' && supabaseConfigured) {
   }
   .input:focus { outline: 2px solid var(--ink); outline-offset: 1px; border-color: var(--ink); }
   .form button { margin-top: 0.4rem; justify-content: center; }
-  code { font-family: var(--font-mono); font-size: 0.85em; color: var(--ink); }
-  .back { display: inline-block; margin-top: 1.4rem; font-size: var(--step--1); color: var(--text-muted); }
-  .back:hover { color: var(--ink); }
-  .relink { display: inline-block; margin-top: 1rem; font-size: var(--step--1); color: var(--ink); }
+  .btn[aria-busy='true'] { pointer-events: none; opacity: 0.75; }
+  .btn[aria-busy='true']::after {
+    content: ''; display: inline-block; width: 13px; height: 13px; margin-left: 9px;
+    border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%;
+    vertical-align: -2px; animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* the trailing links, tidy pair with one clear gap */
+  .foot-links { margin-top: 1.3rem; display: flex; flex-direction: column; gap: 0.55rem; align-items: flex-start; }
+  .resend { margin: 0; }
+  .linkbtn { background: none; border: none; padding: 0; font: inherit; font-size: var(--step--1); color: var(--ink); cursor: pointer; }
+  .linkbtn:hover { text-decoration: underline; }
+  .linkbtn[aria-busy='true'] { opacity: 0.6; pointer-events: none; }
+  .relink { font-size: var(--step--1); color: var(--ink); }
   .relink:hover { text-decoration: underline; }
-  .note strong { color: var(--ink); font-weight: 500; }
+  .back { display: block; margin-top: 1.4rem; font-size: var(--step--1); color: var(--text-muted); }
+  .back:hover { color: var(--ink); }
+
+  @media (prefers-reduced-motion: reduce) { .btn[aria-busy='true']::after { animation: none; } }
 </style>

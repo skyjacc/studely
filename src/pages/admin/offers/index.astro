@@ -3,35 +3,19 @@ export const prerender = false;
 
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { createSupabaseServer } from '../../../lib/supabase';
-import { listAllOffers, setVisibility } from '../../../lib/admin-offers';
-import { triggerDeploy } from '../../../lib/deploy-hook';
+import { listAllOffers } from '../../../lib/admin-offers';
 import { getCategory } from '../../../data/categories';
 
 const { profile } = Astro.locals;
 if (!profile) return Astro.redirect('/admin/login', 302);
 const supabase = createSupabaseServer(Astro.request, Astro.cookies);
 
-let notice: string | null = null;
-let error: string | null = null;
-
-if (Astro.request.method === 'POST') {
-  const form = await Astro.request.formData();
-  const action = String(form.get('_action') ?? '');
-  const slug = String(form.get('slug') ?? '');
-  if ((action === 'publish' || action === 'unpublish') && slug) {
-    const vis = action === 'publish' ? 'published' : 'draft';
-    const res = await setVisibility(supabase, slug, vis);
-    if (res.ok) {
-      await triggerDeploy(`${action} ${slug}`);
-      return Astro.redirect(`/admin/offers?done=${action}`, 303);
-    }
-    error = res.error ?? 'Could not update visibility';
-  }
-}
-
 const done = Astro.url.searchParams.get('done');
-if (done === 'publish') notice = 'Offer published — a rebuild was triggered.';
-if (done === 'unpublish') notice = 'Offer unpublished — a rebuild was triggered.';
+const notice =
+  done === 'publish' ? 'Offer published — a rebuild was triggered.'
+  : done === 'unpublish' ? 'Offer unpublished — a rebuild was triggered.'
+  : done === 'deleted' ? 'Offer deleted.'
+  : null;
 
 const offers = await listAllOffers(supabase);
 const published = offers.filter((o) => o.visibility === 'published').length;
@@ -47,7 +31,7 @@ const checked = (iso: string) => {
 
 <AdminLayout title="Offers" subtitle={`${offers.length} total · ${published} live · ${drafts} draft`} handle={profile.handle} role={profile.role}>
   {notice && <p class="banner ok">{notice}</p>}
-  {error && <p class="banner bad">{error}</p>}
+  <p class="banner bad" id="listerr" hidden></p>
 
   <div class="bar">
     <span class="mono">The library</span>
@@ -76,14 +60,11 @@ const checked = (iso: string) => {
           </div>
           <div class="acts">
             <a class="lnk" href={`/admin/offers/${o.slug}`}>Edit</a>
-            <form method="POST">
-              <input type="hidden" name="slug" value={o.slug} />
-              {o.visibility === 'published' ? (
-                <button class="lnk" name="_action" value="unpublish">Unpublish</button>
-              ) : (
-                <button class="lnk go" name="_action" value="publish">Publish</button>
-              )}
-            </form>
+            {o.visibility === 'published' ? (
+              <button class="lnk" data-vis="unpublish" data-slug={o.slug}>Unpublish</button>
+            ) : (
+              <button class="lnk go" data-vis="publish" data-slug={o.slug}>Publish</button>
+            )}
           </div>
         </div>
       </article>
@@ -91,6 +72,29 @@ const checked = (iso: string) => {
     {offers.length === 0 && <p class="empty">No offers yet. Create the first one.</p>}
   </div>
 </AdminLayout>
+
+<script>
+  import { actions } from 'astro:actions';
+
+  const err = document.getElementById('listerr');
+  const showErr = (m: string) => { if (err) { err.textContent = m; err.hidden = false; } };
+
+  for (const btn of document.querySelectorAll<HTMLButtonElement>('button[data-vis]')) {
+    btn.addEventListener('click', async () => {
+      const slug = btn.dataset.slug!;
+      const action = btn.dataset.vis!;
+      const visibility = action === 'publish' ? 'published' : 'draft';
+      btn.disabled = true;
+      const { data, error } = await actions.offers.setVisibility({ slug, visibility });
+      if (error || !data?.ok) {
+        btn.disabled = false;
+        showErr(error?.message ?? 'Could not update visibility');
+        return;
+      }
+      location.assign(`/admin/offers?done=${action}`);
+    });
+  }
+</script>
 
 <style>
   .banner { padding: 0.7rem 1rem; border-radius: 10px; font-size: var(--step--1); margin-bottom: 1rem; border: 1px solid var(--border-strong); }

@@ -4,9 +4,8 @@ export const prerender = false;
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import OfferFields from '../../../components/admin/OfferFields.astro';
 import { createSupabaseServer } from '../../../lib/supabase';
-import { validateOfferInput, attributeVocabulary, type OfferFormRaw } from '../../../lib/offer-input';
-import { getOfferForEdit, updateOffer, setVisibility, deleteOffer, replaceAttributes } from '../../../lib/admin-offers';
-import { triggerDeploy } from '../../../lib/deploy-hook';
+import { attributeVocabulary } from '../../../lib/offer-input';
+import { getOfferForEdit } from '../../../lib/admin-offers';
 
 const { profile } = Astro.locals;
 if (!profile) return Astro.redirect('/admin/login', 302);
@@ -26,61 +25,9 @@ const fromRow = (r: Record<string, any>) => ({
   tags: Array.isArray(r.tags) ? r.tags.join(', ') : '',
   expires_at: r.expires_at ?? '',
 });
-
-let v: Record<string, any> = fromRow(row);
-let attributeKeys: string[] = existing.attributeKeys;
-let errors: Record<string, string> = {};
-let error: string | null = null;
-
-if (Astro.request.method === 'POST') {
-  const form = await Astro.request.formData();
-  const g = (k: string) => { const x = form.get(k); return typeof x === 'string' ? x : ''; };
-  const cb = (k: string) => form.get(k) != null;
-  const action = g('_action');
-
-  if (action === 'delete') {
-    const wasPublished = row.visibility === 'published';
-    const res = await deleteOffer(supabase, slug);
-    if (res.ok) {
-      if (wasPublished) await triggerDeploy('delete ' + slug);
-      return Astro.redirect('/admin/offers?done=deleted', 303);
-    }
-    error = res.error ?? 'Could not delete';
-  } else if (action === 'publish' || action === 'unpublish') {
-    const vis = action === 'publish' ? 'published' : 'draft';
-    const res = await setVisibility(supabase, slug, vis);
-    if (res.ok) {
-      await triggerDeploy(action + ' ' + slug);
-      return Astro.redirect(`/admin/offers/${slug}?done=${action}`, 303);
-    }
-    error = res.error ?? 'Could not change visibility';
-  } else {
-    const raw: OfferFormRaw = {
-      title: g('title'), provider: g('provider'), category: g('category'), summary: g('summary'),
-      value: g('value'), body: g('body'), url: g('url'), verification: g('verification'),
-      eligibility: g('eligibility'), offer_type: g('offer_type'), discount_percent: g('discount_percent'),
-      status: g('status'), tags: g('tags'), expires_at: g('expires_at'),
-      affiliate: cb('affiliate'), sponsored: cb('sponsored'), featured: cb('featured'), ongoing: cb('ongoing'),
-    };
-    v = { ...raw, slug };
-    attributeKeys = form.getAll('attr').map(String);
-    const result = validateOfferInput(raw, { requireSlug: false });
-    errors = result.errors;
-    if (result.value) {
-      const u = await updateOffer(supabase, slug, result.value);
-      if (u.ok) {
-        const a = await replaceAttributes(supabase, row.id, attributeKeys);
-        if (a.ok) {
-          if (row.visibility === 'published') await triggerDeploy('save ' + slug);
-          return Astro.redirect(`/admin/offers/${slug}?done=save`, 303);
-        }
-        error = a.error ?? 'Saved fields, but attributes failed';
-      } else {
-        error = u.error ?? 'Could not save';
-      }
-    }
-  }
-}
+const v = fromRow(row);
+const attributeKeys: string[] = existing.attributeKeys;
+const errors: Record<string, string> = {};
 
 const done = Astro.url.searchParams.get('done');
 const created = Astro.url.searchParams.get('created');
@@ -98,10 +45,10 @@ const checkedSet = new Set(attributeKeys);
 <AdminLayout title={row.title as string} subtitle={`/offers/${slug}`} handle={profile.handle} role={profile.role}>
   <a class="back" href="/admin/offers">← All offers</a>
   {notice && <p class="banner ok">{notice}</p>}
-  {error && <p class="banner bad">{error}</p>}
+  <p class="banner bad" data-form-error hidden></p>
 
   <div class="layout">
-    <form method="POST" class="editor">
+    <form class="editor" id="offer-form" data-slug={slug}>
       <OfferFields v={v} errors={errors} createMode={false} />
 
       <div class="attrs">
@@ -123,7 +70,7 @@ const checkedSet = new Set(attributeKeys);
       </div>
 
       <div class="actions">
-        <button class="btn pri" name="_action" value="save" type="submit">Save changes</button>
+        <button class="btn pri" type="submit">Save changes</button>
         <a class="btn" href="/admin/offers">Done</a>
       </div>
     </form>
@@ -134,23 +81,50 @@ const checkedSet = new Set(attributeKeys);
           <span class="score">{row.score}</span>
           <div><b>Studely score</b><span>derived from attributes</span></div>
         </div>
-        <div class="vis">
-          <span class={`pill v-${row.visibility}`}>{row.visibility}</span>
-        </div>
+        <div class="vis"><span class={`pill v-${row.visibility}`}>{row.visibility}</span></div>
         {row.visibility === 'published' ? (
-          <form method="POST"><button class="btn wide" name="_action" value="unpublish">Unpublish</button></form>
+          <button class="btn wide" data-vis="unpublish" data-slug={slug}>Unpublish</button>
         ) : (
-          <form method="POST"><button class="btn wide pub" name="_action" value="publish">Publish</button></form>
+          <button class="btn wide pub" data-vis="publish" data-slug={slug}>Publish</button>
         )}
         <p class="hint">Publishing triggers a site rebuild so the change goes live.</p>
       </div>
-
-      <form method="POST" class="danger" onsubmit="return confirm('Delete this offer permanently?')">
-        <button class="btn del" name="_action" value="delete">Delete offer</button>
-      </form>
+      <button class="btn del" data-del data-slug={slug}>Delete offer</button>
     </aside>
   </div>
 </AdminLayout>
+
+<script>
+  import { bindOfferForm } from '../../../components/admin/offer-form-client';
+  import { actions } from 'astro:actions';
+
+  const form = document.getElementById('offer-form') as HTMLFormElement | null;
+  if (form) bindOfferForm({ form, mode: 'edit', slug: form.dataset.slug });
+
+  const banner = document.querySelector<HTMLElement>('[data-form-error]');
+  const showErr = (m: string) => { if (banner) { banner.hidden = false; banner.textContent = m; } };
+
+  for (const btn of document.querySelectorAll<HTMLButtonElement>('button[data-vis]')) {
+    btn.addEventListener('click', async () => {
+      const s = btn.dataset.slug!;
+      const action = btn.dataset.vis!;
+      const visibility = action === 'publish' ? 'published' : 'draft';
+      btn.disabled = true;
+      const { data, error } = await actions.offers.setVisibility({ slug: s, visibility });
+      if (error || !data?.ok) { btn.disabled = false; showErr(error?.message ?? 'Could not change visibility'); return; }
+      location.assign(`/admin/offers/${s}?done=${action}`);
+    });
+  }
+
+  const del = document.querySelector<HTMLButtonElement>('button[data-del]');
+  del?.addEventListener('click', async () => {
+    if (!confirm('Delete this offer permanently?')) return;
+    del.disabled = true;
+    const { data, error } = await actions.offers.remove({ slug: del.dataset.slug! });
+    if (error || !data?.ok) { del.disabled = false; showErr(error?.message ?? 'Could not delete'); return; }
+    location.assign('/admin/offers?done=deleted');
+  });
+</script>
 
 <style>
   .back { display: inline-block; font-size: var(--step--1); color: var(--text-muted); margin-bottom: 1rem; }
@@ -164,6 +138,7 @@ const checkedSet = new Set(attributeKeys);
   .actions { display: flex; gap: 12px; margin-top: 1.6rem; padding-top: 1.2rem; border-top: 1px solid var(--border); }
   .btn { display: inline-flex; align-items: center; justify-content: center; font-size: var(--step--1); font-weight: 500; padding: 9px 16px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink); cursor: pointer; font-family: inherit; }
   .btn:hover { background: var(--surface-2); }
+  .btn[disabled] { opacity: 0.6; pointer-events: none; }
   .btn.pri { background: var(--ink); color: var(--surface); border-color: var(--ink); }
   .btn.wide { width: 100%; }
   .btn.pub { background: rgba(84,201,162,.14); border-color: rgba(84,201,162,.4); color: #7fd6b0; }
@@ -192,7 +167,6 @@ const checkedSet = new Set(attributeKeys);
   .pill.v-published { background: rgba(84,201,162,.14); color: #6fd0ac; }
   .pill.v-draft { background: var(--surface-2); color: var(--text-muted); }
   .pill.v-archived { background: rgba(224,101,92,.12); color: #e0918a; }
-  .side form { margin: 0; }
   .hint { font-size: 11.5px; color: var(--text-muted); margin: 0; line-height: 1.5; }
 
   @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } .side { position: static; } }
