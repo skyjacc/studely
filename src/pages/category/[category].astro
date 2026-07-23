@@ -1,5 +1,5 @@
 ---
-import { getCollection } from 'astro:content';
+import { getAllOffers } from '../../lib/offers-source';
 import Layout from '../../layouts/Layout.astro';
 import OfferCard from '../../components/OfferCard.astro';
 import AdSlot from '../../components/AdSlot.astro';
@@ -15,7 +15,7 @@ export async function getStaticPaths() {
 
 const { category } = Astro.props;
 const offers = sortOffers(
-  (await getCollection('offers')).filter((o) => o.data.category === category.slug && !isExpired(o)),
+  (await getAllOffers()).filter((o) => o.data.category === category.slug && !isExpired(o)),
 );
 const adAt = new Set(site.adsense.slots.inFeed ? adAfterIndexes(offers.length) : []);
 
