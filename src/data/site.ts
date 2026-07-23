@@ -11,13 +11,18 @@ export const site = {
   locale: 'en',
   author: 'Studely',
   /**
-   * Google AdSense. When your account is approved, set `client` to your
-   * publisher id (ca-pub-XXXXXXXXXXXXXXXX) and flip `enabled` to true.
-   * Until then, ad slots render as harmless labelled placeholders.
+   * Google AdSense. `client` set + `enabled` loads the verification/auto-ads
+   * script in <head>, which is what "connect your site" in AdSense needs.
+   * Manual ad units only render once their `slots` id is filled in (from
+   * AdSense → Ads → "By ad unit"); an empty slot renders nothing on production,
+   * so there are no blank/placeholder boxes before the units exist.
+   * A cookie-consent message is required for EEA/UK — enable Google's built-in
+   * GDPR message in AdSense (Privacy & messaging).
    */
   adsense: {
-    client: '',
-    enabled: false,
+    client: 'ca-pub-1024097074226135',
+    enabled: true,
+    slots: { inFeed: '', inArticle: '', leaderboard: '' },
   },
   /**
    * Default affiliate disclosure shown site-wide (FTC / ad-network friendly).

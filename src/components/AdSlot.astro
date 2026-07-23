@@ -9,7 +9,10 @@ interface Props {
   label?: string;
 }
 const { slot = '', format = 'rectangle', label = 'Advertisement' } = Astro.props;
-const live = site.adsense.enabled && site.adsense.client && slot;
+const live = Boolean(site.adsense.enabled && site.adsense.client && slot);
+// Placeholder only in local dev (no account wired). On production with a client
+// but no slot id, render nothing — no blank labelled boxes before the units exist.
+const devPlaceholder = !site.adsense.client;
 ---
 
 {live ? (
@@ -22,12 +25,11 @@ const live = site.adsense.enabled && site.adsense.client && slot;
     data-full-width-responsive="true"
   ></ins>
   <script is:inline>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-) : (
+) : devPlaceholder ? (
   <div class={`ad-ph ad-${format}`} aria-label={label}>
     <span>{label}</span>
-    <small>Ad slot. Connect AdSense in <code>src/data/site.ts</code></small>
   </div>
-)}
+) : null}
 
 <style>
   .ad-ph {

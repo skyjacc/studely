@@ -10,6 +10,7 @@ import { isExpired, daysUntil, verifyGroup, scoreTier, offerTypeLabel } from '..
 import { SEED_ATTRIBUTES } from '../../data/attributes';
 import AdSlot from '../../components/AdSlot.astro';
 import { adAfterIndexes } from '../../lib/ads';
+import { site } from '../../data/site';
 
 const all = (await getCollection('offers')).filter((o) => !isExpired(o));
 // Default order = score high→low, then most recently checked.
@@ -18,7 +19,8 @@ const sorted = [...all].sort(
 );
 // In-feed ad positions for the default (score) order; the client script keeps them
 // interleaved while the grid is in its pristine state and hides them once filtered.
-const adAt = new Set(adAfterIndexes(sorted.length));
+// Only when a real in-feed ad unit is configured — otherwise the grid stays clean.
+const adAt = new Set(site.adsense.slots.inFeed ? adAfterIndexes(sorted.length) : []);
 
 const catFacets = categories
   .map((c) => ({ ...c, n: all.filter((o) => o.data.category === c.slug).length }))
@@ -160,7 +162,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
             {sorted.map((o, i) => (
               <>
                 <div class="item" {...dataAttrs(o)}><OfferCard offer={o} /></div>
-                {adAt.has(i) && <div class="item ad-item"><AdSlot format="in-feed" /></div>}
+                {adAt.has(i) && <div class="item ad-item"><AdSlot format="in-feed" slot={site.adsense.slots.inFeed} /></div>}
               </>
             ))}
           </div>

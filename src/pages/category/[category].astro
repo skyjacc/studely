@@ -7,6 +7,7 @@ import Icon from '../../components/Icon.astro';
 import { categories, getCategory } from '../../data/categories';
 import { sortOffers, isExpired } from '../../lib/offers';
 import { adAfterIndexes } from '../../lib/ads';
+import { site } from '../../data/site';
 
 export async function getStaticPaths() {
   return categories.map((category) => ({ params: { category: category.slug }, props: { category } }));
@@ -16,7 +17,7 @@ const { category } = Astro.props;
 const offers = sortOffers(
   (await getCollection('offers')).filter((o) => o.data.category === category.slug && !isExpired(o)),
 );
-const adAt = new Set(adAfterIndexes(offers.length));
+const adAt = new Set(site.adsense.slots.inFeed ? adAfterIndexes(offers.length) : []);
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -45,7 +46,7 @@ const jsonLd = {
             {offers.map((o, i) => (
               <>
                 <OfferCard offer={o} />
-                {adAt.has(i) && <AdSlot format="in-feed" />}
+                {adAt.has(i) && <AdSlot format="in-feed" slot={site.adsense.slots.inFeed} />}
               </>
             ))}
           </div>
@@ -54,7 +55,7 @@ const jsonLd = {
         <p class="empty muted">No live offers here yet. We add new ones weekly.</p>
       )}
 
-      <div style="margin-top:2.5rem"><AdSlot format="leaderboard" /></div>
+      <div style="margin-top:2.5rem"><AdSlot format="leaderboard" slot={site.adsense.slots.leaderboard} /></div>
     </div>
   </section>
 </Layout>
