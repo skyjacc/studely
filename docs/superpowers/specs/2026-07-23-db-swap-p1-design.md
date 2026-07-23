@@ -69,7 +69,7 @@ export async function getAllOffers(): Promise<OfferView[]>;
 export async function getOffer(slug: string): Promise<OfferView | null>;
 ```
 
-**Client.** `createSupabaseAdmin()` (service-role, already documented as the build-time reader). Build/server context only — never imported by client code.
+**Client.** `createSupabaseBuild()` — a session-less **anon** client added to `src/lib/supabase.ts`. Build/server context only, never imported by client code. (Revised during implementation from the service-role `createSupabaseAdmin()`: published offers and their attributes are public under RLS — `offers_read_published`, `attrs_read` — so the build reads them under least privilege with the anon key already present in CI and Vercel, and needs no service-role secret in the build environment.)
 
 **Queries.** One `offers` select filtered `visibility = 'published'`; one `offer_attributes` select for those offer ids; joined in memory. Two round-trips total, at build.
 
