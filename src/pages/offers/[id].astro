@@ -28,6 +28,15 @@ const related = sortOffers(
 
 const rel = d.affiliate ? 'sponsored nofollow noopener' : 'nofollow noopener';
 
+// Trust signals — the moat, made visible. Data already carried by the offer.
+const verified = d.status !== 'unverified';
+const checkedAgo = (dt: Date) => {
+  const days = Math.floor((Date.now() - dt.getTime()) / 86_400_000);
+  return days <= 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`;
+};
+// Score breakdown, strongest reasons first — every point is attributable.
+const scoreAttrs = [...offer.attributes].sort((a, b) => b.points - a.points);
+
 const pageUrl = new URL(`/offers/${offer.id}`, site.url).href;
 // Product + nested Offer is an eligible rich result (a bare Offer is not); add a BreadcrumbList.
 const jsonLd = {
@@ -101,10 +110,29 @@ const jsonLd = {
 
       <aside class="side">
         <div class="card facts">
+          {verified && (
+            <div class="trust">
+              <span class="vbadge">✓ Verified</span>
+              <span class="muted">checked {checkedAgo(d.lastChecked)}</span>
+            </div>
+          )}
           <div class="scorerow">
             <span class={`score score-${scoreTier(d.score)}`}>{d.score}</span>
             <span class="muted">/10 · Studely score</span>
           </div>
+          {scoreAttrs.length > 0 && (
+            <div class="why">
+              <span class="why-h">Why this score</span>
+              <ul class="breakdown">
+                {scoreAttrs.map((a) => (
+                  <li>
+                    <span class="bl">{a.label}</span>
+                    <b class={a.points >= 0 ? 'pos' : 'neg'}>{a.points >= 0 ? `+${a.points}` : a.points}</b>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <p class="value" style={`--cat:${cat?.accent ?? 'var(--accent)'}`}>{d.value}</p>
           <a class="btn btn-primary go" href={`/go/${offer.id}`} target="_blank" rel={rel}
             data-go data-slug={offer.id} data-category={d.category} data-type={d.offerType}
@@ -157,6 +185,16 @@ const jsonLd = {
   .facts { padding: 1.4rem; }
   .scorerow { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.85rem; font-size: var(--step--1); }
   .scorerow .score { display: inline-grid; place-items: center; min-width: 42px; height: 42px; padding: 0 0.4rem; font-family: var(--font-display); font-weight: 600; font-size: 1.4rem; line-height: 1; border: 1px solid var(--border); border-radius: 10px; }
+  .trust { display: flex; align-items: center; gap: 8px; margin-bottom: 0.7rem; font-size: var(--step--1); }
+  .vbadge { display: inline-flex; align-items: center; gap: 4px; font-weight: 500; color: #6fd0ac; background: rgba(84,201,162,.12); border: 1px solid rgba(84,201,162,.32); border-radius: 20px; padding: 2px 9px; font-size: 0.72rem; }
+  .why { margin: 0.9rem 0 1rem; padding-bottom: 1rem; border-bottom: 1px dashed var(--border); }
+  .why-h { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); }
+  .breakdown { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.32rem; }
+  .breakdown li { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: var(--step--1); }
+  .breakdown .bl { color: var(--ink); }
+  .breakdown b { font-variant-numeric: tabular-nums; font-weight: 600; flex: none; }
+  .breakdown b.pos { color: #54c9a2; }
+  .breakdown b.neg { color: #e0a44a; }
   .facts .value { font-family: var(--font-display); font-weight: 600; font-size: 1.5rem; color: var(--ink); }
   .go { width: 100%; justify-content: center; margin-top: 1rem; }
   .facts dl { margin-top: 1.25rem; display: grid; gap: 0.85rem; }
