@@ -1,5 +1,6 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { marked } from 'marked';
+import { getAllOffers } from '../../lib/offers-source';
 import Layout from '../../layouts/Layout.astro';
 import OfferCard from '../../components/OfferCard.astro';
 import AdSlot from '../../components/AdSlot.astro';
@@ -10,17 +11,17 @@ import { site } from '../../data/site';
 import { offerTypeLabel, isExpiringSoon, isExpired, sortOffers, formatDate, scoreTier } from '../../lib/offers';
 
 export async function getStaticPaths() {
-  const offers = await getCollection('offers');
-  return offers.map((offer) => ({ params: { id: offer.id }, props: { offer } }));
+  const offers = await getAllOffers();
+  return offers.map((offer) => ({ params: { id: offer.slug }, props: { offer } }));
 }
 
 const { offer } = Astro.props;
 const d = offer.data;
 const cat = getCategory(d.category);
-const { Content } = await render(offer);
+const bodyHtml = await marked.parse(offer.body);
 
 const related = sortOffers(
-  (await getCollection('offers')).filter(
+  (await getAllOffers()).filter(
     (o) => o.data.category === d.category && o.id !== offer.id && !isExpired(o),
   ),
 ).slice(0, 3);
@@ -84,9 +85,7 @@ const jsonLd = {
 
         <p class="lead summary">{d.summary}</p>
 
-        <div class="prose body">
-          <Content />
-        </div>
+        <div class="prose body" set:html={bodyHtml}></div>
 
         <div class="in-article"><AdSlot format="in-article" slot={site.adsense.slots.inArticle} /></div>
 
