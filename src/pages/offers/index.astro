@@ -155,12 +155,12 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
                       <td><span class={`tscore score-${scoreTier(o.data.score)}`}>{o.data.score}</span></td>
                       <td class="tname">
                         <span class="tlogo logo-tile"><Logo provider={o.data.provider} /></span>
-                        <a href={`/offers/${o.id}`}>{o.data.title}</a>
+                        <a href={`/offers/${o.id}`} title={o.data.title}>{o.data.title}</a>
                       </td>
                       <td><a class="tcat" href={`/category/${o.data.category}`}>{cat?.name ?? o.data.category}</a></td>
                       <td><Badge variant={o.data.offerType} label={offerTypeLabel[o.data.offerType] ?? o.data.offerType} /></td>
-                      <td class="tval">{o.data.value}</td>
-                      <td class="muted">{o.data.verification}</td>
+                      <td class="tval" title={o.data.value}>{o.data.value}</td>
+                      <td class="muted tverify" title={o.data.verification}>{verifyGroup(o.data.verification)}</td>
                       <td><a class="tgo" href={o.data.url} target="_blank" rel="nofollow noopener">Get ↗</a></td>
                     </tr>
                   );
@@ -573,12 +573,14 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
   #table th:nth-child(6) { width: 19%; }  /* Verify */
   #table th:nth-child(7) { width: 8%; }   /* Get */
   thead th { text-align: left; font-family: var(--font-display); font-weight: 500; padding: 0.85rem 0.8rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  /* top-align so cells don't scatter down a tall row when verify wraps to 2-3 lines */
-  tbody td { padding: 0.75rem 0.8rem; border-bottom: 1px solid var(--border-soft); vertical-align: top; overflow-wrap: anywhere; }
+  /* one line per cell + ellipsis → uniform, scannable rows that scale to hundreds
+     of offers regardless of how long a name / value / verification string is.
+     Full text is on the offer page and in each cell's title tooltip. */
+  tbody td { padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border-soft); vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   tbody tr:last-child td { border-bottom: 0; }
   .tscore { display: inline-grid; place-items: center; min-width: 34px; height: 30px; font-family: var(--font-display); font-weight: 500; border: 1px solid var(--border); border-radius: 8px; }
   .tname { display: flex; align-items: center; gap: 0.6rem; min-width: 0; font-weight: 600; }
-  .tname a { min-width: 0; }
+  .tname a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tname a:hover { color: var(--accent-ink); }
   .tlogo { width: 34px; height: 34px; flex: none; color: var(--ink); }
   .tcat:hover { color: var(--accent-ink); }
