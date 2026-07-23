@@ -54,7 +54,7 @@ We do **not** sell your personal data for money, and we do not currently "share"
 
 Studely earns revenue from **affiliate links**. When you click through to a third-party vendor, that vendor may set an affiliate tracking cookie or append a tracking parameter so the vendor can attribute a resulting sign-up or purchase to Studely. This happens **on the vendor's site, under the vendor's privacy policy**, not on Studely.
 
-Per FTC guidance and equivalent norms, offers that pay us an affiliate commission are disclosed. Affiliate revenue never changes whether an offer is listed or how it is verified — the editorial catalogue is human-verified independently of monetisation.
+Per FTC guidance and equivalent norms, offers that pay us an affiliate commission are disclosed. Affiliate revenue never changes whether an offer is listed or how it is scored — the editorial catalogue is ranked independently of monetisation.
 
 ---
 

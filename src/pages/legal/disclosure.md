@@ -41,7 +41,7 @@ When advertising goes live, ads on Studely will be served by **Google AdSense**.
 
 ### Editorial independence
 
-Studely's catalogue is **editorially independent**. Each offer is human-verified before it is published, and inclusion, ranking and the words we write about an offer are decided on the merits — never bought.
+Studely's catalogue is **editorially independent**. Each offer is scored against fixed, published criteria, and inclusion, ranking and the words we write about an offer are decided on the merits — never bought.
 
 - Vendors cannot pay to be listed, to rank higher, or to have a negative note removed.
 - An affiliate relationship, or the presence of Google ads, has no bearing on whether an offer appears or how it scores.

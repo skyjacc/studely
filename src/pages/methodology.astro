@@ -3,27 +3,28 @@ import Layout from '@ui/layouts/Layout.astro';
 import { site } from '@core/config/site';
 ---
 
-<Layout title="How we verify offers" description="How Studely curates, verifies and re-checks every student offer.">
+<Layout title="How Studely scores offers" description="How Studely scores student offers against fixed, visible criteria — with every point explained.">
   <section class="section">
     <div class="wrap prose">
       <p class="eyebrow">Trust &amp; methodology</p>
-      <h1>How we verify offers</h1>
-      <p class="lead">Anyone can paste a list of links. We keep ours honest with a repeatable process, re-run automatically.</p>
+      <h1>How Studely scores offers</h1>
+      <p class="lead">Anyone can paste a list of links. Ours are ranked by a score you can see the reasoning for — not a gut feeling.</p>
 
-      <h2>1. Curation</h2>
-      <p>Every offer is added by hand. We only list perks from named, reputable providers, with a clear student-eligibility path. No “free trials” dressed up as freebies.</p>
+      <h2>1. Eligibility, spelled out</h2>
+      <p>Every offer shows exactly who can use it and how to prove you’re a student — a <code>.edu</code> email, SheerID, ISIC, or the provider’s own student program. If the eligibility path isn’t clear, it isn’t listed.</p>
 
-      <h2>2. Verification</h2>
-      <p>For each offer we record exactly how you prove you’re a student: a <code>.edu</code> email, SheerID, ISIC, or the GitHub Student Pack. If we can’t confirm the path, it doesn’t go live.</p>
+      <h2>2. The Studely score</h2>
+      <p>Each offer gets a score from 1 to 10, built from fixed, named criteria across three axes: <strong>what you get</strong>, <strong>how hard it is to claim</strong>, and <strong>how long it lasts</strong>. Every offer starts at a neutral 5; each named reason adds or subtracts a small amount, and the result is clamped to 1–10.</p>
+      <p>The point of this is honesty: on every offer’s page we show the full breakdown — <em>“full paid tier, free +2”</em>, <em>“no card required +1”</em>, <em>“credit expires −1”</em> — so the ranking is explainable, and you can disagree with a specific reason rather than a mystery number.</p>
 
-      <h2>3. Automatic re-checking</h2>
-      <p>A weekly job re-checks every link and flags anything that 404s, redirects to a dead page, or has expired, so we can review and remove it. Each listing shows its <strong>last checked</strong> date so you can see how fresh it is.</p>
+      <h2>3. Link checks</h2>
+      <p>Automated checks fetch each link on a schedule and surface anything broken, redirected or expired for editorial review, so dead deals don’t linger.</p>
 
       <h2>4. Honesty about money</h2>
-      <p>{site.affiliateDisclosure} Sponsored placements are always labelled <strong>Sponsored</strong>. A payment never buys a better review, only a position.</p>
+      <p>{site.affiliateDisclosure} Sponsored placements are always labelled <strong>Sponsored</strong>. A payment never buys a better score — only a position.</p>
 
       <h2>Found something wrong?</h2>
-      <p>Offers change fast. If a deal is dead or the terms moved, tell us and we’ll re-check within a day. Always confirm current terms on the provider’s own site before relying on an offer.</p>
+      <p>Offers change fast. If a deal is dead or the terms moved, tell us and we’ll review it. Always confirm current terms on the provider’s own site before relying on an offer.</p>
     </div>
   </section>
 </Layout>

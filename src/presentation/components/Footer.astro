@@ -14,7 +14,7 @@ const offerCount = (await getAllOffers()).filter((o) => !isExpired(o)).length;
 const nav = [
   { label: 'All offers', href: '/offers' },
   { label: 'Categories', href: '/categories' },
-  { label: 'How we verify', href: '/methodology' },
+  { label: 'How we score', href: '/methodology' },
   { label: 'Suggest a deal', href: `mailto:${site.email}?subject=Deal%20suggestion` },
 ];
 
@@ -50,7 +50,7 @@ const socials = [
       <div class="f-detail">
         <span class="f-label">(the directory)</span>
         <a href="/" class="brand" aria-label={`${site.name} home`}><Wordmark class="footer-logo" /></a>
-        <p class="f-about">Free tools, credits and courses for students. Verified by a human, re-checked weekly.</p>
+        <p class="f-about">Free tools, credits and courses for students. Scored against clear criteria, with the reasoning shown.</p>
         <a class="f-email" href={`mailto:${site.email}`}>{site.email}</a>
       </div>
 
@@ -66,7 +66,7 @@ const socials = [
       <div class="f-detail">
         <span class="f-label">(elsewhere)</span>
         <ul class="f-links">
-          <li><a href="/methodology">How we verify</a></li>
+          <li><a href="/methodology">How we score</a></li>
           <li><a href="/offers">Browse all {offerCount}</a></li>
           {socials.map((s) => (
             <li><a href={s.url} target="_blank" rel="me noopener">{s.label} <span aria-hidden="true">↗</span></a></li>
@@ -79,7 +79,7 @@ const socials = [
     <div class="footer-bottom">
       <div class="fb-status">
         <span class="fb-strong">{offerCount} offers live</span>
-        <span>Re-checked weekly</span>
+        <span>Scored, not scraped</span>
       </div>
       <div class="fb-mid">
         <a class="to-top" href="#top">Back to top <span class="tt-arrow" aria-hidden="true">↑</span></a>

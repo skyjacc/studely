@@ -21,7 +21,7 @@ If you are using the Service on behalf of an organisation, you represent that yo
 
 ## 2. What Studely is (and is not)
 
-Studely is an **editorial directory** of free tools, cloud credits, online courses, and discounts aimed at students. Each listing ("Offer") is a human-verified pointer to a product, programme, or promotion operated by a **third party** (the "Provider").
+Studely is an **editorial directory** of free tools, cloud credits, online courses, and discounts aimed at students. Each listing ("Offer") is an editorially scored pointer to a product, programme, or promotion operated by a **third party** (the "Provider").
 
 > **Studely is not the Provider**
 > We do not sell, supply, sponsor, endorse, warrant, or control any Offer, product, or service listed on the Service. We are a signpost, not a party to any transaction between you and a Provider. Every Offer is subject to the Provider's own terms, eligibility rules (including student-status verification), pricing, and privacy practices, which you must read and accept directly with that Provider.

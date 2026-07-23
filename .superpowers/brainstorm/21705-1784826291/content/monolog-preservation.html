@@ -1,0 +1,54 @@
+<style>
+  .concept { max-width: 1080px; margin: 0 auto; background:#090909; color:#f2f0ec; border:1px solid #292929; overflow:hidden; }
+  .concept-nav { display:flex; align-items:center; justify-content:space-between; padding:20px 28px; font-size:13px; border-bottom:1px solid rgba(255,255,255,.08); }
+  .concept-logo { font-weight:800; letter-spacing:-.08em; font-size:22px; }
+  .concept-links { display:flex; gap:28px; color:#d3d0cb; }
+  .concept-button { background:#f2f0ec; color:#111; padding:9px 12px; border-radius:5px; font-weight:700; }
+  .hero { min-height:540px; position:relative; display:grid; place-items:center; text-align:center; overflow:hidden; background:radial-gradient(ellipse at 50% 50%,#252520 0%,#11110f 43%,#080808 78%); }
+  .grain { position:absolute; inset:0; opacity:.18; background-image:radial-gradient(#fff 0.75px, transparent .75px); background-size:4px 4px; mix-blend-mode:overlay; }
+  .halo { width:38px; height:38px; border:1px solid #c5c3bd; border-radius:50%; position:relative; margin:0 auto 28px; }
+  .halo:before,.halo:after { content:''; position:absolute; inset:8px -1px; border:1px solid #c5c3bd; border-radius:50%; }
+  .halo:after { inset:-1px 8px; }
+  .hero-copy { position:relative; z-index:1; max-width:560px; }
+  .hero h1 { font-size:clamp(38px,5vw,66px); line-height:.97; margin:0; letter-spacing:-.075em; font-weight:500; }
+  .hero p { max-width:390px; margin:22px auto 0; color:#bdbab4; line-height:1.45; font-size:15px; }
+  .hero-actions { display:flex; justify-content:center; gap:11px; margin-top:26px; font-size:13px; font-weight:700; }
+  .hero-actions span { padding:10px 13px; border:1px solid #4b4a46; border-radius:4px; }
+  .hero-actions span:first-child { background:#f2f0ec; color:#111; border-color:#f2f0ec; }
+  .word { position:absolute; bottom:-65px; left:50%; transform:translateX(-50%); white-space:nowrap; font-size:clamp(110px,23vw,280px); font-weight:600; line-height:.8; letter-spacing:-.11em; color:rgba(242,240,236,.13); }
+  .proof { position:absolute; z-index:2; bottom:20px; left:24px; right:24px; display:flex; justify-content:space-between; color:#aaa7a0; font:11px/1.2 ui-monospace,monospace; text-transform:uppercase; letter-spacing:.08em; }
+  .notes { padding:26px 28px; display:grid; grid-template-columns:repeat(3,1fr); gap:20px; background:#10100f; border-top:1px solid rgba(255,255,255,.08); }
+  .notes b { display:block; font-size:12px; color:#f2f0ec; margin-bottom:7px; }
+  .notes p { margin:0; color:#aaa7a0; font-size:12px; line-height:1.45; }
+  @media (max-width:680px) { .concept-links{display:none}.notes{grid-template-columns:1fr}.proof{font-size:9px}.hero{min-height:480px}.word{bottom:-30px} }
+</style>
+
+<h2>Preserve the Monolog-like hero</h2>
+<p class="subtitle">The proposal keeps the atmosphere, oversized wordmark and restrained motion. The change is the hierarchy: Studely’s promise becomes specific and can stay true as verification coverage grows.</p>
+
+<div class="concept">
+  <div class="concept-nav">
+    <span class="concept-logo">studely</span>
+    <span class="concept-links"><span>Categories</span><span>How we verify</span></span>
+    <span class="concept-button">Browse benefits ↗</span>
+  </div>
+  <section class="hero">
+    <div class="grain"></div>
+    <div class="hero-copy">
+      <div class="halo"></div>
+      <h1>The student benefits<br>worth knowing.</h1>
+      <p>Rare free tools, credits and programmes — clearly explained, with proof when we have checked them.</p>
+      <div class="hero-actions"><span>Explore benefits ↗</span><span>How our checks work</span></div>
+    </div>
+    <div class="word">Studely</div>
+    <div class="proof"><span>Editorial directory</span><span>14 benefits live</span><span>Evidence over hype</span></div>
+  </section>
+  <div class="notes">
+    <div><b>Keep the signature</b><p>The oversized wordmark and atmospheric canvas remain the single expressive moment.</p></div>
+    <div><b>Make the claim honest</b><p>Do not promise that every link is verified or rechecked until the records demonstrate it.</p></div>
+    <div><b>Make the next step clear</b><p>One primary action leads to offers; methodology remains a quieter proof path.</p></div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:18px">This is a direction, not an implementation. Click the card if this is the right baseline, then tell me what copy or intensity feels wrong.</p>
+<div class="options"><div class="option" data-choice="preserve-monolog" onclick="toggleSelect(this)"><div class="letter">✓</div><div class="content"><h3>Keep this visual direction</h3><p>Monolog-like hero, but truthful trust copy and sharper CTA hierarchy.</p></div></div></div>
