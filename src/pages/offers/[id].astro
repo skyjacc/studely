@@ -35,6 +35,10 @@ const scoreAttrs = [...offer.attributes].sort((a, b) => b.points - a.points);
 // The verifications table is empty for now, so both rows stay hidden until real.
 const realCheck = offer.verification.verified && offer.verification.at ? offer.verification.at : null;
 
+// Long ledger values stack (label above, value full-width left) on mobile so
+// they don't wrap ragged against the right edge; short ones stay inline.
+const STACK_AT = 20;
+
 const pageUrl = new URL(`/offers/${offer.id}`, site.url).href;
 // Product + nested Offer is an eligible rich result (a bare Offer is not); add a BreadcrumbList.
 const jsonLd = {
@@ -133,8 +137,8 @@ const jsonLd = {
             {realCheck && (
               <div><dt>Status</dt><dd><span class="vbadge">✓ Verified</span></dd></div>
             )}
-            <div><dt>Eligibility</dt><dd>{d.verification}</dd></div>
-            <div><dt>Source</dt><dd><a class="rec-link" href={d.url} target="_blank" rel="nofollow noopener">Official {d.provider} page ↗</a></dd></div>
+            <div class:list={[{ stack: d.verification.length > STACK_AT }]}><dt>Eligibility</dt><dd>{d.verification}</dd></div>
+            <div class:list={[{ stack: `Official ${d.provider} page`.length > STACK_AT }]}><dt>Source</dt><dd><a class="rec-link" href={d.url} target="_blank" rel="nofollow noopener">Official {d.provider} page ↗</a></dd></div>
             {realCheck && (
               <div><dt>Last checked</dt><dd>{formatDate(new Date(realCheck))}</dd></div>
             )}
@@ -153,8 +157,8 @@ const jsonLd = {
         <section class="rec" aria-label="Eligibility and terms">
           <h2 class="sec-h">Eligibility &amp; terms</h2>
           <dl class="rec-list">
-            <div><dt>Who can apply</dt><dd>{d.eligibility}</dd></div>
-            <div><dt>Student eligibility</dt><dd>{d.verification}</dd></div>
+            <div class:list={[{ stack: d.eligibility.length > STACK_AT }]}><dt>Who can apply</dt><dd>{d.eligibility}</dd></div>
+            <div class:list={[{ stack: d.verification.length > STACK_AT }]}><dt>Student eligibility</dt><dd>{d.verification}</dd></div>
             <div><dt>Offer duration</dt><dd>{d.expires === 'ongoing' ? 'Ongoing' : d.expires}</dd></div>
           </dl>
         </section>
@@ -239,8 +243,14 @@ const jsonLd = {
   .sec-h { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 0.4rem; }
   .rec-list { margin: 0; border-top: 1px solid var(--border); }
   .rec-list > div { display: flex; align-items: baseline; justify-content: space-between; gap: 1.25rem; padding: 0.72rem 0; border-bottom: 1px solid var(--border-soft); }
-  .rec-list dt { font-size: 0.85rem; color: var(--text-muted); flex: none; }
+  .rec-list dt { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); flex: none; }
   .rec-list dd { font-weight: 500; text-align: right; min-width: 0; }
+  /* long values stack on mobile — label above, value full-width left (no ragged
+     right-aligned wrapping). Short values stay inline. */
+  @media (max-width: 640px) {
+    .rec-list > div.stack { flex-direction: column; align-items: flex-start; gap: 0.15rem; }
+    .rec-list > div.stack dd { text-align: left; }
+  }
   .rec-link { color: var(--ink); border-bottom: 1px solid var(--border-strong); white-space: nowrap; }
   .rec-link:hover { color: var(--accent-ink); border-color: var(--accent-ink); }
   .vbadge { display: inline-flex; align-items: center; gap: 4px; font-weight: 500; color: #6fd0ac; background: rgba(84,201,162,.12); border: 1px solid rgba(84,201,162,.32); border-radius: 20px; padding: 2px 9px; font-size: 0.72rem; }
