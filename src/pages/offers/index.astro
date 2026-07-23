@@ -6,7 +6,8 @@ import Logo from '../../components/Logo.astro';
 import Icon from '../../components/Icon.astro';
 import Badge from '../../components/Badge.astro';
 import { categories, getCategory } from '../../data/categories';
-import { isExpired, verifyGroup, scoreTier, offerTypeLabel } from '../../lib/offers';
+import { isExpired, daysUntil, verifyGroup, scoreTier, offerTypeLabel } from '../../lib/offers';
+import { SEED_ATTRIBUTES } from '../../data/attributes';
 import AdSlot from '../../components/AdSlot.astro';
 import { adAfterIndexes } from '../../lib/ads';
 
@@ -30,12 +31,21 @@ const verifyFacets = [...new Set(all.map((o) => verifyGroup(o.data.verification)
   .map((g) => ({ g, n: all.filter((o) => verifyGroup(o.data.verification) === g).length }))
   .sort((a, b) => b.n - a.n);
 
+// "No card required" — an offer needs a card only if the scoring flags card_required.
+const noCardCount = all.filter((o) => !(SEED_ATTRIBUTES[o.id] ?? []).includes('card_required')).length;
+
+const daysLeft = (o: (typeof sorted)[number]) => {
+  const d = daysUntil(o.data.expires);
+  return d === null ? 999999 : d; // ongoing sorts last
+};
 const dataAttrs = (o: (typeof sorted)[number]) => ({
   'data-cat': o.data.category,
   'data-type': o.data.offerType,
   'data-verify': verifyGroup(o.data.verification),
   'data-score': String(o.data.score),
   'data-checked': String(o.data.lastChecked.getTime()),
+  'data-expires': String(daysLeft(o)),
+  'data-card': (SEED_ATTRIBUTES[o.id] ?? []).includes('card_required') ? 'yes' : 'no',
   'data-name': o.data.title.toLowerCase(),
   'data-text': `${o.data.title} ${o.data.provider} ${o.data.summary} ${o.data.tags.join(' ')} ${getCategory(o.data.category)?.name ?? ''}`.toLowerCase(),
 });
@@ -61,6 +71,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
                 <select id="sort" class="select">
                   <option value="score">Score: high → low</option>
                   <option value="checked">Recently checked</option>
+                  <option value="expiring">Ending soon</option>
                   <option value="az">Name: A → Z</option>
                 </select>
               </div>
@@ -97,6 +108,16 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
             </fieldset>
 
             <fieldset class="fgroup">
+              <legend class="flabel">Requirements</legend>
+              <label class="check">
+                <input type="checkbox" data-facet="card" value="no" />
+                <span class="box" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2.4 6.3 4.7 8.6 9.6 3.7"/></svg></span>
+                <span class="ctxt">No card required</span>
+                <span class="cn">{noCardCount}</span>
+              </label>
+            </fieldset>
+
+            <fieldset class="fgroup">
               <legend class="flabel">Verify with</legend>
               {verifyFacets.map((v) => (
                 <label class="check">
@@ -118,7 +139,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
           <div class="toolbar">
             <button id="filter-toggle" class="filter-toggle" type="button" aria-expanded="false" aria-controls="filter-rail">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-              Filter &amp; sort
+              Filter &amp; sort<span class="ft-count" hidden></span>
             </button>
             <p id="count" class="count" aria-live="polite">{all.length} offers</p>
             <div class="views" role="group" aria-label="View">
@@ -132,6 +153,8 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
               </button>
             </div>
           </div>
+
+          <div id="active-filters" class="afilters" hidden aria-label="Active filters"></div>
 
           <div id="cards" class="grid grid-offers">
             {sorted.map((o, i) => (
@@ -186,11 +209,9 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
     const emptyEl = document.getElementById('empty');
     const q = document.getElementById('q');
     const sortEl = document.getElementById('sort');
-    const state = { q: '', sort: 'score', cat: new Set(), type: new Set(), verify: new Set() };
-
-    // hydrate search from ?q= (header/hero search deep-links here)
-    const q0 = (new URLSearchParams(location.search).get('q') || '').trim();
-    if (q0) { q.value = q0; state.q = q0.toLowerCase(); }
+    const state = { q: '', sort: 'score', view: 'cards', cat: new Set(), type: new Set(), verify: new Set(), card: new Set() };
+    const FSETS = ['cat', 'type', 'verify', 'card'];
+    const STORE_KEY = 'studely.offers.v1';
 
     const facetSet = (facet) => {
       const s = new Set();
@@ -198,16 +219,39 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
       return s;
     };
 
+    // Restore state from the URL (shareable / reload), else from localStorage (return
+    // visit). URL wins so a shared link always shows exactly what was shared.
+    const hydrate = () => {
+      const url = new URLSearchParams(location.search);
+      let src = url;
+      if (!['q', 'sort', 'view', ...FSETS].some((k) => url.has(k))) {
+        try { const s = localStorage.getItem(STORE_KEY); if (s) src = new URLSearchParams(s); } catch (e) {}
+      }
+      state.q = (src.get('q') || '').trim().toLowerCase();
+      q.value = src.get('q') || '';
+      const sort = src.get('sort');
+      if (['score', 'checked', 'expiring', 'az'].includes(sort)) { state.sort = sort; sortEl.value = sort; }
+      if (src.get('view') === 'table') state.view = 'table';
+      FSETS.forEach((f) => {
+        const vals = (src.get(f) || '').split(',').filter(Boolean);
+        document.querySelectorAll(`input[data-facet="${f}"]`).forEach((inp) => { if (vals.includes(inp.value)) inp.checked = true; });
+        state[f] = facetSet(f);
+      });
+    };
+    hydrate();
+
     const show = (el) => {
       if (state.q && !(el.dataset.text || '').includes(state.q)) return false;
       if (state.cat.size && !state.cat.has(el.dataset.cat)) return false;
       if (state.type.size && !state.type.has(el.dataset.type)) return false;
       if (state.verify.size && !state.verify.has(el.dataset.verify)) return false;
+      if (state.card.size && !state.card.has(el.dataset.card)) return false;
       return true;
     };
 
     const cmp = (a, b) => {
       if (state.sort === 'checked') return +b.dataset.checked - +a.dataset.checked;
+      if (state.sort === 'expiring') return +a.dataset.expires - +b.dataset.expires; // soonest first
       if (state.sort === 'az') return (a.dataset.name || '').localeCompare(b.dataset.name || '');
       return +b.dataset.score - +a.dataset.score; // score default
     };
@@ -220,12 +264,13 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
     // Live facet counts. A group is counted against every OTHER active filter but NOT its
     // own selection — otherwise picking one category would zero out the rest of that group
     // and you could never OR a second one in.
-    const FACETS = ['cat', 'type', 'verify'];
+    const FACETS = ['cat', 'type', 'verify', 'card'];
     const matchesExcept = (el, skip) => {
       if (state.q && !(el.dataset.text || '').includes(state.q)) return false;
       if (skip !== 'cat' && state.cat.size && !state.cat.has(el.dataset.cat)) return false;
       if (skip !== 'type' && state.type.size && !state.type.has(el.dataset.type)) return false;
       if (skip !== 'verify' && state.verify.size && !state.verify.has(el.dataset.verify)) return false;
+      if (skip !== 'card' && state.card.size && !state.card.has(el.dataset.card)) return false;
       return true;
     };
 
@@ -248,6 +293,72 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
         const group = inputs[0] && inputs[0].closest('.fgroup');
         if (group) group.hidden = !anyVisible; // drop the whole group if nothing is left
       });
+    };
+
+    // --- URL + localStorage persistence, removable active-filter chips, filter count ---
+    const persist = () => {
+      const p = new URLSearchParams();
+      if (state.q) p.set('q', q.value.trim());
+      if (state.sort !== 'score') p.set('sort', state.sort);
+      if (state.view !== 'cards') p.set('view', state.view);
+      FSETS.forEach((f) => { if (state[f].size) p.set(f, [...state[f]].join(',')); });
+      const qs = p.toString();
+      history.replaceState(null, '', qs ? '?' + qs : location.pathname);
+      try { localStorage.setItem(STORE_KEY, qs); } catch (e) {}
+    };
+
+    const FACET_LABEL = {};
+    document.querySelectorAll('input[data-facet]').forEach((inp) => {
+      const f = inp.dataset.facet;
+      const txt = inp.closest('.check')?.querySelector('.ctxt')?.textContent?.trim();
+      (FACET_LABEL[f] = FACET_LABEL[f] || {})[inp.value] = txt || inp.value;
+    });
+
+    const updateFilterCount = () => {
+      const n = (state.q ? 1 : 0) + FSETS.reduce((s, f) => s + state[f].size, 0);
+      const ft = document.querySelector('.ft-count');
+      if (ft) { ft.textContent = String(n); ft.hidden = n === 0; }
+    };
+
+    const removeChip = (kind, val) => {
+      if (kind === 'q') { state.q = ''; q.value = ''; }
+      else {
+        state[kind].delete(val);
+        document.querySelectorAll(`input[data-facet="${kind}"]`).forEach((i) => { if (i.value === val) i.checked = false; });
+      }
+      apply();
+    };
+
+    const renderChips = () => {
+      const box = document.getElementById('active-filters');
+      if (!box) return;
+      const chips = [];
+      if (state.q) chips.push(['q', '', '"' + q.value.trim() + '"']);
+      FSETS.forEach((f) => state[f].forEach((v) => chips.push([f, v, (FACET_LABEL[f] || {})[v] || v])));
+      box.innerHTML = '';
+      if (!chips.length) { box.hidden = true; return; }
+      box.hidden = false;
+      chips.forEach(([kind, val, label]) => {
+        const el = document.createElement('span');
+        el.className = 'achip';
+        const t = document.createElement('span'); t.textContent = label;
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = '×'; b.setAttribute('aria-label', 'Remove ' + label);
+        b.addEventListener('click', () => removeChip(kind, val));
+        el.append(t, b);
+        box.appendChild(el);
+      });
+      const clear = document.createElement('button');
+      clear.className = 'aclear'; clear.type = 'button'; clear.textContent = 'Clear all';
+      clear.addEventListener('click', resetAll);
+      box.appendChild(clear);
+    };
+
+    const resetAll = () => {
+      state.q = ''; q.value = '';
+      document.querySelectorAll('input[data-facet]').forEach((el) => (el.checked = false));
+      FSETS.forEach((f) => state[f].clear());
+      state.sort = 'score'; sortEl.value = 'score';
+      sortEl.dispatchEvent(new Event('change', { bubbles: true })); // syncs the custom listbox + applies
     };
 
     // In-feed ad cadence — mirrors src/lib/ads.ts. Ads live in the cards grid only,
@@ -280,22 +391,19 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
       countEl.textContent = `${visible.length} offer${visible.length === 1 ? '' : 's'}`;
       emptyEl.hidden = visible.length !== 0;
       updateFacets();
+      persist();
+      renderChips();
+      updateFilterCount();
     };
 
     q.addEventListener('input', () => { state.q = q.value.trim().toLowerCase(); apply(); });
     sortEl.addEventListener('change', () => { state.sort = sortEl.value; apply(); });
     document.querySelectorAll('input[data-facet]').forEach((el) =>
       el.addEventListener('change', () => {
-        state.cat = facetSet('cat'); state.type = facetSet('type'); state.verify = facetSet('verify'); apply();
+        state.cat = facetSet('cat'); state.type = facetSet('type'); state.verify = facetSet('verify'); state.card = facetSet('card'); apply();
       }),
     );
-    document.getElementById('reset').addEventListener('click', () => {
-      state.q = ''; q.value = '';
-      document.querySelectorAll('input[data-facet]').forEach((el) => (el.checked = false));
-      state.cat.clear(); state.type.clear(); state.verify.clear();
-      state.sort = 'score'; sortEl.value = 'score';
-      apply();
-    });
+    document.getElementById('reset').addEventListener('click', resetAll);
 
     // view toggle
     const vCards = document.getElementById('view-cards');
@@ -307,9 +415,12 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
       vCards.classList.toggle('is-active', !isTable);
       vTable.setAttribute('aria-pressed', String(isTable));
       vCards.setAttribute('aria-pressed', String(!isTable));
+      state.view = isTable ? 'table' : 'cards';
+      persist();
     };
     vCards.addEventListener('click', () => setView(false));
     vTable.addEventListener('click', () => setView(true));
+    setView(state.view === 'table'); // reflect the hydrated / stored view
 
     // mobile filter bottom-sheet
     const dir = document.querySelector('.dir');
@@ -535,6 +646,31 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
 
   .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
   .count { font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; }
+
+  /* active-filter chips (removable), shown above the grid when any filter is on */
+  .afilters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 1.1rem; }
+  .afilters[hidden] { display: none; }
+  .achip {
+    display: inline-flex; align-items: center; gap: 0.35em;
+    font-size: var(--step--1); font-weight: 500; color: var(--ink);
+    padding: 0.26em 0.35em 0.26em 0.7em; border-radius: var(--radius-pill);
+    border: 1px solid var(--border-control); background: var(--surface);
+  }
+  .achip button {
+    display: inline-grid; place-items: center; width: 1.25em; height: 1.25em; flex: none;
+    border: 0; border-radius: 50%; background: none; color: var(--text-muted);
+    font: inherit; line-height: 1; cursor: pointer;
+  }
+  .achip button:hover { background: var(--surface-2); color: var(--ink); }
+  .aclear { font: inherit; font-size: var(--step--1); font-weight: 500; color: var(--text-muted); background: none; border: 0; padding: 0.26em 0.4em; cursor: pointer; }
+  .aclear:hover { color: var(--ink); }
+  /* active-filter count on the mobile Filter button */
+  .ft-count {
+    display: inline-grid; place-items: center; min-width: 1.4em; height: 1.4em; padding: 0 0.35em;
+    border-radius: var(--radius-pill); background: var(--ink); color: var(--bg);
+    font-size: 0.72em; font-weight: 700; line-height: 1;
+  }
+  .ft-count[hidden] { display: none; }
   .views { display: inline-flex; gap: 0; border: 1px solid var(--border-control); border-radius: var(--radius-pill); overflow: hidden; }
   .vbtn { display: inline-flex; align-items: center; gap: 0.4em; font: inherit; font-size: var(--step--1); font-weight: 500; cursor: pointer; padding: 0.4em 0.85em; background: var(--surface); color: var(--text-muted); border: 0; }
   .vbtn svg { flex: none; }
@@ -562,7 +698,10 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
   .check[hidden], .fgroup[hidden] { display: none; }
 
   /* table view */
-  .tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); background: var(--surface); }
+  /* no overflow-x here so it isn't a scroll container — that would break the sticky
+     header. The fixed-layout table always fits at desktop; narrow screens get a
+     scroll wrapper + min-width via the media query below. */
+  .tablewrap { border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); background: var(--surface); }
   /* fixed layout so 7 columns share 100% and never overflow the results column */
   table { width: 100%; border-collapse: collapse; font-size: var(--step--1); table-layout: fixed; }
   #table th:nth-child(1) { width: 7%; }   /* Score */
@@ -573,6 +712,10 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
   #table th:nth-child(6) { width: 19%; }  /* Verify */
   #table th:nth-child(7) { width: 8%; }   /* Get */
   thead th { text-align: left; font-family: var(--font-display); font-weight: 500; padding: 0.85rem 0.8rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  /* sticky header + row hover for scanning hundreds of rows */
+  #table thead th { position: sticky; top: var(--nav-h); z-index: 2; background: var(--surface); }
+  #table tbody tr { transition: background 0.14s var(--ease-out); }
+  #table tbody tr:hover { background: var(--surface-2); }
   /* one line per cell + ellipsis → uniform, scannable rows that scale to hundreds
      of offers regardless of how long a name / value / verification string is.
      Full text is on the offer page and in each cell's title tooltip. */
@@ -589,6 +732,9 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
 
   @media (max-width: 860px) {
     .dir { grid-template-columns: 1fr; }
+    /* narrow screens: let the table scroll sideways instead of over-truncating */
+    .tablewrap { overflow-x: auto; }
+    #table table { min-width: 640px; }
     .filter-toggle, .rail-close { display: inline-flex; }
     /* filters become a bottom sheet; results render first (rail is out of flow) */
     .rail {
