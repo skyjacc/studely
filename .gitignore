@@ -32,3 +32,6 @@ Thumbs.db
 .vercel/
 
 .vercel
+
+# local diagnostic output, not part of the app
+graphify-out/
