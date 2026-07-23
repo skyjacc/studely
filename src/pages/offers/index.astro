@@ -305,7 +305,10 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
       if (state.view !== 'cards') p.set('view', state.view);
       FSETS.forEach((f) => { if (state[f].size) p.set(f, [...state[f]].join(',')); });
       const qs = p.toString();
-      history.replaceState(null, '', qs ? '?' + qs : location.pathname);
+      // Preserve the existing history.state — Astro's ClientRouter stores its nav
+      // metadata there. Passing null wiped it, and Astro's popstate handler ignores
+      // null-state entries, so Back after leaving /offers did nothing.
+      history.replaceState(history.state, '', qs ? '?' + qs : location.pathname);
       try { localStorage.setItem(STORE_KEY, qs); } catch (e) {}
     };
 
