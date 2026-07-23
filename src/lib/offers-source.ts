@@ -1,15 +1,16 @@
 // Build-time source of offers, reading Supabase instead of the Markdown
-// collection. Uses the service-role client (build/server only) and caches the
-// full published set for the duration of one build, since every page asks for it.
+// collection. Uses a session-less anon client (published rows are public under
+// RLS) and caches the full published set for the duration of one build, since
+// every page asks for it.
 
-import { createSupabaseAdmin } from './supabase';
+import { createSupabaseBuild } from './supabase';
 import { mapOfferRow, type OfferView, type OfferRow, type AttrRow } from './offer-mapping';
 
 const OFFER_COLUMNS =
   'id,slug,title,provider,category,summary,value,body,offer_type,discount_percent,url,affiliate,sponsored,featured,verification,eligibility,tags,score,status,expires_at,last_checked';
 
 async function loadOffers(): Promise<OfferView[]> {
-  const db = createSupabaseAdmin();
+  const db = createSupabaseBuild();
 
   const { data: rows, error } = await db
     .from('offers')

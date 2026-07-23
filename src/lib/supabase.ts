@@ -66,6 +66,21 @@ export function createSupabaseAdmin() {
   });
 }
 
+/**
+ * Session-less anon client for build-time reads of PUBLIC data. Runs under RLS
+ * as the anon role, so it sees only what the world can — published offers and
+ * their attributes (policies `offers_read_published`, `attrs_read`). Preferred
+ * over the service-role client for the public build: least privilege, and it
+ * needs only the PUBLIC_ keys (already in CI and Vercel), not the service-role
+ * secret.
+ */
+export function createSupabaseBuild() {
+  if (!supabaseConfigured) throw new Error('Supabase env vars are missing — copy .env.example to .env');
+  return createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
 export type StaffRole = 'moderator' | 'admin';
 
 export interface StaffProfile {
