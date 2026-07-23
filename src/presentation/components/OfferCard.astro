@@ -1,6 +1,6 @@
 ---
 import type { Offer } from '@domain/offers/offers';
-import { isExpiringSoon, offerTypeLabel, scoreTier } from '@domain/offers/offers';
+import { isExpiringSoon, offerTypeLabel, scoreTier, verifyGroup } from '@domain/offers/offers';
 import { getCategory } from '@domain/offers/categories';
 import Badge from './Badge.astro';
 import Icon from './Icon.astro';
@@ -12,12 +12,6 @@ const d = offer.data;
 const cat = getCategory(d.category);
 const href = `/offers/${offer.id}`;
 const expiring = isExpiringSoon(offer);
-const verified = offer.verification.verified;
-const relDays = (dt: Date) => {
-  const n = Math.floor((Date.now() - dt.getTime()) / 86_400_000);
-  return n <= 0 ? 'today' : n === 1 ? '1d ago' : `${n}d ago`;
-};
-const verifiedAgo = offer.verification.at ? relDays(new Date(offer.verification.at)) : null;
 ---
 
 <article class="card offer" style={`--cat: ${cat?.accent ?? 'var(--accent)'}`}>
@@ -27,9 +21,9 @@ const verifiedAgo = offer.verification.at ? relDays(new Date(offer.verification.
   </div>
 
   <h3 class="title"><a href={href}>{d.title}</a></h3>
+  <p class="value">{d.value}</p>
 
   <div class="meta">
-    <span class="value">{d.value}</span>
     <Badge variant={d.offerType} label={offerTypeLabel[d.offerType] ?? d.offerType} />
     {d.sponsored && <Badge variant="sponsored" label="Sponsored" />}
     {expiring && <Badge variant="expiring" label="Ending soon" />}
@@ -39,7 +33,7 @@ const verifiedAgo = offer.verification.at ? relDays(new Date(offer.verification.
 
   <div class="foot">
     <a class="chip" href={`/category/${d.category}`}><Icon category={d.category} /> {cat?.name ?? d.category}</a>
-    {verified && <span class="verify muted" title="Passed a human verification">✓ verified · {verifiedAgo}</span>}
+    <span class="elig muted" title={`Student eligibility: ${d.verification}`}>{verifyGroup(d.verification)}</span>
   </div>
 </article>
 
@@ -61,8 +55,9 @@ const verifiedAgo = offer.verification.at ? relDays(new Date(offer.verification.
   .title a::after { content: ''; position: absolute; inset: 0; z-index: 0; }
   .offer:hover .title a { color: var(--accent-ink); }
 
+  /* value is the headline benefit — its own line, above the (compact) badges */
+  .value { font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; letter-spacing: -0.01em; color: color-mix(in srgb, var(--cat) 58%, var(--ink)); margin-top: 0.05rem; }
   .meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem 0.5rem; }
-  .value { font-family: var(--font-display); font-weight: 600; font-size: 0.92rem; color: color-mix(in srgb, var(--cat) 55%, var(--ink)); }
 
   /* clamp summary to 2 lines → uniform, compact cards */
   .summary {
@@ -75,6 +70,6 @@ const verifiedAgo = offer.verification.at ? relDays(new Date(offer.verification.
   .chip { position: relative; z-index: 1; padding: 0.22em 0.6em; }
   .chip :global(.cat-ico) { width: 1em; height: 1em; color: color-mix(in srgb, var(--cat) 70%, var(--ink)); }
   .chip:hover { border-color: var(--cat); }
-  /* let eligibility/verify wrap to 2 lines instead of cutting a word mid-string */
-  .verify { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 58%; line-height: 1.32; text-align: right; }
+  /* eligibility method — secondary, one scannable line */
+  .elig { max-width: 55%; line-height: 1.3; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

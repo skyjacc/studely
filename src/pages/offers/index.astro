@@ -119,7 +119,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
             </fieldset>
 
             <fieldset class="fgroup">
-              <legend class="flabel">Verify with</legend>
+              <legend class="flabel">Student eligibility</legend>
               {verifyFacets.map((v) => (
                 <label class="check">
                   <input type="checkbox" data-facet="verify" value={v.g} />
@@ -169,7 +169,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
           <div id="table" class="tablewrap" hidden>
             <table>
               <thead>
-                <tr><th>Score</th><th>Offer</th><th>Category</th><th>Type</th><th>Value</th><th>Verify</th><th></th></tr>
+                <tr><th>Score</th><th>Offer</th><th>Value</th><th>Eligibility</th><th></th></tr>
               </thead>
               <tbody>
                 {sorted.map((o) => {
@@ -179,10 +179,11 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
                       <td><span class={`tscore score-${scoreTier(o.data.score)}`}>{o.data.score}</span></td>
                       <td class="tname">
                         <span class="tlogo logo-tile"><Logo provider={o.data.provider} /></span>
-                        <a href={`/offers/${o.id}`} title={o.data.title}>{o.data.title}</a>
+                        <span class="tname-txt">
+                          <a href={`/offers/${o.id}`} title={o.data.title}>{o.data.title}</a>
+                          <span class="tmeta"><a href={`/category/${o.data.category}`}>{cat?.name ?? o.data.category}</a> · {offerTypeLabel[o.data.offerType] ?? o.data.offerType}</span>
+                        </span>
                       </td>
-                      <td><a class="tcat" href={`/category/${o.data.category}`}>{cat?.name ?? o.data.category}</a></td>
-                      <td><Badge variant={o.data.offerType} label={offerTypeLabel[o.data.offerType] ?? o.data.offerType} /></td>
                       <td class="tval" title={o.data.value}>{o.data.value}</td>
                       <td class="muted tverify" title={o.data.verification}>{verifyGroup(o.data.verification)}</td>
                       <td><a class="tgo" href={`/go/${o.id}`} target="_blank" rel={o.data.affiliate ? 'sponsored nofollow noopener' : 'nofollow noopener'} data-go data-slug={o.id} data-category={o.data.category} data-type={o.data.offerType} data-sponsored={o.data.sponsored ? '1' : '0'} data-affiliate={o.data.affiliate ? '1' : '0'}>Get ↗</a></td>
@@ -708,13 +709,11 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
   .tablewrap { border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); background: var(--surface); }
   /* fixed layout so 7 columns share 100% and never overflow the results column */
   table { width: 100%; border-collapse: collapse; font-size: var(--step--1); table-layout: fixed; }
-  #table th:nth-child(1) { width: 7%; }   /* Score */
-  #table th:nth-child(2) { width: 27%; }  /* Offer */
-  #table th:nth-child(3) { width: 13%; }  /* Category */
-  #table th:nth-child(4) { width: 10%; }  /* Type */
-  #table th:nth-child(5) { width: 16%; }  /* Value */
-  #table th:nth-child(6) { width: 19%; }  /* Verify */
-  #table th:nth-child(7) { width: 8%; }   /* Get */
+  #table th:nth-child(1) { width: 8%; }   /* Score */
+  #table th:nth-child(2) { width: 40%; }  /* Offer (+ category · type) */
+  #table th:nth-child(3) { width: 22%; }  /* Value */
+  #table th:nth-child(4) { width: 20%; }  /* Eligibility */
+  #table th:nth-child(5) { width: 10%; }  /* Get */
   thead th { text-align: left; font-family: var(--font-display); font-weight: 500; padding: 0.85rem 0.8rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
   /* sticky header + row hover for scanning hundreds of rows */
   #table thead th { position: sticky; top: var(--nav-h); z-index: 2; background: var(--surface); }
@@ -727,7 +726,11 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
   tbody tr:last-child td { border-bottom: 0; }
   .tscore { display: inline-grid; place-items: center; min-width: 34px; height: 30px; font-family: var(--font-display); font-weight: 500; border: 1px solid var(--border); border-radius: 8px; }
   .tname { display: flex; align-items: center; gap: 0.6rem; min-width: 0; font-weight: 600; }
-  .tname a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tname-txt { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+  .tname-txt > a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tmeta { font-size: 0.82em; font-weight: 400; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tmeta a { color: inherit; }
+  .tmeta a:hover { color: var(--ink); }
   .tname a:hover { color: var(--accent-ink); }
   .tlogo { width: 34px; height: 34px; flex: none; color: var(--ink); }
   .tcat:hover { color: var(--accent-ink); }
