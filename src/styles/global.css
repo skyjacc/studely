@@ -126,10 +126,13 @@ body.no-chrome #main { padding-top: 0; }
 /* motion initial states (only when JS+motion on) */
 html.js-motion [data-reveal] { opacity: 0; transform: translateY(20px); filter: blur(7px); }
 html.js-motion [data-reveal-group] > * { opacity: 0; transform: translateY(20px); }
+/* [data-enter]: orchestrated on-load entrance (subtler than a scroll reveal) */
+html.js-motion [data-enter] { opacity: 0; transform: translateY(14px); filter: blur(5px); }
 html.js-motion [data-hero-word] { display: inline-block; opacity: 0; transform: translateY(0.7em); }
 html.js-motion .mark { --mark-scale: 0; }
 @media (prefers-reduced-motion: reduce) {
   html.js-motion [data-reveal],
+  html.js-motion [data-enter],
   html.js-motion [data-reveal-group] > *,
   html.js-motion [data-hero-word] { opacity: 1; transform: none; filter: none; }
 }

@@ -82,23 +82,23 @@ const jsonLd = {
         <div class="head" style={`--cat:${cat?.accent ?? 'var(--accent)'}`}>
           <span class="logo logo-tile"><Logo provider={d.provider} /></span>
           <div>
-            <p class="provider muted">{d.provider}</p>
-            <h1>{d.title}</h1>
+            <p class="provider muted" data-enter>{d.provider}</p>
+            <h1 data-split>{d.title}</h1>
           </div>
         </div>
 
-        <div class="badges">
+        <div class="badges" data-enter>
           <Badge variant={d.offerType} label={offerTypeLabel[d.offerType] ?? d.offerType} />
           {d.discountPercent && <Badge variant="discount" label={`${d.discountPercent}% off`} />}
           {d.sponsored && <Badge variant="sponsored" label="Sponsored" />}
           {isExpiringSoon(offer) && <Badge variant="expiring" label="Ending soon" />}
         </div>
 
-        <p class="lead summary">{d.summary}</p>
+        <p class="lead summary" data-enter>{d.summary}</p>
       </div>
 
       <aside class="side">
-        <div class="card hero-cta">
+        <div class="card hero-cta" data-enter>
           <p class="hc-lbl">Student value</p>
           <p class="hc-value" style={`--cat:${cat?.accent ?? 'var(--accent)'}`}>{d.value}</p>
           <a class="btn btn-primary go" href={`/go/${offer.id}`} target="_blank" rel={rel}
@@ -112,7 +112,7 @@ const jsonLd = {
 
       <div class="content">
         {scoreAttrs.length > 0 && (
-          <section class="scoreproof" aria-label="Why this score">
+          <section class="scoreproof" aria-label="Why this score" data-reveal>
             <div class="sp-head">
               <span class={`sp-score score-${scoreTier(d.score)}`}>{d.score}<i>/10</i></span>
               <div class="sp-cap">
@@ -120,7 +120,7 @@ const jsonLd = {
                 <span class="sp-s">Every point is a named reason — not a gut feeling.</span>
               </div>
             </div>
-            <ul class="sp-breakdown">
+            <ul class="sp-breakdown" data-reveal-group>
               {scoreAttrs.map((a) => (
                 <li>
                   <span class="sp-bl">{a.label}</span>
@@ -131,9 +131,9 @@ const jsonLd = {
           </section>
         )}
 
-        <section class="rec" aria-label="Offer record">
+        <section class="rec" aria-label="Offer record" data-reveal>
           <h2 class="sec-h">Offer record</h2>
-          <dl class="rec-list">
+          <dl class="rec-list" data-reveal-group>
             {realCheck && (
               <div><dt>Status</dt><dd><span class="vbadge">✓ Verified</span></dd></div>
             )}
@@ -148,15 +148,15 @@ const jsonLd = {
           </dl>
         </section>
 
-        <div class="prose body" set:html={bodyHtml}></div>
+        <div class="prose body" set:html={bodyHtml} data-reveal></div>
 
         {site.adsense.slots.inArticle && (
           <div class="in-article"><AdSlot format="in-article" slot={site.adsense.slots.inArticle} /></div>
         )}
 
-        <section class="rec" aria-label="Eligibility and terms">
+        <section class="rec" aria-label="Eligibility and terms" data-reveal>
           <h2 class="sec-h">Eligibility &amp; terms</h2>
-          <dl class="rec-list">
+          <dl class="rec-list" data-reveal-group>
             <div class:list={[{ stack: d.eligibility.length > STACK_AT }]}><dt>Who can apply</dt><dd>{d.eligibility}</dd></div>
             <div class:list={[{ stack: d.verification.length > STACK_AT }]}><dt>Student eligibility</dt><dd>{d.verification}</dd></div>
             <div><dt>Offer duration</dt><dd>{d.expires === 'ongoing' ? 'Ongoing' : d.expires}</dd></div>
@@ -165,8 +165,8 @@ const jsonLd = {
 
         {related.length > 0 && (
           <section class="related">
-            <h2 class="rel-h">More in {cat?.name ?? d.category}</h2>
-            <div class="grid grid-offers">
+            <h2 class="rel-h" data-reveal>More in {cat?.name ?? d.category}</h2>
+            <div class="grid grid-offers" data-reveal-group>
               {related.map((o) => <OfferCard offer={o} />)}
             </div>
           </section>

@@ -86,6 +86,14 @@
         ...(inHero ? {} : { scrollTrigger: { trigger: el, start: 'top 88%', once: true } }) });
     });
 
+    // orchestrated on-load entrance: [data-enter] elements play immediately,
+    // staggered by DOM order. For an above-the-fold zone that isn't a single
+    // [data-hero] wrapper (the offer page's identity / CTA / content split grid).
+    gsap.utils.toArray<HTMLElement>('[data-enter]').forEach((el, i) => {
+      gsap.to(el, { opacity: 1, y: 0, filter: 'blur(0px)', ease: 'ease-transition',
+        duration: 0.8, delay: 0.12 + i * 0.08, overwrite: true });
+    });
+
     // staggered groups (grid children)
     gsap.utils.toArray<HTMLElement>('[data-reveal-group]').forEach((group) => {
       gsap.to(group.children, { opacity: 1, y: 0, duration: 0.7, ease: 'ease-transition', stagger: 0.06, overwrite: true,
