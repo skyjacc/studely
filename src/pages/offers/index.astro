@@ -52,12 +52,12 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
 });
 ---
 
-<Layout title="All student offers" description="Browse every verified free tool, credit, course and student discount. Filter by category, type and verification, sorted by our editorial score.">
+<Layout title="All student offers" description="Browse free tools, credits, courses and student discounts. Filter by category, type and eligibility, sorted by the Studely score.">
   <section class="section">
     <div class="wrap">
       <p class="eyebrow">The directory</p>
       <h1>All offers</h1>
-      <p class="lead" style="max-width:52ch">{all.length} verified perks, scored and re-checked. Filter it down.</p>
+      <p class="lead" style="max-width:52ch">{all.length} student perks, scored against clear criteria. Filter it down.</p>
     </div>
 
     <div class="dir-wrap">
@@ -185,7 +185,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
                       <td><Badge variant={o.data.offerType} label={offerTypeLabel[o.data.offerType] ?? o.data.offerType} /></td>
                       <td class="tval" title={o.data.value}>{o.data.value}</td>
                       <td class="muted tverify" title={o.data.verification}>{verifyGroup(o.data.verification)}</td>
-                      <td><a class="tgo" href={o.data.url} target="_blank" rel="nofollow noopener">Get ↗</a></td>
+                      <td><a class="tgo" href={`/go/${o.id}`} target="_blank" rel={o.data.affiliate ? 'sponsored nofollow noopener' : 'nofollow noopener'} data-go data-slug={o.id} data-category={o.data.category} data-type={o.data.offerType} data-sponsored={o.data.sponsored ? '1' : '0'} data-affiliate={o.data.affiliate ? '1' : '0'}>Get ↗</a></td>
                     </tr>
                   );
                 })}
@@ -651,20 +651,23 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
   /* active-filter chips (removable), shown above the grid when any filter is on */
   .afilters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 1.1rem; }
   .afilters[hidden] { display: none; }
-  .achip {
+  /* :global — these chips are built in JS at runtime, so a scoped selector (which
+     carries this component's data-astro-cid) never matches them. Global makes the
+     styles actually apply. One chip reads "Developer Tools ×"; Clear all is a quiet link. */
+  :global(.achip) {
     display: inline-flex; align-items: center; gap: 0.35em;
     font-size: var(--step--1); font-weight: 500; color: var(--ink);
     padding: 0.26em 0.35em 0.26em 0.7em; border-radius: var(--radius-pill);
     border: 1px solid var(--border-control); background: var(--surface);
   }
-  .achip button {
+  :global(.achip button) {
     display: inline-grid; place-items: center; width: 1.25em; height: 1.25em; flex: none;
     border: 0; border-radius: 50%; background: none; color: var(--text-muted);
     font: inherit; line-height: 1; cursor: pointer;
   }
-  .achip button:hover { background: var(--surface-2); color: var(--ink); }
-  .aclear { font: inherit; font-size: var(--step--1); font-weight: 500; color: var(--text-muted); background: none; border: 0; padding: 0.26em 0.4em; cursor: pointer; }
-  .aclear:hover { color: var(--ink); }
+  :global(.achip button:hover) { background: var(--surface-2); color: var(--ink); }
+  :global(.aclear) { font: inherit; font-size: var(--step--1); font-weight: 500; color: var(--text-muted); background: none; border: 0; padding: 0.26em 0.4em; margin-left: 0.15em; cursor: pointer; }
+  :global(.aclear:hover) { color: var(--ink); text-decoration: underline; }
   /* active-filter count on the mobile Filter button */
   .ft-count {
     display: inline-grid; place-items: center; min-width: 1.4em; height: 1.4em; padding: 0 0.35em;
@@ -733,9 +736,12 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
 
   @media (max-width: 860px) {
     .dir { grid-template-columns: 1fr; }
-    /* narrow screens: let the table scroll sideways instead of over-truncating */
-    .tablewrap { overflow-x: auto; }
-    #table table { min-width: 640px; }
+    /* 7 columns are not a readable phone pattern, and a min-width table here pushed
+       the whole document wider than the viewport (390px → 658px). Below 860px:
+       cards only — no table, no view toggle. The table stays a desktop affordance. */
+    .views { display: none; }
+    #table { display: none !important; }
+    #cards { display: grid !important; }
     .filter-toggle, .rail-close { display: inline-flex; }
     /* filters become a bottom sheet; results render first (rail is out of flow) */
     .rail {
