@@ -1,12 +1,12 @@
 ---
-import { getCollection } from 'astro:content';
+import { getAllOffers } from '../lib/offers-source';
 import Layout from '../layouts/Layout.astro';
 import CategoryCard from '../components/CategoryCard.astro';
 import { categories } from '../data/categories';
 import { site } from '../data/site';
 import { isExpired } from '../lib/offers';
 
-const all = (await getCollection('offers')).filter((o) => !isExpired(o));
+const all = (await getAllOffers()).filter((o) => !isExpired(o));
 const counts = new Map<string, number>();
 for (const o of all) counts.set(o.data.category, (counts.get(o.data.category) ?? 0) + 1);
 
