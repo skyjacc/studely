@@ -146,7 +146,9 @@ const jsonLd = {
 
         <div class="prose body" set:html={bodyHtml}></div>
 
-        <div class="in-article"><AdSlot format="in-article" slot={site.adsense.slots.inArticle} /></div>
+        {site.adsense.slots.inArticle && (
+          <div class="in-article"><AdSlot format="in-article" slot={site.adsense.slots.inArticle} /></div>
+        )}
 
         <section class="rec" aria-label="Eligibility and terms">
           <h2 class="sec-h">Eligibility &amp; terms</h2>
