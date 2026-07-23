@@ -106,7 +106,9 @@ const jsonLd = {
             <span class="muted">/10 · Studely score</span>
           </div>
           <p class="value" style={`--cat:${cat?.accent ?? 'var(--accent)'}`}>{d.value}</p>
-          <a class="btn btn-primary go" href={d.url} target="_blank" rel={rel}>Get this offer ↗</a>
+          <a class="btn btn-primary go" href={`/go/${offer.id}`} target="_blank" rel={rel}
+            data-go data-slug={offer.id} data-category={d.category} data-type={d.offerType}
+            data-sponsored={d.sponsored ? '1' : '0'} data-affiliate={d.affiliate ? '1' : '0'}>Get this offer ↗</a>
           <dl>
             <div><dt>Type</dt><dd>{offerTypeLabel[d.offerType] ?? d.offerType}</dd></div>
             <div><dt>Verify with</dt><dd>{d.verification}</dd></div>
@@ -120,6 +122,19 @@ const jsonLd = {
     </div>
   </article>
 </Layout>
+
+<script>
+  // One event on the money path. No-op until an analytics tool (Plausible/PostHog)
+  // is added; the durable record is the offer_clicks row written by /go.
+  for (const a of document.querySelectorAll<HTMLAnchorElement>('a[data-go]')) {
+    a.addEventListener('click', () => {
+      const d = a.dataset;
+      (window as any).plausible?.('offer_clicked', {
+        props: { slug: d.slug, category: d.category, type: d.type, sponsored: d.sponsored === '1', affiliate: d.affiliate === '1' },
+      });
+    });
+  }
+</script>
 
 <style>
   .layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 2.5rem; align-items: start; }
