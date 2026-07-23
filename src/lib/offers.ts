@@ -1,6 +1,6 @@
-import type { CollectionEntry } from 'astro:content';
+import type { OfferView } from './offer-mapping';
 
-export type Offer = CollectionEntry<'offers'>;
+export type Offer = OfferView;
 
 /** Days until an ISO date; null for "ongoing" / unparseable. */
 export function daysUntil(expires: string): number | null {
