@@ -7,7 +7,7 @@ const { category, count, index } = Astro.props;
 const idx = index !== undefined ? String(index).padStart(2, '0') : '';
 ---
 
-<a class="cat-row" href={`/category/${category.slug}`} style={`--cat: ${category.accent}`}>
+<a class="cat-row" href={`/offers?cat=${category.slug}`} style={`--cat: ${category.accent}`}>
   <span class="cat-idx">{idx}</span>
   <span class="cat-ico-tile"><Icon category={category.slug} /></span>
   <span class="cat-body">

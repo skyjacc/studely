@@ -28,7 +28,7 @@ const jsonLd = {
       '@type': 'ListItem',
       position: i + 1,
       name: r.c.name,
-      url: new URL(`/category/${r.c.slug}`, site.url).href,
+      url: new URL(`/offers?cat=${r.c.slug}`, site.url).href,
     })),
   },
 };

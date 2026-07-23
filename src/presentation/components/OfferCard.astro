@@ -32,7 +32,7 @@ const expiring = isExpiringSoon(offer);
   <p class="summary muted">{d.summary}</p>
 
   <div class="foot">
-    <a class="chip" href={`/category/${d.category}`}><Icon category={d.category} /> {cat?.name ?? d.category}</a>
+    <a class="chip" href={`/offers?cat=${d.category}`}><Icon category={d.category} /> {cat?.name ?? d.category}</a>
     <span class="elig muted" title={`Student eligibility: ${d.verification}`}>{verifyGroup(d.verification)}</span>
   </div>
 </article>

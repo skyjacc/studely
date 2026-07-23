@@ -181,7 +181,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
                         <span class="tlogo logo-tile"><Logo provider={o.data.provider} /></span>
                         <span class="tname-txt">
                           <a href={`/offers/${o.id}`} title={o.data.title}>{o.data.title}</a>
-                          <span class="tmeta"><a href={`/category/${o.data.category}`}>{cat?.name ?? o.data.category}</a> · {offerTypeLabel[o.data.offerType] ?? o.data.offerType}</span>
+                          <span class="tmeta"><a href={`/offers?cat=${o.data.category}`}>{cat?.name ?? o.data.category}</a> · {offerTypeLabel[o.data.offerType] ?? o.data.offerType}</span>
                         </span>
                       </td>
                       <td class="tval" title={o.data.value}>{o.data.value}</td>

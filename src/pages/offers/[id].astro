@@ -61,7 +61,7 @@ const jsonLd = {
       '@type': 'BreadcrumbList',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Offers', item: new URL('/offers', site.url).href },
-        { '@type': 'ListItem', position: 2, name: cat?.name ?? d.category, item: new URL(`/category/${d.category}`, site.url).href },
+        { '@type': 'ListItem', position: 2, name: cat?.name ?? d.category, item: new URL(`/offers?cat=${d.category}`, site.url).href },
         { '@type': 'ListItem', position: 3, name: d.title, item: pageUrl },
       ],
     },
@@ -75,7 +75,7 @@ const jsonLd = {
       <div class="main">
         <nav class="crumbs muted">
           <a href="/offers">Offers</a> ›
-          <a href={`/category/${d.category}`}>{cat?.name ?? d.category}</a>
+          <a href={`/offers?cat=${d.category}`}>{cat?.name ?? d.category}</a>
         </nav>
 
         <div class="head" style={`--cat:${cat?.accent ?? 'var(--accent)'}`}>

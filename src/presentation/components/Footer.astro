@@ -58,7 +58,7 @@ const socials = [
         <span class="f-label">(categories)</span>
         <ul class="f-links">
           {topCats.map((c) => (
-            <li><a href={`/category/${c.slug}`}>{c.name}</a></li>
+            <li><a href={`/offers?cat=${c.slug}`}>{c.name}</a></li>
           ))}
         </ul>
       </div>

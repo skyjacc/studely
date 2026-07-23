@@ -1,77 +1,20 @@
 ---
-import { getAllOffers } from '@domain/offers/offers-source';
-import Layout from '@ui/layouts/Layout.astro';
-import OfferCard from '@ui/components/OfferCard.astro';
-import AdSlot from '@ui/components/AdSlot.astro';
-import Icon from '@ui/components/Icon.astro';
-import { categories, getCategory } from '@domain/offers/categories';
-import { sortOffers, isExpired } from '@domain/offers/offers';
-import { adAfterIndexes } from '@domain/ads/ads';
-import { site } from '@core/config/site';
+// Dedicated category landing pages were thin duplicates of the interactive
+// /offers directory (same offers, no facets, generic one-line intro). They were
+// collapsed into /offers filters; category links now refine /offers in place.
+//
+// This route only survives to 301 the old /category/<slug> URLs onto the matching
+// filter, so shared links and any accrued link equity are preserved. Astro's
+// static `redirects` config can't map a path param into a query string
+// (InvalidRedirectDestination), so this is a tiny on-demand redirect instead.
+//
+// Curated category landings can return later, once a category earns unique
+// editorial content (the Collections rule) — at which point this becomes a real
+// page again rather than a redirect.
+export const prerender = false;
+import { categories } from '@domain/offers/categories';
 
-export async function getStaticPaths() {
-  return categories.map((category) => ({ params: { category: category.slug }, props: { category } }));
-}
-
-const { category } = Astro.props;
-const offers = sortOffers(
-  (await getAllOffers()).filter((o) => o.data.category === category.slug && !isExpired(o)),
-);
-const adAt = new Set(site.adsense.slots.inFeed ? adAfterIndexes(offers.length) : []);
-
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'CollectionPage',
-  name: `${category.name} student offers`,
-  description: category.description,
-};
+const { category } = Astro.params;
+const known = categories.some((c) => c.slug === category);
+return Astro.redirect(known ? `/offers?cat=${category}` : '/offers', 301);
 ---
-
-<Layout title={`${category.name} student offers`} description={category.description} jsonLd={jsonLd}>
-  <section class="section">
-    <div class="wrap">
-      <nav class="crumbs muted"><a href="/categories">Categories</a> › {category.name}</nav>
-      <header class="cat-head" style={`--cat:${category.accent}`}>
-        <span class="icon"><Icon category={category.slug} /></span>
-        <div>
-          <h1>{category.name}</h1>
-          <p class="lead">{category.description}</p>
-        </div>
-      </header>
-
-      {offers.length > 0 ? (
-        <>
-          <p class="muted count">{offers.length} verified offer{offers.length === 1 ? '' : 's'}</p>
-          <div class="grid grid-offers">
-            {offers.map((o, i) => (
-              <>
-                <OfferCard offer={o} />
-                {adAt.has(i) && <AdSlot format="in-feed" slot={site.adsense.slots.inFeed} />}
-              </>
-            ))}
-          </div>
-        </>
-      ) : (
-        <p class="empty muted">No live offers here yet. We add new ones weekly.</p>
-      )}
-
-      <div style="margin-top:2.5rem"><AdSlot format="leaderboard" slot={site.adsense.slots.leaderboard} /></div>
-    </div>
-  </section>
-</Layout>
-
-<style>
-  .crumbs { font-size: var(--step--1); margin-bottom: 1rem; }
-  .crumbs a:hover { color: var(--accent-ink); }
-  .cat-head { display: flex; gap: 1.1rem; align-items: center; margin-bottom: 1.75rem; }
-  .cat-head .icon {
-    display: inline-grid; place-items: center; width: 66px; height: 66px; flex: none;
-    border-radius: 16px; border: 1px solid var(--border);
-    background: color-mix(in srgb, var(--cat) 16%, var(--surface));
-    color: color-mix(in srgb, var(--cat) 72%, var(--ink));
-  }
-  .cat-head .icon :global(.cat-ico) { width: 30px; height: 30px; }
-  .cat-head .lead { margin-top: 0.3rem; }
-  .count { margin-bottom: 1.25rem; }
-  .empty { font-size: var(--step-1); margin-top: 1.5rem; }
-</style>
