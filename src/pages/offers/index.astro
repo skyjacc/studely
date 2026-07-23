@@ -703,10 +703,11 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
   .check[hidden], .fgroup[hidden] { display: none; }
 
   /* table view */
-  /* no overflow-x here so it isn't a scroll container — that would break the sticky
-     header. The fixed-layout table always fits at desktop; narrow screens get a
-     scroll wrapper + min-width via the media query below. */
-  .tablewrap { border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); background: var(--surface); }
+  /* overflow: clip (not hidden/auto) rounds the corners by clipping the square-
+     cornered collapsed table to the wrapper radius WITHOUT creating a scroll
+     container — so the sticky header still sticks to the viewport. The fixed-layout
+     table always fits at desktop; narrow screens get a scroll wrapper below. */
+  .tablewrap { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: clip; box-shadow: var(--shadow-soft); background: var(--surface); }
   /* fixed layout so 7 columns share 100% and never overflow the results column */
   table { width: 100%; border-collapse: collapse; font-size: var(--step--1); table-layout: fixed; }
   #table th:nth-child(1) { width: 8%; }   /* Score */
@@ -722,8 +723,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
   /* one line per cell + ellipsis → uniform, scannable rows that scale to hundreds
      of offers regardless of how long a name / value / verification string is.
      Full text is on the offer page and in each cell's title tooltip. */
-  tbody td { padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border-soft); vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  tbody tr:last-child td { border-bottom: 0; }
+  tbody td { padding: 0.6rem 0.8rem; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .tscore { display: inline-grid; place-items: center; min-width: 34px; height: 30px; font-family: var(--font-display); font-weight: 500; border: 1px solid var(--border); border-radius: 8px; }
   .tname { display: flex; align-items: center; gap: 0.6rem; min-width: 0; font-weight: 600; }
   .tname-txt { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
