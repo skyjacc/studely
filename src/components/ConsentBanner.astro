@@ -1,0 +1,91 @@
+---
+// Custom cookie-consent banner in the site's dark editorial style. It drives
+// Google Consent Mode v2: the default (denied) is set in Layout's <head> before
+// the AdSense script loads, and this banner flips the signals to granted/denied
+// on the visitor's choice, then remembers it.
+//
+// Compliance note: for strict EEA "personalized ads" Google expects a certified
+// CMP (IAB TCF v2.2). This banner + Consent Mode covers cookie consent and gates
+// ad personalization — a pragmatic setup for a small site. Swap in a certified
+// CMP later if full TCF certification is required.
+---
+
+<aside id="consent" class="consent" hidden aria-label="Cookie consent">
+  <p class="consent-text">
+    Studely uses cookies to show ads and keep sign-in working. See the <a href="/legal/cookies">Cookie Notice</a>.
+  </p>
+  <div class="consent-actions">
+    <button type="button" class="consent-btn c-ghost" data-consent="deny">Reject</button>
+    <button type="button" class="consent-btn c-primary" data-consent="grant">Accept</button>
+  </div>
+</aside>
+
+<script>
+  function initConsent() {
+    const KEY = 'studely.consent.v1';
+    const el = document.getElementById('consent') as HTMLElement | null;
+    if (!el || el.dataset.bound) return;
+    el.dataset.bound = '1';
+
+    const w = window as any;
+    function gtag(..._args: unknown[]) { (w.dataLayer = w.dataLayer || []).push(arguments); }
+    function apply(choice: string) {
+      const g = choice === 'grant' ? 'granted' : 'denied';
+      gtag('consent', 'update', {
+        ad_storage: g, ad_user_data: g, ad_personalization: g, analytics_storage: g,
+      });
+    }
+
+    let stored: string | null = null;
+    try { stored = localStorage.getItem(KEY); } catch (e) {}
+    if (stored === 'grant' || stored === 'deny') { apply(stored); return; } // already chosen
+
+    el.hidden = false;
+    el.addEventListener('click', (e) => {
+      const b = (e.target as Element | null)?.closest('[data-consent]') as HTMLElement | null;
+      if (!b) return;
+      const choice = b.dataset.consent as string;
+      try { localStorage.setItem(KEY, choice); } catch (e) {}
+      apply(choice);
+      el.hidden = true;
+    });
+  }
+  document.addEventListener('astro:page-load', initConsent);
+</script>
+
+<style>
+  .consent {
+    position: fixed; z-index: 95;
+    left: clamp(0.75rem, 0.5rem + 1vw, 1.5rem);
+    right: clamp(0.75rem, 0.5rem + 1vw, 1.5rem);
+    bottom: clamp(0.75rem, 0.5rem + 1vw, 1.5rem);
+    max-width: 660px; margin-inline: auto;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 0.85rem 1.2rem; padding: 0.95rem 1.15rem;
+    background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-hard-lg);
+    color: var(--text-muted); font-size: var(--step--1); line-height: 1.5;
+  }
+  .consent[hidden] { display: none; }
+  .consent-text { min-width: 15rem; flex: 1; }
+  .consent-text a {
+    color: var(--ink); text-decoration: underline; text-underline-offset: 3px;
+    text-decoration-color: var(--border-strong);
+  }
+  .consent-text a:hover { text-decoration-color: var(--ink); }
+  .consent-actions { display: flex; gap: 0.5rem; flex: none; }
+  .consent-btn {
+    font: inherit; font-size: var(--step--1); font-weight: 500; cursor: pointer;
+    padding: 0.5em 1.15em; border-radius: var(--radius-pill);
+    transition: background 0.25s var(--ease-out), color 0.25s var(--ease-out), border-color 0.25s var(--ease-out);
+  }
+  .c-ghost { background: transparent; color: var(--ink); border: 1px solid var(--border-control); }
+  .c-ghost:hover { border-color: var(--ink); }
+  .c-primary { background: var(--ink); color: var(--bg); border: 1px solid var(--ink); }
+  .c-primary:hover { background: transparent; color: var(--ink); }
+
+  @media (max-width: 520px) {
+    .consent { flex-direction: column; align-items: stretch; }
+    .consent-actions { justify-content: flex-end; }
+  }
+</style>
