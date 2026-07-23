@@ -1,3 +1,8 @@
+// NOTE (2026-07-23, P1 DB-swap): the public site no longer reads this collection —
+// it reads Supabase via src/lib/offers-source.ts. This file and src/content/offers/*.md
+// are kept ONLY because scripts/check-links.mjs and scripts/validate-offers.mjs still
+// read the Markdown directly. Delete both once those scripts are retargeted at the DB.
+
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { categorySlugs } from './data/categories';
