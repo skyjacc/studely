@@ -1,5 +1,5 @@
 ---
-import { getCollection } from 'astro:content';
+import { getAllOffers } from '../lib/offers-source';
 import { site } from '../data/site';
 import { categories } from '../data/categories';
 import { isExpired } from '../lib/offers';
@@ -7,7 +7,7 @@ import Wordmark from './Wordmark.astro';
 
 const year = new Date().getFullYear();
 const topCats = categories.slice(0, 6);
-const offerCount = (await getCollection('offers')).filter((o) => !isExpired(o)).length;
+const offerCount = (await getAllOffers()).filter((o) => !isExpired(o)).length;
 
 // Big footer nav — real destinations only (no 404 stubs). "Suggest a deal" is a
 // mailto so it works before a /submit page exists.
