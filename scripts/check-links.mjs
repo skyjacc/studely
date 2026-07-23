@@ -1,34 +1,39 @@
 #!/usr/bin/env node
-// Auto-checker: fetches every offer URL and flags dead links + expired offers.
-// Run locally with `npm run check-links`, or on a schedule via GitHub Actions.
-// Exit code 1 if any link is dead or any offer expired (fails CI).
+// Auto-checker: fetches every published offer URL and flags dead links + expired
+// offers. Reads the offers straight from Supabase (the site's source of truth
+// since the P1 DB-swap), not from Markdown. Run locally with `npm run check-links`,
+// or on a schedule via GitHub Actions. Exit code 1 if any link is dead or any
+// offer expired (fails CI).
 
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createClient } from '@supabase/supabase-js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OFFERS_DIR = join(ROOT, 'src', 'content', 'offers');
 const TIMEOUT_MS = 15_000;
 const CONCURRENCY = 6;
 
-/** Pull a scalar value for `key` out of a YAML frontmatter block. */
-function fm(block, key) {
-  const m = block.match(new RegExp(`^${key}:\\s*(.+)$`, 'm'));
-  if (!m) return undefined;
-  return m[1].trim().replace(/^["']|["']$/g, '');
+// Load .env for local runs; in CI the vars come from the workflow env, and there
+// is no .env file — loadEnvFile throws in that case, which we ignore.
+try {
+  process.loadEnvFile(join(ROOT, '.env'));
+} catch {
+  // no .env — rely on the ambient environment (CI secrets)
 }
 
-function parseOffer(raw) {
-  const m = raw.match(/^---\n([\s\S]*?)\n---/);
-  const block = m ? m[1] : '';
-  return {
-    title: fm(block, 'title') ?? '(untitled)',
-    url: fm(block, 'url'),
-    expires: fm(block, 'expires') ?? 'ongoing',
-    lastChecked: fm(block, 'lastChecked'),
-  };
+const SUPABASE_URL = process.env.PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.PUBLIC_SUPABASE_ANON_KEY;
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('Missing PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY — cannot read offers.');
+  process.exit(1);
 }
+
+// The anon key reads published offers under RLS (offers_read_published), which is
+// exactly the set that is live and worth checking.
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
 
 // A realistic browser UA cuts down on false 403s from anti-bot walls.
 const UA =
@@ -80,10 +85,21 @@ async function pool(items, worker, size) {
   return out;
 }
 
-const files = (await readdir(OFFERS_DIR)).filter((f) => f.endsWith('.md'));
-const offers = await Promise.all(
-  files.map(async (f) => ({ file: f, ...parseOffer(await readFile(join(OFFERS_DIR, f), 'utf8')) })),
-);
+const { data: rows, error } = await db
+  .from('offers')
+  .select('slug,title,url,expires_at')
+  .eq('visibility', 'published');
+if (error) {
+  console.error(`Failed to load offers from Supabase: ${error.message}`);
+  process.exit(1);
+}
+
+const offers = (rows ?? []).map((r) => ({
+  slug: r.slug,
+  title: r.title ?? '(untitled)',
+  url: r.url,
+  expires: r.expires_at ?? 'ongoing',
+}));
 
 console.log(`Checking ${offers.length} offers…\n`);
 
@@ -109,8 +125,8 @@ const report = {
   checkedAt: new Date().toISOString(),
   total: results.length,
   ok: results.filter((r) => r.status === 'ok').length,
-  blocked: blocked.map((p) => ({ file: p.file, title: p.title, url: p.url, http: p.link.status })),
-  problems: problems.map((p) => ({ file: p.file, title: p.title, url: p.url, status: p.status, http: p.link.status, error: p.link.error })),
+  blocked: blocked.map((p) => ({ slug: p.slug, title: p.title, url: p.url, http: p.link.status })),
+  problems: problems.map((p) => ({ slug: p.slug, title: p.title, url: p.url, status: p.status, http: p.link.status, error: p.link.error })),
 };
 await writeFile(join(ROOT, 'link-report.json'), JSON.stringify(report, null, 2));
 

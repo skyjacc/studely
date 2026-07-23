@@ -11,8 +11,7 @@
     "preview": "astro preview",
     "check": "astro check",
     "test": "vitest run",
-    "check-links": "node scripts/check-links.mjs",
-    "validate-offers": "node scripts/validate-offers.mjs"
+    "check-links": "node scripts/check-links.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",

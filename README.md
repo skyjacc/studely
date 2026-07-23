@@ -25,38 +25,20 @@ Quality helpers:
 
 ```bash
 npm run check          # Astro + TypeScript diagnostics
-npm run validate-offers # fast frontmatter sanity check
-npm run check-links    # fetch every offer URL, flag dead/expired → link-report.json
+npm test               # vitest unit tests (not run in CI)
+npm run check-links    # fetch every published offer URL, flag dead/expired → link-report.json
 ```
 
 ## Add an offer
 
-Create `src/content/offers/<slug>.md`:
+Offers live in the Supabase `offers` table — the site reads them at build time
+(see `src/lib/offers-source.ts`). To add one, insert a row with `visibility =
+'published'`; the next deploy picks it up. Postgres enforces the shape (enums,
+NOT NULL, the discount-percent check), and `score` is derived by trigger from
+`offer_attributes` — never set it by hand.
 
-```markdown
----
-title: Offer name
-provider: Company
-category: dev-tools        # see src/data/categories.ts for the 10 slugs
-summary: One-line hook.
-value: "$200k+ in tools"   # headline shown on the card
-offerType: free            # free | discount | credit | trial
-discountPercent: 50        # only for offerType: discount
-url: https://…             # ← put your affiliate / referral link here
-affiliate: false           # true adds rel="sponsored" + a disclosure
-sponsored: false           # true = paid placement, sorted first, labelled
-featured: true             # surfaces on the homepage
-verification: SheerID
-eligibility: Verified students worldwide
-expires: ongoing           # ISO date (2026-12-31) or "ongoing"
-lastChecked: 2026-07-19
-tags: [github, bundle]
----
-
-Markdown body = the offer detail page.
-```
-
-The build **fails** on an invalid offer (zod schema in `src/content.config.ts`), so broken data never ships.
+Until the admin editor lands (P2), add rows via the Supabase SQL editor or the
+dashboard. A UI to create and edit offers is the next planned piece of work.
 
 ## Monetisation
 
@@ -83,5 +65,5 @@ src/
   layouts/Layout.astro
   pages/              # index, offers/, offers/[id], category/[category], methodology, 404
   lib/offers.ts       # sort / expiry helpers
-scripts/              # check-links.mjs, validate-offers.mjs
+scripts/              # check-links.mjs
 ```

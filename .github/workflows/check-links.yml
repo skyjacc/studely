@@ -10,7 +10,6 @@ on:
   workflow_dispatch: {}
   push:
     paths:
-      - 'src/content/offers/**'
       - 'scripts/check-links.mjs'
 
 jobs:
@@ -22,9 +21,14 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      # npm install, not npm ci — the lockfile cannot be ci-clean (see ci.yml).
+      - run: npm install --no-audit --no-fund
       - name: Check links & expiry
         run: npm run check-links
+        env:
+          # The checker reads published offers from Supabase (RLS-gated anon read).
+          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4
