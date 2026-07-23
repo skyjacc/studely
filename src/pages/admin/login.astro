@@ -9,6 +9,7 @@ import { createSupabaseServer, supabaseConfigured } from '../../lib/supabase';
 const url = Astro.url;
 let error = '';
 let sent = false;
+let sentTo = '';
 
 // Signed in, but the profile has no staff role. Said plainly — sign-up is open
 // (comments need accounts), the admin is not.
@@ -68,6 +69,7 @@ if (Astro.request.method === 'POST' && supabaseConfigured) {
           : 'Could not send the link. Try again in a moment.';
     } else {
       sent = true;
+      sentTo = email;
     }
   }
 }
@@ -92,9 +94,10 @@ if (Astro.request.method === 'POST' && supabaseConfigured) {
       <>
         <h2>Check your email</h2>
         <p class="note">
-          A one-time sign-in link is on its way. It expires shortly, and opening it brings you
-          straight back here.
+          A one-time sign-in link is on its way to <strong>{sentTo}</strong>. It expires shortly,
+          and opening it brings you straight back to the admin.
         </p>
+        <a class="relink" href={`/admin/login?next=${encodeURIComponent(nextPath)}`}>← Use a different email</a>
       </>
     ) : (
       <>
@@ -180,6 +183,9 @@ if (Astro.request.method === 'POST' && supabaseConfigured) {
     padding: clamp(1.5rem, 1rem + 1.5vw, 2rem);
     transition: opacity 0.14s var(--ease-out);
   }
+  /* this panel reuses the global .card look but is NOT an offer card — kill the
+     hover-lift transform (global.css .card:hover) so it does not jump on hover */
+  .card:hover { transform: none; box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.9); border-color: var(--border-strong); }
   /* brief fade while the server's response is swapped in */
   .card.is-swapping { opacity: 0.35; }
   .form button[disabled] { opacity: 0.6; cursor: default; }
@@ -204,4 +210,7 @@ if (Astro.request.method === 'POST' && supabaseConfigured) {
   code { font-family: var(--font-mono); font-size: 0.85em; color: var(--ink); }
   .back { display: inline-block; margin-top: 1.4rem; font-size: var(--step--1); color: var(--text-muted); }
   .back:hover { color: var(--ink); }
+  .relink { display: inline-block; margin-top: 1rem; font-size: var(--step--1); color: var(--ink); }
+  .relink:hover { text-decoration: underline; }
+  .note strong { color: var(--ink); font-weight: 500; }
 </style>
