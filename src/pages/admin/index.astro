@@ -1,8 +1,8 @@
 ---
 export const prerender = false;
 
-import AdminLayout from '../../layouts/AdminLayout.astro';
-import { createSupabaseServer } from '../../lib/supabase';
+import AdminLayout from '@ui/layouts/AdminLayout.astro';
+import { createSupabaseServer } from '@core/supabase';
 
 // The middleware guarantees a staff profile before this page renders, but the type
 // is optional because it is genuinely unset on the sign-out side of the gate. If it

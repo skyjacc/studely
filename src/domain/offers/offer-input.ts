@@ -2,8 +2,8 @@
 // attribute parsing. No Astro and no Supabase imports, so it is unit-testable in
 // isolation. The IO layer (admin-offers.ts) calls these before it writes.
 
-import { categorySlugs } from '../data/categories';
-import { ATTRIBUTES, attributeByKey, type AttributeKey } from '../data/attributes';
+import { categorySlugs } from './categories';
+import { ATTRIBUTES, attributeByKey, type AttributeKey } from './attributes';
 import type { OfferType, OfferStatus } from './offer-mapping';
 
 const OFFER_TYPES: OfferType[] = ['free', 'discount', 'credit', 'trial'];

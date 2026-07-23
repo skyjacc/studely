@@ -1,5 +1,5 @@
 import { defineMiddleware } from 'astro:middleware';
-import { createSupabaseServer, isStaff, supabaseConfigured, type StaffProfile } from './lib/supabase';
+import { createSupabaseServer, isStaff, supabaseConfigured, type StaffProfile } from '@core/supabase';
 
 /**
  * Gate for /admin. Everything else — the entire public directory — short-circuits

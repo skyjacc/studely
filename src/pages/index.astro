@@ -1,14 +1,14 @@
 ---
-import { getAllOffers } from '../lib/offers-source';
-import Layout from '../layouts/Layout.astro';
-import CategoryExplorer from '../components/CategoryExplorer.astro';
-import Pipeline from '../components/Pipeline.astro';
-import OfferCard from '../components/OfferCard.astro';
-import AdSlot from '../components/AdSlot.astro';
-import Hero3D from '../components/Hero3D.astro';
-import { categories } from '../data/categories';
-import { site } from '../data/site';
-import { sortOffers, isExpired } from '../lib/offers';
+import { getAllOffers } from '@domain/offers/offers-source';
+import Layout from '@ui/layouts/Layout.astro';
+import CategoryExplorer from '@ui/components/CategoryExplorer.astro';
+import Pipeline from '@ui/components/Pipeline.astro';
+import OfferCard from '@ui/components/OfferCard.astro';
+import AdSlot from '@ui/components/AdSlot.astro';
+import Hero3D from '@ui/components/Hero3D.astro';
+import { categories } from '@domain/offers/categories';
+import { site } from '@core/config/site';
+import { sortOffers, isExpired } from '@domain/offers/offers';
 
 const all = (await getAllOffers()).filter((o) => !isExpired(o));
 const counts = new Map<string, number>();

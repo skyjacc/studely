@@ -1,5 +1,5 @@
 ---
-layout: ../../layouts/LegalLayout.astro
+layout: ../../presentation/layouts/LegalLayout.astro
 title: "Affiliate & Advertising Disclosure"
 description: "How Studely uses affiliate links and advertising while keeping its scoring editorially independent."
 draft: false

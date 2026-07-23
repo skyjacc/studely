@@ -1,5 +1,5 @@
 ---
-// Hero WebGL — the shared two-pass dot-matrix field (src/lib/dot-field.ts),
+// Hero WebGL — the shared two-pass dot-matrix field (src/presentation/visual/dot-field.ts),
 // configured as drifting grey smoke with the halftone dots on top.
 // Gated for perf/a11y; three.js is dynamically imported inside the module.
 // Wired for Astro View Transitions (boot on astro:page-load, dispose on before-swap).
@@ -9,7 +9,7 @@
 </div>
 
 <script>
-  import { initDotField, dotFieldAllowed, type DotFieldConfig } from '../lib/dot-field';
+  import { initDotField, dotFieldAllowed, type DotFieldConfig } from '@ui/visual/dot-field';
 
   // Their hero = smoke IMAGE + dot overlay. We have no image, so the shader carries
   // BOTH: a soft drifting grey CLOUD (the smooth field) + the halftone dots on top.

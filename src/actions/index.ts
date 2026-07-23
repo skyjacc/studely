@@ -11,12 +11,12 @@
 import { defineAction, ActionError } from 'astro:actions';
 import { z } from 'astro:schema';
 import type { AstroCookies } from 'astro';
-import { createSupabaseServer, isStaff, type StaffProfile } from '../lib/supabase';
-import { validateOfferInput, type OfferFormRaw } from '../lib/offer-input';
+import { createSupabaseServer, isStaff, type StaffProfile } from '@core/supabase';
+import { validateOfferInput, type OfferFormRaw } from '@domain/offers/offer-input';
 import {
   createOffer, updateOffer, setVisibility, deleteOffer, replaceAttributes, getOfferForEdit,
-} from '../lib/admin-offers';
-import { triggerDeploy } from '../lib/deploy-hook';
+} from '@domain/offers/admin-offers';
+import { triggerDeploy } from '@services/deploy/deploy-hook';
 
 type Ctx = { request: Request; cookies: AstroCookies };
 

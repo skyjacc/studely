@@ -1,14 +1,14 @@
 ---
 import { marked } from 'marked';
-import { getAllOffers } from '../../lib/offers-source';
-import Layout from '../../layouts/Layout.astro';
-import OfferCard from '../../components/OfferCard.astro';
-import AdSlot from '../../components/AdSlot.astro';
-import Badge from '../../components/Badge.astro';
-import Logo from '../../components/Logo.astro';
-import { getCategory } from '../../data/categories';
-import { site } from '../../data/site';
-import { offerTypeLabel, isExpiringSoon, isExpired, sortOffers, formatDate, scoreTier } from '../../lib/offers';
+import { getAllOffers } from '@domain/offers/offers-source';
+import Layout from '@ui/layouts/Layout.astro';
+import OfferCard from '@ui/components/OfferCard.astro';
+import AdSlot from '@ui/components/AdSlot.astro';
+import Badge from '@ui/components/Badge.astro';
+import Logo from '@ui/components/Logo.astro';
+import { getCategory } from '@domain/offers/categories';
+import { site } from '@core/config/site';
+import { offerTypeLabel, isExpiringSoon, isExpired, sortOffers, formatDate, scoreTier } from '@domain/offers/offers';
 
 export async function getStaticPaths() {
   const offers = await getAllOffers();

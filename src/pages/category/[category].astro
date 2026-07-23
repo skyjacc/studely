@@ -1,13 +1,13 @@
 ---
-import { getAllOffers } from '../../lib/offers-source';
-import Layout from '../../layouts/Layout.astro';
-import OfferCard from '../../components/OfferCard.astro';
-import AdSlot from '../../components/AdSlot.astro';
-import Icon from '../../components/Icon.astro';
-import { categories, getCategory } from '../../data/categories';
-import { sortOffers, isExpired } from '../../lib/offers';
-import { adAfterIndexes } from '../../lib/ads';
-import { site } from '../../data/site';
+import { getAllOffers } from '@domain/offers/offers-source';
+import Layout from '@ui/layouts/Layout.astro';
+import OfferCard from '@ui/components/OfferCard.astro';
+import AdSlot from '@ui/components/AdSlot.astro';
+import Icon from '@ui/components/Icon.astro';
+import { categories, getCategory } from '@domain/offers/categories';
+import { sortOffers, isExpired } from '@domain/offers/offers';
+import { adAfterIndexes } from '@domain/ads/ads';
+import { site } from '@core/config/site';
 
 export async function getStaticPaths() {
   return categories.map((category) => ({ params: { category: category.slug }, props: { category } }));

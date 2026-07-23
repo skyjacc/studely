@@ -1,10 +1,10 @@
 ---
-import { getAllOffers } from '../lib/offers-source';
-import Layout from '../layouts/Layout.astro';
-import CategoryCard from '../components/CategoryCard.astro';
-import { categories } from '../data/categories';
-import { site } from '../data/site';
-import { isExpired } from '../lib/offers';
+import { getAllOffers } from '@domain/offers/offers-source';
+import Layout from '@ui/layouts/Layout.astro';
+import CategoryCard from '@ui/components/CategoryCard.astro';
+import { categories } from '@domain/offers/categories';
+import { site } from '@core/config/site';
+import { isExpired } from '@domain/offers/offers';
 
 const all = (await getAllOffers()).filter((o) => !isExpired(o));
 const counts = new Map<string, number>();

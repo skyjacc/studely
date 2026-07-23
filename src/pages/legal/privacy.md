@@ -1,5 +1,5 @@
 ---
-layout: ../../layouts/LegalLayout.astro
+layout: ../../presentation/layouts/LegalLayout.astro
 title: "Privacy Policy"
 description: "How Studely collects, uses and protects your data — email-only, no passwords, with your GDPR and CCPA rights."
 draft: false

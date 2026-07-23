@@ -1,11 +1,11 @@
 ---
 export const prerender = false;
 
-import AdminLayout from '../../../layouts/AdminLayout.astro';
-import OfferFields from '../../../components/admin/OfferFields.astro';
-import { createSupabaseServer } from '../../../lib/supabase';
-import { attributeVocabulary } from '../../../lib/offer-input';
-import { getOfferForEdit } from '../../../lib/admin-offers';
+import AdminLayout from '@ui/layouts/AdminLayout.astro';
+import OfferFields from '@ui/components/admin/OfferFields.astro';
+import { createSupabaseServer } from '@core/supabase';
+import { attributeVocabulary } from '@domain/offers/offer-input';
+import { getOfferForEdit } from '@domain/offers/admin-offers';
 
 const { profile } = Astro.locals;
 if (!profile) return Astro.redirect('/admin/login', 302);
@@ -95,7 +95,7 @@ const checkedSet = new Set(attributeKeys);
 </AdminLayout>
 
 <script>
-  import { bindOfferForm } from '../../../components/admin/offer-form-client';
+  import { bindOfferForm } from '@ui/components/admin/offer-form-client';
   import { actions } from 'astro:actions';
 
   const form = document.getElementById('offer-form') as HTMLFormElement | null;

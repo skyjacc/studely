@@ -1,8 +1,8 @@
 ---
 export const prerender = false;
 
-import AdminLayout from '../../../layouts/AdminLayout.astro';
-import OfferFields from '../../../components/admin/OfferFields.astro';
+import AdminLayout from '@ui/layouts/AdminLayout.astro';
+import OfferFields from '@ui/components/admin/OfferFields.astro';
 
 const { profile } = Astro.locals;
 if (!profile) return Astro.redirect('/admin/login', 302);
@@ -27,7 +27,7 @@ const errors: Record<string, string> = {};
 </AdminLayout>
 
 <script>
-  import { bindOfferForm } from '../../../components/admin/offer-form-client';
+  import { bindOfferForm } from '@ui/components/admin/offer-form-client';
   const form = document.getElementById('offer-form') as HTMLFormElement | null;
   if (form) bindOfferForm({ form, mode: 'create' });
 </script>

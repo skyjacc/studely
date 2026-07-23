@@ -1,15 +1,15 @@
 ---
-import { getAllOffers } from '../../lib/offers-source';
-import Layout from '../../layouts/Layout.astro';
-import OfferCard from '../../components/OfferCard.astro';
-import Logo from '../../components/Logo.astro';
-import Icon from '../../components/Icon.astro';
-import Badge from '../../components/Badge.astro';
-import { categories, getCategory } from '../../data/categories';
-import { isExpired, daysUntil, verifyGroup, scoreTier, offerTypeLabel } from '../../lib/offers';
-import AdSlot from '../../components/AdSlot.astro';
-import { adAfterIndexes } from '../../lib/ads';
-import { site } from '../../data/site';
+import { getAllOffers } from '@domain/offers/offers-source';
+import Layout from '@ui/layouts/Layout.astro';
+import OfferCard from '@ui/components/OfferCard.astro';
+import Logo from '@ui/components/Logo.astro';
+import Icon from '@ui/components/Icon.astro';
+import Badge from '@ui/components/Badge.astro';
+import { categories, getCategory } from '@domain/offers/categories';
+import { isExpired, daysUntil, verifyGroup, scoreTier, offerTypeLabel } from '@domain/offers/offers';
+import AdSlot from '@ui/components/AdSlot.astro';
+import { adAfterIndexes } from '@domain/ads/ads';
+import { site } from '@core/config/site';
 
 const all = (await getAllOffers()).filter((o) => !isExpired(o));
 // Default order = score high→low, then most recently checked.
@@ -362,7 +362,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
       sortEl.dispatchEvent(new Event('change', { bubbles: true })); // syncs the custom listbox + applies
     };
 
-    // In-feed ad cadence — mirrors src/lib/ads.ts. Ads live in the cards grid only,
+    // In-feed ad cadence — mirrors src/domain/ads/ads.ts. Ads live in the cards grid only,
     // show only in the pristine default browse, and never trail a filtered subset.
     const AD_INTERVAL = 6;
     const apply = () => {

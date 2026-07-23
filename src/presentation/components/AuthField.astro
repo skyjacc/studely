@@ -1,5 +1,5 @@
 ---
-// Sign-in backdrop: the same dot-matrix field as the hero (src/lib/dot-field.ts),
+// Sign-in backdrop: the same dot-matrix field as the hero (src/presentation/visual/dot-field.ts),
 // tuned dark, slow and quiet so it reads as atmosphere behind the card rather than
 // competing with it. Gated exactly like the hero — reduced-motion, touch and small
 // screens get the plain background and never load three.js.
@@ -9,7 +9,7 @@
 </div>
 
 <script>
-  import { initDotField, dotFieldAllowed, type DotFieldConfig } from '../lib/dot-field';
+  import { initDotField, dotFieldAllowed, type DotFieldConfig } from '@ui/visual/dot-field';
 
   // Much calmer than the hero: half the drift speed, lower amplitude, dimmer dots.
   // A sign-in screen should feel still.

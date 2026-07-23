@@ -1,10 +1,10 @@
 ---
 export const prerender = false;
 
-import AdminLayout from '../../../layouts/AdminLayout.astro';
-import { createSupabaseServer } from '../../../lib/supabase';
-import { listAllOffers } from '../../../lib/admin-offers';
-import { getCategory } from '../../../data/categories';
+import AdminLayout from '@ui/layouts/AdminLayout.astro';
+import { createSupabaseServer } from '@core/supabase';
+import { listAllOffers } from '@domain/offers/admin-offers';
+import { getCategory } from '@domain/offers/categories';
 
 const { profile } = Astro.locals;
 if (!profile) return Astro.redirect('/admin/login', 302);

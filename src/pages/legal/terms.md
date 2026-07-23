@@ -1,5 +1,5 @@
 ---
-layout: ../../layouts/LegalLayout.astro
+layout: ../../presentation/layouts/LegalLayout.astro
 title: "Terms of Service"
 description: "The terms for using Studely, a verified directory of free tools and discounts for students."
 draft: false

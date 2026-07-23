@@ -3,7 +3,7 @@
 // RLS) and caches the full published set for the duration of one build, since
 // every page asks for it.
 
-import { createSupabaseBuild } from './supabase';
+import { createSupabaseBuild } from '@core/supabase';
 import { mapOfferRow, type OfferView, type OfferRow, type AttrRow } from './offer-mapping';
 
 const OFFER_COLUMNS =

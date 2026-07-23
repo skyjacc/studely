@@ -1,5 +1,5 @@
 ---
-layout: ../../layouts/LegalLayout.astro
+layout: ../../presentation/layouts/LegalLayout.astro
 title: "Cookie Notice"
 description: "What cookies and similar technologies Studely uses, and how cookie consent works."
 draft: false

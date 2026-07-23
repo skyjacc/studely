@@ -1,7 +1,7 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Wordmark from '../components/Wordmark.astro';
-import { notFound } from '../data/notFound';
+import Layout from '@ui/layouts/Layout.astro';
+import Wordmark from '@ui/components/Wordmark.astro';
+import { notFound } from '@core/config/notFound';
 
 // A 404 on a link directory is an awkward moment: the whole promise of the site is
 // that its links work. So the page owns it rather than shrugging — it names the
@@ -13,7 +13,7 @@ import { notFound } from '../data/notFound';
 // this page owes the reader its own way out and its own way home, so it carries the
 // wordmark and three explicit destinations.
 //
-// All copy and the exit links live in src/data/notFound.ts, not here.
+// All copy and the exit links live in src/core/config/notFound.ts, not here.
 const { meta, status, method, code, heading, lead, exits } = notFound;
 ---
 
@@ -71,7 +71,7 @@ const { meta, status, method, code, heading, lead, exits } = notFound;
 </Layout>
 
 <script>
-  import { initDotField, dotFieldAllowed, type DotFieldConfig } from '../lib/dot-field';
+  import { initDotField, dotFieldAllowed, type DotFieldConfig } from '@ui/visual/dot-field';
 
   // The hero field, degraded: a coarser grid and dimmer dots so the surface reads as
   // something that has fallen apart rather than something being shown off.
