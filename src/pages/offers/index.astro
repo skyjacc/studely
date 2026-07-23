@@ -427,6 +427,25 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
     vTable.addEventListener('click', () => setView(true));
     setView(state.view === 'table'); // reflect the hydrated / stored view
 
+    // Category tags inside the directory (card chip, table row) are filters, not
+    // navigations. Intercept them so they refine in place and KEEP the current
+    // view — a plain nav to /offers?cat= carried no view param and reset table→
+    // cards. The href stays a real link, so no-JS and the same tags on other
+    // pages (categories/footer/home) still navigate normally.
+    const filterByCat = (e) => {
+      const a = e.target.closest('a[href^="/offers?cat="]');
+      if (!a) return;
+      const cat = new URL(a.href, location.origin).searchParams.get('cat');
+      if (!cat) return;
+      e.preventDefault();
+      document.querySelectorAll('input[data-facet="cat"]').forEach((i) => { i.checked = i.value === cat; });
+      state.cat = facetSet('cat');
+      apply();
+      document.querySelector('.results')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    };
+    cards.addEventListener('click', filterByCat);
+    table.addEventListener('click', filterByCat);
+
     // mobile filter bottom-sheet
     const dir = document.querySelector('.dir');
     const ftoggle = document.getElementById('filter-toggle');
