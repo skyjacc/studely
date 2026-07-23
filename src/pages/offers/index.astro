@@ -717,7 +717,9 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
   .rail-backdrop { position: fixed; inset: 0; z-index: 69; background: rgba(0, 0, 0, 0.55); }
 
   .empty { margin-top: 2rem; font-size: var(--step-1); }
-  .item[hidden] { display: none; }
+  /* must out-specify `#cards .item { display: flex }` (id+class) — a bare
+     `.item[hidden]` loses to it, leaving filtered-out cards visible. */
+  #cards .item[hidden], #table .item[hidden] { display: none; }
   /* .grid sets display:grid, which beats the UA [hidden] rule — so the Table view
      could not actually hide the cards grid. Restore hidden = hidden. */
   #cards[hidden] { display: none; }
