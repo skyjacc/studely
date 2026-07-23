@@ -66,4 +66,13 @@ describe('mapOfferRow', () => {
     const attrs: OfferAttr[] = [{ key: 'card_required', label: 'Card required', points: -2 }];
     expect(mapOfferRow(baseRow, attrs).attributes).toEqual(attrs);
   });
+
+  it('defaults verification to unverified — never guesses from status', () => {
+    expect(mapOfferRow(baseRow).verification).toEqual({ verified: false, at: null });
+  });
+
+  it('carries a real passing verification when given', () => {
+    const v = { verified: true, at: '2026-07-20T00:00:00Z' };
+    expect(mapOfferRow(baseRow, [], v).verification).toEqual(v);
+  });
 });

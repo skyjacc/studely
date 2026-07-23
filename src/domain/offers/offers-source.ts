@@ -40,7 +40,23 @@ async function loadOffers(): Promise<OfferView[]> {
     byOffer.set(a.offer_id, list);
   }
 
-  return offerRows.map((r) => mapOfferRow(r, byOffer.get(r.id) ?? []));
+  // Verification signal: the latest human check per offer. Verified ONLY when the
+  // most recent verification passed — never inferred from status, so the badge
+  // can't lie. No verifications yet → verified:false for everyone (honest).
+  const { data: verifRows, error: verifError } = await db
+    .from('verifications')
+    .select('offer_id,result,checked_at')
+    .in('offer_id', ids)
+    .order('checked_at', { ascending: false });
+  if (verifError) throw new Error(`Failed to load verifications: ${verifError.message}`);
+
+  const verifiedBy = new Map<string, { verified: boolean; at: string | null }>();
+  for (const v of (verifRows ?? []) as { offer_id: string; result: string; checked_at: string }[]) {
+    if (verifiedBy.has(v.offer_id)) continue; // newest-first; keep only the latest
+    verifiedBy.set(v.offer_id, { verified: v.result === 'pass', at: v.result === 'pass' ? v.checked_at : null });
+  }
+
+  return offerRows.map((r) => mapOfferRow(r, byOffer.get(r.id) ?? [], verifiedBy.get(r.id)));
 }
 
 let cache: Promise<OfferView[]> | null = null;

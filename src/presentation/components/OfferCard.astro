@@ -12,11 +12,12 @@ const d = offer.data;
 const cat = getCategory(d.category);
 const href = `/offers/${offer.id}`;
 const expiring = isExpiringSoon(offer);
-const verified = d.status !== 'unverified';
-const checked = (dt: Date) => {
+const verified = offer.verification.verified;
+const relDays = (dt: Date) => {
   const n = Math.floor((Date.now() - dt.getTime()) / 86_400_000);
   return n <= 0 ? 'today' : n === 1 ? '1d ago' : `${n}d ago`;
 };
+const verifiedAgo = offer.verification.at ? relDays(new Date(offer.verification.at)) : null;
 ---
 
 <article class="card offer" style={`--cat: ${cat?.accent ?? 'var(--accent)'}`}>
@@ -38,7 +39,7 @@ const checked = (dt: Date) => {
 
   <div class="foot">
     <a class="chip" href={`/category/${d.category}`}><Icon category={d.category} /> {cat?.name ?? d.category}</a>
-    <span class="verify muted" title={`Verify with ${d.verification}`}>{verified ? '✓ verified · ' : ''}{checked(d.lastChecked)}</span>
+    {verified && <span class="verify muted" title="Passed a human verification">✓ verified · {verifiedAgo}</span>}
   </div>
 </article>
 

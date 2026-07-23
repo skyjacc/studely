@@ -34,6 +34,14 @@ export interface OfferData {
   tags: string[];
 }
 
+/** A real verification signal — the latest human check from the verifications table. */
+export interface OfferVerification {
+  /** True only when the most recent verification passed. Never a guess. */
+  verified: boolean;
+  /** When that passing check happened (ISO), or null if never verified. */
+  at: string | null;
+}
+
 export interface OfferView {
   /** Equals the slug, so /offers/[id] routing is unchanged. */
   id: string;
@@ -42,6 +50,8 @@ export interface OfferView {
   /** Raw Markdown from offers.body. */
   body: string;
   attributes: OfferAttr[];
+  /** Backed by the verifications table — not derived from status. */
+  verification: OfferVerification;
 }
 
 /** One row of `select ... from offers`. snake_case, straight from Postgres. */
@@ -78,12 +88,17 @@ export interface AttrRow {
   points: number;
 }
 
-export function mapOfferRow(row: OfferRow, attributes: OfferAttr[] = []): OfferView {
+export function mapOfferRow(
+  row: OfferRow,
+  attributes: OfferAttr[] = [],
+  verification: OfferVerification = { verified: false, at: null },
+): OfferView {
   return {
     id: row.slug,
     slug: row.slug,
     body: row.body ?? '',
     attributes,
+    verification,
     data: {
       title: row.title,
       provider: row.provider,

@@ -28,8 +28,9 @@ const related = sortOffers(
 
 const rel = d.affiliate ? 'sponsored nofollow noopener' : 'nofollow noopener';
 
-// Trust signals — the moat, made visible. Data already carried by the offer.
-const verified = d.status !== 'unverified';
+// Trust signals — the moat, made visible. Verified is backed by a real passing
+// verification (verifications table), never inferred from status.
+const verified = offer.verification.verified;
 const checkedAgo = (dt: Date) => {
   const days = Math.floor((Date.now() - dt.getTime()) / 86_400_000);
   return days <= 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`;
@@ -110,10 +111,10 @@ const jsonLd = {
 
       <aside class="side">
         <div class="card facts">
-          {verified && (
+          {verified && offer.verification.at && (
             <div class="trust">
               <span class="vbadge">✓ Verified</span>
-              <span class="muted">checked {checkedAgo(d.lastChecked)}</span>
+              <span class="muted">verified {checkedAgo(new Date(offer.verification.at))}</span>
             </div>
           )}
           <div class="scorerow">
