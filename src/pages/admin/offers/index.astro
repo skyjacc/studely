@@ -1,0 +1,137 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { createSupabaseServer } from '../../../lib/supabase';
+import { listAllOffers, setVisibility } from '../../../lib/admin-offers';
+import { triggerDeploy } from '../../../lib/deploy-hook';
+import { getCategory } from '../../../data/categories';
+
+const { profile } = Astro.locals;
+if (!profile) return Astro.redirect('/admin/login', 302);
+const supabase = createSupabaseServer(Astro.request, Astro.cookies);
+
+let notice: string | null = null;
+let error: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('_action') ?? '');
+  const slug = String(form.get('slug') ?? '');
+  if ((action === 'publish' || action === 'unpublish') && slug) {
+    const vis = action === 'publish' ? 'published' : 'draft';
+    const res = await setVisibility(supabase, slug, vis);
+    if (res.ok) {
+      await triggerDeploy(`${action} ${slug}`);
+      return Astro.redirect(`/admin/offers?done=${action}`, 303);
+    }
+    error = res.error ?? 'Could not update visibility';
+  }
+}
+
+const done = Astro.url.searchParams.get('done');
+if (done === 'publish') notice = 'Offer published — a rebuild was triggered.';
+if (done === 'unpublish') notice = 'Offer unpublished — a rebuild was triggered.';
+
+const offers = await listAllOffers(supabase);
+const published = offers.filter((o) => o.visibility === 'published').length;
+const drafts = offers.filter((o) => o.visibility === 'draft').length;
+
+const tier = (s: number) => (s >= 9 ? 'hi' : s >= 7 ? 'mi' : 'lo');
+const initial = (p: string) => p.trim().slice(0, 1).toUpperCase();
+const checked = (iso: string) => {
+  const days = Math.floor((Date.now() - Date.parse(iso)) / 86_400_000);
+  return days <= 0 ? 'today' : days === 1 ? '1d' : `${days}d`;
+};
+---
+
+<AdminLayout title="Offers" subtitle={`${offers.length} total · ${published} live · ${drafts} draft`} handle={profile.handle} role={profile.role}>
+  {notice && <p class="banner ok">{notice}</p>}
+  {error && <p class="banner bad">{error}</p>}
+
+  <div class="bar">
+    <span class="mono">The library</span>
+    <a class="btn pri" href="/admin/offers/new">＋ New offer</a>
+  </div>
+
+  <div class="board">
+    {offers.map((o) => (
+      <article class="of">
+        <div class="row1">
+          <span class="tile">{initial(o.provider)}</span>
+          <div class="who">
+            <a class="ttl" href={`/admin/offers/${o.slug}`}>{o.title}</a>
+            <span class="prov">{o.provider} · {getCategory(o.category)?.name ?? o.category}</span>
+          </div>
+          <span class={`score ${tier(o.score)}`}>{o.score}</span>
+        </div>
+
+        <p class="val">{o.value}</p>
+
+        <div class="foot">
+          <div class="pills">
+            <span class={`pill v-${o.visibility}`}>{o.visibility}</span>
+            {o.featured && <span class="pill flag">featured</span>}
+            <span class="muted">checked {checked(o.last_checked)}</span>
+          </div>
+          <div class="acts">
+            <a class="lnk" href={`/admin/offers/${o.slug}`}>Edit</a>
+            <form method="POST">
+              <input type="hidden" name="slug" value={o.slug} />
+              {o.visibility === 'published' ? (
+                <button class="lnk" name="_action" value="unpublish">Unpublish</button>
+              ) : (
+                <button class="lnk go" name="_action" value="publish">Publish</button>
+              )}
+            </form>
+          </div>
+        </div>
+      </article>
+    ))}
+    {offers.length === 0 && <p class="empty">No offers yet. Create the first one.</p>}
+  </div>
+</AdminLayout>
+
+<style>
+  .banner { padding: 0.7rem 1rem; border-radius: 10px; font-size: var(--step--1); margin-bottom: 1rem; border: 1px solid var(--border-strong); }
+  .banner.ok { color: #7fd6b0; background: rgba(84,201,162,.08); border-color: rgba(84,201,162,.3); }
+  .banner.bad { color: #e88f88; background: rgba(224,101,92,.08); border-color: rgba(224,101,92,.3); }
+
+  .bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .mono { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); }
+  .btn { display: inline-flex; align-items: center; gap: 6px; font-size: var(--step--1); font-weight: 500; padding: 8px 14px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink); cursor: pointer; transition: background .18s var(--ease-out), transform .1s; }
+  .btn:hover { background: var(--surface-2); }
+  .btn:active { transform: scale(.98); }
+  .btn.pri { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+
+  .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 0.85rem; }
+  .of { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 15px; transition: transform .16s var(--ease-out), border-color .16s; }
+  .of:hover { transform: translateY(-3px); border-color: var(--border-strong); }
+  .row1 { display: flex; align-items: center; gap: 11px; }
+  .tile { width: 40px; height: 40px; flex: none; border-radius: 11px; display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; font-size: 16px; background: var(--surface-2); color: var(--ink); border: 1px solid var(--border); }
+  .who { min-width: 0; flex: 1; }
+  .ttl { display: block; font-size: 14px; font-weight: 600; letter-spacing: -.01em; color: var(--ink); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ttl:hover { text-decoration: underline; }
+  .prov { display: block; font-size: 11.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .score { width: 30px; height: 30px; flex: none; border-radius: 8px; display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; font-size: 14px; border: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+  .score.hi { color: #54c9a2; border-color: rgba(84,201,162,.35); }
+  .score.mi { color: var(--ink); }
+  .score.lo { color: #e0a44a; border-color: rgba(224,164,74,.35); }
+  .val { font-family: var(--font-display); font-weight: 600; font-size: 15px; letter-spacing: -.02em; margin: 12px 0 12px; }
+  .foot { display: flex; flex-direction: column; gap: 10px; }
+  .pills { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pill { font-size: 11px; font-weight: 500; padding: 2px 9px; border-radius: 20px; text-transform: capitalize; }
+  .pill.v-published { background: rgba(84,201,162,.14); color: #6fd0ac; }
+  .pill.v-draft { background: var(--surface-2); color: var(--text-muted); }
+  .pill.v-archived { background: rgba(224,101,92,.12); color: #e0918a; }
+  .pill.flag { background: rgba(224,164,74,.14); color: #e6bd78; }
+  .muted { font-size: 11.5px; color: var(--text-muted); }
+  .acts { display: flex; align-items: center; gap: 14px; }
+  .acts form { margin: 0; }
+  .lnk { font-size: 12.5px; color: var(--text-muted); background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; }
+  .lnk:hover { color: var(--ink); }
+  .lnk.go:hover { color: #6fd0ac; }
+  .empty { color: var(--text-muted); font-size: var(--step--1); padding: 2rem 0; }
+
+  @media (prefers-reduced-motion: reduce) { .of { transition: none; } }
+</style>

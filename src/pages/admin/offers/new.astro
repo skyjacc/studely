@@ -1,0 +1,63 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import OfferFields from '../../../components/admin/OfferFields.astro';
+import { createSupabaseServer } from '../../../lib/supabase';
+import { validateOfferInput, type OfferFormRaw } from '../../../lib/offer-input';
+import { createOffer } from '../../../lib/admin-offers';
+
+const { profile } = Astro.locals;
+if (!profile) return Astro.redirect('/admin/login', 302);
+const supabase = createSupabaseServer(Astro.request, Astro.cookies);
+
+let v: Record<string, any> = { offer_type: 'free', status: 'active', eligibility: 'Verified students worldwide' };
+let errors: Record<string, string> = {};
+let error: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const g = (k: string) => { const x = form.get(k); return typeof x === 'string' ? x : ''; };
+  const cb = (k: string) => form.get(k) != null;
+  const raw: OfferFormRaw = {
+    slug: g('slug'), title: g('title'), provider: g('provider'), category: g('category'),
+    summary: g('summary'), value: g('value'), body: g('body'), url: g('url'),
+    verification: g('verification'), eligibility: g('eligibility'), offer_type: g('offer_type'),
+    discount_percent: g('discount_percent'), status: g('status'), tags: g('tags'),
+    expires_at: g('expires_at'), affiliate: cb('affiliate'), sponsored: cb('sponsored'),
+    featured: cb('featured'), ongoing: cb('ongoing'),
+  };
+  v = raw;
+  const result = validateOfferInput(raw, { requireSlug: true });
+  errors = result.errors;
+  if (result.value) {
+    const res = await createOffer(supabase, result.value, profile.id);
+    if (res.ok) return Astro.redirect(`/admin/offers/${res.slug}?created=1`, 303);
+    error = res.error ?? 'Could not create the offer';
+  }
+}
+---
+
+<AdminLayout title="New offer" subtitle="Creates a draft — publish it when it's ready" handle={profile.handle} role={profile.role}>
+  <a class="back" href="/admin/offers">← All offers</a>
+  {error && <p class="banner bad">{error}</p>}
+
+  <form method="POST" class="editor">
+    <OfferFields v={v} errors={errors} createMode={true} />
+    <div class="actions">
+      <button class="btn pri" type="submit">Create draft</button>
+      <a class="btn" href="/admin/offers">Cancel</a>
+    </div>
+  </form>
+</AdminLayout>
+
+<style>
+  .back { display: inline-block; font-size: var(--step--1); color: var(--text-muted); margin-bottom: 1rem; }
+  .back:hover { color: var(--ink); }
+  .banner { padding: 0.7rem 1rem; border-radius: 10px; font-size: var(--step--1); margin-bottom: 1rem; border: 1px solid rgba(224,101,92,.3); color: #e88f88; background: rgba(224,101,92,.08); }
+  .editor { max-width: 720px; }
+  .actions { display: flex; gap: 12px; margin-top: 1.6rem; padding-top: 1.2rem; border-top: 1px solid var(--border); }
+  .btn { display: inline-flex; align-items: center; font-size: var(--step--1); font-weight: 500; padding: 9px 16px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink); cursor: pointer; }
+  .btn:hover { background: var(--surface-2); }
+  .btn.pri { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+</style>

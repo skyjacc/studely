@@ -1,0 +1,200 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import OfferFields from '../../../components/admin/OfferFields.astro';
+import { createSupabaseServer } from '../../../lib/supabase';
+import { validateOfferInput, attributeVocabulary, type OfferFormRaw } from '../../../lib/offer-input';
+import { getOfferForEdit, updateOffer, setVisibility, deleteOffer, replaceAttributes } from '../../../lib/admin-offers';
+import { triggerDeploy } from '../../../lib/deploy-hook';
+
+const { profile } = Astro.locals;
+if (!profile) return Astro.redirect('/admin/login', 302);
+const slug = Astro.params.slug!;
+const supabase = createSupabaseServer(Astro.request, Astro.cookies);
+
+const existing = await getOfferForEdit(supabase, slug);
+if (!existing) return Astro.redirect('/admin/offers?missing=' + slug, 302);
+const row = existing.row;
+
+const fromRow = (r: Record<string, any>) => ({
+  slug: r.slug, title: r.title, provider: r.provider, category: r.category,
+  summary: r.summary, value: r.value, body: r.body, url: r.url,
+  verification: r.verification, eligibility: r.eligibility, offer_type: r.offer_type,
+  discount_percent: r.discount_percent ?? '', status: r.status,
+  affiliate: r.affiliate, sponsored: r.sponsored, featured: r.featured,
+  tags: Array.isArray(r.tags) ? r.tags.join(', ') : '',
+  expires_at: r.expires_at ?? '',
+});
+
+let v: Record<string, any> = fromRow(row);
+let attributeKeys: string[] = existing.attributeKeys;
+let errors: Record<string, string> = {};
+let error: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const g = (k: string) => { const x = form.get(k); return typeof x === 'string' ? x : ''; };
+  const cb = (k: string) => form.get(k) != null;
+  const action = g('_action');
+
+  if (action === 'delete') {
+    const wasPublished = row.visibility === 'published';
+    const res = await deleteOffer(supabase, slug);
+    if (res.ok) {
+      if (wasPublished) await triggerDeploy('delete ' + slug);
+      return Astro.redirect('/admin/offers?done=deleted', 303);
+    }
+    error = res.error ?? 'Could not delete';
+  } else if (action === 'publish' || action === 'unpublish') {
+    const vis = action === 'publish' ? 'published' : 'draft';
+    const res = await setVisibility(supabase, slug, vis);
+    if (res.ok) {
+      await triggerDeploy(action + ' ' + slug);
+      return Astro.redirect(`/admin/offers/${slug}?done=${action}`, 303);
+    }
+    error = res.error ?? 'Could not change visibility';
+  } else {
+    const raw: OfferFormRaw = {
+      title: g('title'), provider: g('provider'), category: g('category'), summary: g('summary'),
+      value: g('value'), body: g('body'), url: g('url'), verification: g('verification'),
+      eligibility: g('eligibility'), offer_type: g('offer_type'), discount_percent: g('discount_percent'),
+      status: g('status'), tags: g('tags'), expires_at: g('expires_at'),
+      affiliate: cb('affiliate'), sponsored: cb('sponsored'), featured: cb('featured'), ongoing: cb('ongoing'),
+    };
+    v = { ...raw, slug };
+    attributeKeys = form.getAll('attr').map(String);
+    const result = validateOfferInput(raw, { requireSlug: false });
+    errors = result.errors;
+    if (result.value) {
+      const u = await updateOffer(supabase, slug, result.value);
+      if (u.ok) {
+        const a = await replaceAttributes(supabase, row.id, attributeKeys);
+        if (a.ok) {
+          if (row.visibility === 'published') await triggerDeploy('save ' + slug);
+          return Astro.redirect(`/admin/offers/${slug}?done=save`, 303);
+        }
+        error = a.error ?? 'Saved fields, but attributes failed';
+      } else {
+        error = u.error ?? 'Could not save';
+      }
+    }
+  }
+}
+
+const done = Astro.url.searchParams.get('done');
+const created = Astro.url.searchParams.get('created');
+const wasPublished = row.visibility === 'published';
+let notice: string | null = null;
+if (created) notice = 'Draft created. Set its attributes and publish when it is ready.';
+if (done === 'save') notice = 'Saved.' + (wasPublished ? ' A rebuild was triggered.' : '');
+if (done === 'publish') notice = 'Published — a rebuild was triggered.';
+if (done === 'unpublish') notice = 'Unpublished — a rebuild was triggered.';
+
+const groups: [string, string][] = [['value', 'What you get'], ['access', 'How hard to claim'], ['durability', 'Durability']];
+const checkedSet = new Set(attributeKeys);
+---
+
+<AdminLayout title={row.title as string} subtitle={`/offers/${slug}`} handle={profile.handle} role={profile.role}>
+  <a class="back" href="/admin/offers">← All offers</a>
+  {notice && <p class="banner ok">{notice}</p>}
+  {error && <p class="banner bad">{error}</p>}
+
+  <div class="layout">
+    <form method="POST" class="editor">
+      <OfferFields v={v} errors={errors} createMode={false} />
+
+      <div class="attrs">
+        <div class="lb">Scoring attributes <em>every point is attributable · score recomputes on save</em></div>
+        {groups.map(([gk, gl]) => (
+          <div class="agroup">
+            <span class="amono">{gl}</span>
+            <div class="achips">
+              {attributeVocabulary.filter((a) => a.group === gk).map((a) => (
+                <label class={`achip ${checkedSet.has(a.key) ? 'on' : ''}`}>
+                  <input type="checkbox" name="attr" value={a.key} checked={checkedSet.has(a.key)} />
+                  <span>{a.label}</span>
+                  <b class={a.points >= 0 ? 'pos' : 'neg'}>{a.points >= 0 ? `+${a.points}` : a.points}</b>
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div class="actions">
+        <button class="btn pri" name="_action" value="save" type="submit">Save changes</button>
+        <a class="btn" href="/admin/offers">Done</a>
+      </div>
+    </form>
+
+    <aside class="side">
+      <div class="card">
+        <div class="scorebox">
+          <span class="score">{row.score}</span>
+          <div><b>Studely score</b><span>derived from attributes</span></div>
+        </div>
+        <div class="vis">
+          <span class={`pill v-${row.visibility}`}>{row.visibility}</span>
+        </div>
+        {row.visibility === 'published' ? (
+          <form method="POST"><button class="btn wide" name="_action" value="unpublish">Unpublish</button></form>
+        ) : (
+          <form method="POST"><button class="btn wide pub" name="_action" value="publish">Publish</button></form>
+        )}
+        <p class="hint">Publishing triggers a site rebuild so the change goes live.</p>
+      </div>
+
+      <form method="POST" class="danger" onsubmit="return confirm('Delete this offer permanently?')">
+        <button class="btn del" name="_action" value="delete">Delete offer</button>
+      </form>
+    </aside>
+  </div>
+</AdminLayout>
+
+<style>
+  .back { display: inline-block; font-size: var(--step--1); color: var(--text-muted); margin-bottom: 1rem; }
+  .back:hover { color: var(--ink); }
+  .banner { padding: 0.7rem 1rem; border-radius: 10px; font-size: var(--step--1); margin-bottom: 1rem; border: 1px solid var(--border-strong); }
+  .banner.ok { color: #7fd6b0; background: rgba(84,201,162,.08); border-color: rgba(84,201,162,.3); }
+  .banner.bad { color: #e88f88; background: rgba(224,101,92,.08); border-color: rgba(224,101,92,.3); }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 1.6rem; align-items: start; }
+  .editor { min-width: 0; }
+  .actions { display: flex; gap: 12px; margin-top: 1.6rem; padding-top: 1.2rem; border-top: 1px solid var(--border); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; font-size: var(--step--1); font-weight: 500; padding: 9px 16px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink); cursor: pointer; font-family: inherit; }
+  .btn:hover { background: var(--surface-2); }
+  .btn.pri { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .btn.wide { width: 100%; }
+  .btn.pub { background: rgba(84,201,162,.14); border-color: rgba(84,201,162,.4); color: #7fd6b0; }
+  .btn.del { width: 100%; color: #e88f88; border-color: rgba(224,101,92,.35); background: transparent; }
+  .btn.del:hover { background: rgba(224,101,92,.1); }
+
+  .attrs { margin-top: 1.6rem; padding-top: 1.4rem; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 1rem; }
+  .lb { font-size: 12.5px; color: var(--ink); font-weight: 500; }
+  .lb em { font-style: normal; color: var(--text-muted); font-weight: 400; margin-left: 6px; }
+  .agroup { display: flex; flex-direction: column; gap: 8px; }
+  .amono { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); }
+  .achips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .achip { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 7px 11px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; color: var(--text-muted); transition: border-color .16s, color .16s, background .16s; }
+  .achip:hover { border-color: var(--border-strong); color: var(--ink); }
+  .achip.on { border-color: var(--ink); color: var(--ink); background: var(--surface-2); }
+  .achip input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .achip b { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .achip b.pos { color: #54c9a2; } .achip b.neg { color: #e0a44a; }
+
+  .side { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 24px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .scorebox { display: flex; align-items: center; gap: 12px; }
+  .scorebox .score { width: 46px; height: 46px; flex: none; border-radius: 11px; display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; font-size: 22px; border: 1px solid var(--border-strong); font-variant-numeric: tabular-nums; }
+  .scorebox b { display: block; font-size: 13px; } .scorebox span { display: block; font-size: 11.5px; color: var(--text-muted); }
+  .pill { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; text-transform: capitalize; }
+  .pill.v-published { background: rgba(84,201,162,.14); color: #6fd0ac; }
+  .pill.v-draft { background: var(--surface-2); color: var(--text-muted); }
+  .pill.v-archived { background: rgba(224,101,92,.12); color: #e0918a; }
+  .side form { margin: 0; }
+  .hint { font-size: 11.5px; color: var(--text-muted); margin: 0; line-height: 1.5; }
+
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } .side { position: static; } }
+  @media (prefers-reduced-motion: reduce) { .achip { transition: none; } }
+</style>

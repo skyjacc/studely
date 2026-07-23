@@ -1,0 +1,154 @@
+---
+import { categories } from '../../data/categories';
+
+interface Props {
+  v: Record<string, any>;
+  errors: Record<string, string>;
+  createMode: boolean;
+}
+const { v, errors, createMode } = Astro.props;
+const OFFER_TYPES = ['free', 'discount', 'credit', 'trial'];
+const STATUSES = ['active', 'expiring', 'expired', 'unverified'];
+const val = (k: string) => (v[k] ?? '') as string;
+const err = (k: string) => errors[k];
+---
+
+<div class="fields">
+  {createMode ? (
+    <label class="f">
+      <span class="lb">Slug <em>the URL — locked after creation</em></span>
+      <input name="slug" value={val('slug')} placeholder="github-student-pack" autocomplete="off" />
+      {err('slug') && <span class="er">{err('slug')}</span>}
+    </label>
+  ) : (
+    <div class="f">
+      <span class="lb">Slug <em>locked</em></span>
+      <code class="ro">{val('slug')}</code>
+    </div>
+  )}
+
+  <label class="f">
+    <span class="lb">Title</span>
+    <input name="title" value={val('title')} />
+    {err('title') && <span class="er">{err('title')}</span>}
+  </label>
+
+  <div class="two">
+    <label class="f">
+      <span class="lb">Provider</span>
+      <input name="provider" value={val('provider')} />
+      {err('provider') && <span class="er">{err('provider')}</span>}
+    </label>
+    <label class="f">
+      <span class="lb">Category</span>
+      <select name="category">
+        <option value="">—</option>
+        {categories.map((c) => (
+          <option value={c.slug} selected={val('category') === c.slug}>{c.name}</option>
+        ))}
+      </select>
+      {err('category') && <span class="er">{err('category')}</span>}
+    </label>
+  </div>
+
+  <label class="f">
+    <span class="lb">Summary <em>one-line hook</em></span>
+    <input name="summary" value={val('summary')} />
+    {err('summary') && <span class="er">{err('summary')}</span>}
+  </label>
+
+  <div class="two">
+    <label class="f">
+      <span class="lb">Value <em>headline, e.g. "$200k+ in tools"</em></span>
+      <input name="value" value={val('value')} />
+      {err('value') && <span class="er">{err('value')}</span>}
+    </label>
+    <label class="f">
+      <span class="lb">Offer type</span>
+      <select name="offer_type">
+        {OFFER_TYPES.map((t) => <option value={t} selected={val('offer_type') === t}>{t}</option>)}
+      </select>
+      {err('offer_type') && <span class="er">{err('offer_type')}</span>}
+    </label>
+  </div>
+
+  <label class="f">
+    <span class="lb">Discount percent <em>only for a discount offer</em></span>
+    <input name="discount_percent" value={val('discount_percent')} inputmode="numeric" placeholder="50" style="max-width:140px" />
+    {err('discount_percent') && <span class="er">{err('discount_percent')}</span>}
+  </label>
+
+  <label class="f">
+    <span class="lb">Destination URL</span>
+    <input name="url" value={val('url')} placeholder="https://…" />
+    {err('url') && <span class="er">{err('url')}</span>}
+  </label>
+
+  <div class="two">
+    <label class="f">
+      <span class="lb">Verification <em>how a student proves eligibility</em></span>
+      <input name="verification" value={val('verification')} placeholder="SheerID" />
+      {err('verification') && <span class="er">{err('verification')}</span>}
+    </label>
+    <label class="f">
+      <span class="lb">Eligibility</span>
+      <input name="eligibility" value={val('eligibility')} placeholder="Verified students worldwide" />
+    </label>
+  </div>
+
+  <div class="two">
+    <label class="f">
+      <span class="lb">Status</span>
+      <select name="status">
+        {STATUSES.map((s) => <option value={s} selected={val('status') === s}>{s}</option>)}
+      </select>
+    </label>
+    <label class="f">
+      <span class="lb">Expires <em>or tick ongoing</em></span>
+      <div class="row-exp">
+        <input type="date" name="expires_at" value={val('expires_at')} />
+        <label class="ck"><input type="checkbox" name="ongoing" checked={!val('expires_at')} /> ongoing</label>
+      </div>
+      {err('expires_at') && <span class="er">{err('expires_at')}</span>}
+    </label>
+  </div>
+
+  <label class="f">
+    <span class="lb">Tags <em>comma-separated</em></span>
+    <input name="tags" value={val('tags')} placeholder="github, bundle, dev" />
+  </label>
+
+  <div class="flags">
+    <label class="ck"><input type="checkbox" name="affiliate" checked={Boolean(v.affiliate)} /> Affiliate link</label>
+    <label class="ck"><input type="checkbox" name="sponsored" checked={Boolean(v.sponsored)} /> Sponsored</label>
+    <label class="ck"><input type="checkbox" name="featured" checked={Boolean(v.featured)} /> Featured on homepage</label>
+  </div>
+
+  <label class="f">
+    <span class="lb">Body <em>Markdown — the offer detail page</em></span>
+    <textarea name="body" rows="10">{val('body')}</textarea>
+  </label>
+</div>
+
+<style>
+  .fields { display: flex; flex-direction: column; gap: 1rem; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .f { display: flex; flex-direction: column; gap: 6px; }
+  .lb { font-size: 12.5px; color: var(--ink); font-weight: 500; }
+  .lb em { font-style: normal; color: var(--text-muted); font-weight: 400; margin-left: 6px; }
+  input, select, textarea {
+    font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--border-strong); border-radius: 9px; padding: 9px 11px; width: 100%;
+    transition: border-color .16s var(--ease-out);
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--ink); }
+  textarea { resize: vertical; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; }
+  .ro { display: inline-block; font-family: var(--font-mono); font-size: 13px; color: var(--text-muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 11px; }
+  .er { font-size: 12px; color: #e88f88; }
+  .row-exp { display: flex; align-items: center; gap: 12px; }
+  .row-exp input[type="date"] { max-width: 180px; }
+  .ck { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink); cursor: pointer; }
+  .ck input { width: auto; }
+  .flags { display: flex; flex-wrap: wrap; gap: 18px; padding: 4px 0; }
+  @media (max-width: 640px) { .two { grid-template-columns: 1fr; } }
+</style>
