@@ -28,15 +28,12 @@ const related = sortOffers(
 
 const rel = d.affiliate ? 'sponsored nofollow noopener' : 'nofollow noopener';
 
-// Trust signals — the moat, made visible. Verified is backed by a real passing
-// verification (verifications table), never inferred from status.
-const verified = offer.verification.verified;
-const checkedAgo = (dt: Date) => {
-  const days = Math.floor((Date.now() - dt.getTime()) / 86_400_000);
-  return days <= 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`;
-};
 // Score breakdown, strongest reasons first — every point is attributable.
 const scoreAttrs = [...offer.attributes].sort((a, b) => b.points - a.points);
+
+// A real, dated passing check is the ONLY basis for "Verified" / "Last checked".
+// The verifications table is empty for now, so both rows stay hidden until real.
+const realCheck = offer.verification.verified && offer.verification.at ? offer.verification.at : null;
 
 const pageUrl = new URL(`/offers/${offer.id}`, site.url).href;
 // Product + nested Offer is an eligible rich result (a bare Offer is not); add a BreadcrumbList.
@@ -72,7 +69,7 @@ const jsonLd = {
 <Layout title={d.title} description={d.summary} jsonLd={jsonLd} noindex={isExpired(offer)}>
   <article class="section">
     <div class="wrap layout">
-      <div class="main">
+      <div class="identity">
         <nav class="crumbs muted">
           <a href="/offers">Offers</a> ›
           <a href={`/offers?cat=${d.category}`}>{cat?.name ?? d.category}</a>
@@ -94,13 +91,28 @@ const jsonLd = {
         </div>
 
         <p class="lead summary">{d.summary}</p>
+      </div>
 
+      <aside class="side">
+        <div class="card hero-cta">
+          <p class="hc-lbl">Student value</p>
+          <p class="hc-value" style={`--cat:${cat?.accent ?? 'var(--accent)'}`}>{d.value}</p>
+          <a class="btn btn-primary go" href={`/go/${offer.id}`} target="_blank" rel={rel}
+            data-go data-slug={offer.id} data-category={d.category} data-type={d.offerType}
+            data-sponsored={d.sponsored ? '1' : '0'} data-affiliate={d.affiliate ? '1' : '0'}>Get this offer ↗</a>
+          {d.affiliate
+            ? <p class="hc-note muted">Partner link — we may earn a commission.</p>
+            : <p class="hc-note muted">Continues to the official {d.provider} page.</p>}
+        </div>
+      </aside>
+
+      <div class="content">
         {scoreAttrs.length > 0 && (
-          <div class="scoreproof">
+          <section class="scoreproof" aria-label="Why this score">
             <div class="sp-head">
               <span class={`sp-score score-${scoreTier(d.score)}`}>{d.score}<i>/10</i></span>
               <div class="sp-cap">
-                <span class="sp-t">Studely score</span>
+                <span class="sp-t">Why this score</span>
                 <span class="sp-s">Every point is a named reason — not a gut feeling.</span>
               </div>
             </div>
@@ -112,45 +124,48 @@ const jsonLd = {
                 </li>
               ))}
             </ul>
-          </div>
+          </section>
         )}
+
+        <section class="rec" aria-label="Offer record">
+          <h2 class="sec-h">Offer record</h2>
+          <dl class="rec-list">
+            {realCheck && (
+              <div><dt>Status</dt><dd><span class="vbadge">✓ Verified</span></dd></div>
+            )}
+            <div><dt>Eligibility</dt><dd>{d.verification}</dd></div>
+            <div><dt>Source</dt><dd><a class="rec-link" href={d.url} target="_blank" rel="nofollow noopener">Official {d.provider} page ↗</a></dd></div>
+            {realCheck && (
+              <div><dt>Last checked</dt><dd>{formatDate(new Date(realCheck))}</dd></div>
+            )}
+            {d.affiliate && (
+              <div><dt>Partner</dt><dd class="muted">We may earn a commission</dd></div>
+            )}
+          </dl>
+        </section>
 
         <div class="prose body" set:html={bodyHtml}></div>
 
         <div class="in-article"><AdSlot format="in-article" slot={site.adsense.slots.inArticle} /></div>
 
+        <section class="rec" aria-label="Eligibility and terms">
+          <h2 class="sec-h">Eligibility &amp; terms</h2>
+          <dl class="rec-list">
+            <div><dt>Who can apply</dt><dd>{d.eligibility}</dd></div>
+            <div><dt>Student eligibility</dt><dd>{d.verification}</dd></div>
+            <div><dt>Offer duration</dt><dd>{d.expires === 'ongoing' ? 'Ongoing' : d.expires}</dd></div>
+          </dl>
+        </section>
+
         {related.length > 0 && (
           <section class="related">
-            <h2>More in {cat?.name ?? d.category}</h2>
+            <h2 class="rel-h">More in {cat?.name ?? d.category}</h2>
             <div class="grid grid-offers">
               {related.map((o) => <OfferCard offer={o} />)}
             </div>
           </section>
         )}
       </div>
-
-      <aside class="side">
-        <div class="card facts">
-          {verified && offer.verification.at && (
-            <div class="trust">
-              <span class="vbadge">✓ Verified</span>
-              <span class="muted">verified {checkedAgo(new Date(offer.verification.at))}</span>
-            </div>
-          )}
-          <p class="value" style={`--cat:${cat?.accent ?? 'var(--accent)'}`}>{d.value}</p>
-          <a class="btn btn-primary go" href={`/go/${offer.id}`} target="_blank" rel={rel}
-            data-go data-slug={offer.id} data-category={d.category} data-type={d.offerType}
-            data-sponsored={d.sponsored ? '1' : '0'} data-affiliate={d.affiliate ? '1' : '0'}>Get this offer ↗</a>
-          <dl>
-            <div><dt>Type</dt><dd>{offerTypeLabel[d.offerType] ?? d.offerType}</dd></div>
-            <div><dt>Eligibility method</dt><dd>{d.verification}</dd></div>
-            <div><dt>Who's eligible</dt><dd>{d.eligibility}</dd></div>
-            <div><dt>Expires</dt><dd>{d.expires === 'ongoing' ? 'Ongoing' : d.expires}</dd></div>
-            <div><dt>Last checked</dt><dd>{formatDate(d.lastChecked)}</dd></div>
-          </dl>
-          {d.affiliate && <p class="aff muted">Partner link. We may earn a commission.</p>}
-        </div>
-      </aside>
     </div>
   </article>
 </Layout>
@@ -169,7 +184,18 @@ const jsonLd = {
 </script>
 
 <style>
-  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 2.5rem; align-items: start; }
+  /* three zones: identity (top-left), value+CTA (right, sticky), content (below
+     identity). On desktop the CTA card sits top-right, aligned with the title;
+     on mobile the order is identity → value+CTA → content (title before CTA,
+     CTA still high on the page). */
+  .layout {
+    display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 2rem 2.5rem;
+    grid-template-areas: "identity side" "content side"; align-items: start;
+  }
+  .identity { grid-area: identity; }
+  .content { grid-area: content; min-width: 0; }
+  .side { grid-area: side; position: sticky; top: 84px; }
+
   .crumbs { font-size: var(--step--1); margin-bottom: 1rem; }
   .crumbs a:hover { color: var(--accent-ink); }
   .head { display: flex; gap: 1rem; align-items: center; }
@@ -177,12 +203,20 @@ const jsonLd = {
     width: 66px; height: 66px; flex: none; color: var(--ink);
     border-radius: 16px; background: color-mix(in srgb, var(--cat) 14%, var(--surface));
   }
+  .head h1 { font-size: clamp(1.7rem, 1.2rem + 2.2vw, 2.55rem); line-height: 1.05; letter-spacing: -0.03em; }
   .provider { font-weight: 600; letter-spacing: 0.02em; }
   .badges { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1.1rem; }
   .summary { margin-top: 1rem; max-width: 60ch; }
 
-  /* the score is the moat — make it the main proof, in the reading flow */
-  .scoreproof { margin-top: 1.6rem; border: 1px solid var(--border-strong); border-radius: 14px; padding: 1.1rem 1.25rem; background: var(--surface); }
+  /* hero value + CTA card */
+  .hero-cta { padding: 1.5rem 1.4rem; }
+  .hc-lbl { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
+  .hc-value { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.5rem, 1.2rem + 1.3vw, 1.95rem); letter-spacing: -0.02em; color: var(--ink); margin-top: 0.25rem; }
+  .go { width: 100%; justify-content: center; margin-top: 1.1rem; }
+  .hc-note { font-size: var(--step--1); margin-top: 0.7rem; }
+
+  /* Why this score — the main proof, first in the content flow */
+  .scoreproof { border: 1px solid var(--border-strong); border-radius: 14px; padding: 1.1rem 1.25rem; background: var(--surface); }
   .sp-head { display: flex; align-items: center; gap: 14px; }
   .sp-score { display: inline-grid; place-items: center; min-width: 54px; height: 54px; padding: 0 0.45rem; font-family: var(--font-display); font-weight: 600; font-size: 1.7rem; line-height: 1; border: 1px solid var(--border); border-radius: 12px; font-variant-numeric: tabular-nums; }
   .sp-score i { font-style: normal; font-size: 0.8rem; color: var(--text-muted); font-weight: 400; margin-left: 1px; }
@@ -198,35 +232,24 @@ const jsonLd = {
   .sp-breakdown b.pos { color: #54c9a2; }
   .sp-breakdown b.neg { color: #e0a44a; }
 
-  .body { margin-top: 1.5rem; }
-  .in-article { margin: 2.5rem 0; }
-  .related { margin-top: 3rem; }
-  .related h2 { font-size: var(--step-2); margin-bottom: 1.25rem; }
-
-  .side { position: sticky; top: 84px; }
-  .facts { padding: 1.4rem; }
-  .scorerow { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.85rem; font-size: var(--step--1); }
-  .scorerow .score { display: inline-grid; place-items: center; min-width: 42px; height: 42px; padding: 0 0.4rem; font-family: var(--font-display); font-weight: 600; font-size: 1.4rem; line-height: 1; border: 1px solid var(--border); border-radius: 10px; }
-  .trust { display: flex; align-items: center; gap: 8px; margin-bottom: 0.7rem; font-size: var(--step--1); }
+  /* record ledgers — Offer record + Terms. Rows appear only for facts we hold. */
+  .rec { margin-top: 2rem; }
+  .sec-h { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 0.4rem; }
+  .rec-list { margin: 0; border-top: 1px solid var(--border); }
+  .rec-list > div { display: flex; align-items: baseline; justify-content: space-between; gap: 1.25rem; padding: 0.72rem 0; border-bottom: 1px solid var(--border-soft); }
+  .rec-list dt { font-size: 0.85rem; color: var(--text-muted); flex: none; }
+  .rec-list dd { font-weight: 500; text-align: right; min-width: 0; }
+  .rec-link { color: var(--ink); border-bottom: 1px solid var(--border-strong); white-space: nowrap; }
+  .rec-link:hover { color: var(--accent-ink); border-color: var(--accent-ink); }
   .vbadge { display: inline-flex; align-items: center; gap: 4px; font-weight: 500; color: #6fd0ac; background: rgba(84,201,162,.12); border: 1px solid rgba(84,201,162,.32); border-radius: 20px; padding: 2px 9px; font-size: 0.72rem; }
-  .why { margin: 0.9rem 0 1rem; padding-bottom: 1rem; border-bottom: 1px dashed var(--border); }
-  .why-h { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); }
-  .breakdown { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.32rem; }
-  .breakdown li { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: var(--step--1); }
-  .breakdown .bl { color: var(--ink); }
-  .breakdown b { font-variant-numeric: tabular-nums; font-weight: 600; flex: none; }
-  .breakdown b.pos { color: #54c9a2; }
-  .breakdown b.neg { color: #e0a44a; }
-  .facts .value { font-family: var(--font-display); font-weight: 600; font-size: 1.5rem; color: var(--ink); }
-  .go { width: 100%; justify-content: center; margin-top: 1rem; }
-  .facts dl { margin-top: 1.25rem; display: grid; gap: 0.85rem; }
-  .facts dl div { display: grid; gap: 0.15rem; }
-  .facts dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
-  .facts dd { font-weight: 500; }
-  .aff { font-size: var(--step--1); margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
+
+  .body { margin-top: 2rem; }
+  .in-article { margin: 2.5rem 0; }
+  .related { margin-top: 2.5rem; }
+  .rel-h { font-size: var(--step-1); letter-spacing: -0.02em; margin-bottom: 1rem; }
 
   @media (max-width: 900px) {
-    .layout { grid-template-columns: 1fr; }
-    .side { position: static; order: -1; }
+    .layout { grid-template-columns: 1fr; grid-template-areas: "identity" "side" "content"; gap: 1.75rem; }
+    .side { position: static; }
   }
 </style>
