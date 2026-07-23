@@ -36,5 +36,6 @@ Thumbs.db
 # local diagnostic output, not part of the app
 graphify-out/
 
-# superpowers local state
+# superpowers local state + generated planning artifacts (kept local, not in repo)
 .superpowers/
+docs/superpowers/
