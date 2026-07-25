@@ -21,6 +21,7 @@ pnpm-debug.log*
 
 # reports
 link-report.json
+backups/
 
 # os / editor
 .DS_Store

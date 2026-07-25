@@ -36,8 +36,8 @@ const schemaMissing = pendingSubs === null && published === null;
 
 // Queues first: these are things a human must act on. Library stats come after.
 const queues = [
-  { label: 'Submissions waiting', n: pendingSubs, href: '/admin/submissions' },
-  { label: 'Comments to moderate', n: pendingComments, href: '/admin/comments' },
+  { label: 'Submissions waiting', n: pendingSubs },
+  { label: 'Comments to moderate', n: pendingComments },
   { label: 'Drafts unpublished', n: drafts, href: '/admin/offers?visibility=draft' },
   { label: 'Not checked in 7 days', n: stale, href: '/admin/offers?stale=1' },
 ];
@@ -62,12 +62,19 @@ const library = [
 
   <h2 class="hd">Needs attention</h2>
   <div class="tiles">
-    {queues.map((q) => (
-      <a class:list={['tile', { 'is-hot': (q.n ?? 0) > 0 }]} href={q.href}>
-        <span class="n">{q.n ?? '—'}</span>
-        <span class="l">{q.label}</span>
-      </a>
-    ))}
+    {queues.map((q) =>
+      q.href ? (
+        <a class:list={['tile', { 'is-hot': (q.n ?? 0) > 0 }]} href={q.href}>
+          <span class="n">{q.n ?? '—'}</span>
+          <span class="l">{q.label}</span>
+        </a>
+      ) : (
+        <div class:list={['tile', 'is-quiet', { 'is-hot': (q.n ?? 0) > 0 }]}>
+          <span class="n">{q.n ?? '—'}</span>
+          <span class="l">{q.label} · queue UI not built</span>
+        </div>
+      ),
+    )}
   </div>
 
   <h2 class="hd">Library</h2>

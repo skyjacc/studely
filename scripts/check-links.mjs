@@ -1,136 +1,150 @@
 #!/usr/bin/env node
-// Auto-checker: fetches every published offer URL and flags dead links + expired
-// offers. Reads the offers straight from Supabase (the site's source of truth
-// since the P1 DB-swap), not from Markdown. Run locally with `npm run check-links`,
-// or on a schedule via GitHub Actions. Exit code 1 if any link is dead or any
-// offer expired (fails CI).
+// Auto-checker: reads every published offer from Supabase, fetches its official
+// URL, writes link-report.json, and (when SUPABASE_SERVICE_ROLE_KEY is present)
+// records the whole run atomically through record_link_check_batch(jsonb).
 
 import { writeFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
+import { classifyOfferCheck, dedupeWrites } from '../src/domain/verification/link-check.ts';
+import { fetchLinkWithRetry } from '../src/domain/verification/fetch-link.ts';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const TIMEOUT_MS = 15_000;
 const CONCURRENCY = 6;
 
-// Load .env for local runs; in CI the vars come from the workflow env, and there
-// is no .env file — loadEnvFile throws in that case, which we ignore.
 try {
   process.loadEnvFile(join(ROOT, '.env'));
 } catch {
-  // no .env — rely on the ambient environment (CI secrets)
+  // No .env in CI — use workflow environment.
 }
 
 const SUPABASE_URL = process.env.PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.PUBLIC_SUPABASE_ANON_KEY;
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error('Missing PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY — cannot read offers.');
-  process.exit(1);
-}
+  process.exitCode = 1;
+} else {
+  const readDb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const writeDb = SERVICE_KEY
+    ? createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
+    : null;
 
-// The anon key reads published offers under RLS (offers_read_published), which is
-// exactly the set that is live and worth checking.
-const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
+  async function pool(items, worker, size) {
+    const out = new Array(items.length);
+    let i = 0;
+    await Promise.all(
+      Array.from({ length: Math.min(size, items.length) }, async () => {
+        while (i < items.length) {
+          const idx = i++;
+          out[idx] = await worker(items[idx], idx);
+        }
+      }),
+    );
+    return out;
+  }
 
-// A realistic browser UA cuts down on false 403s from anti-bot walls.
-const UA =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
-// Codes that mean "server is up but is refusing the bot" — not a broken link.
-const BLOCKED_CODES = new Set([401, 403, 405, 406, 429]);
+  const { data: rows, error } = await readDb
+    .from('offers')
+    .select('id,slug,title,url,expires_at,status')
+    .eq('visibility', 'published')
+    .order('slug');
 
-async function checkUrl(url) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
-  try {
-    // Some hosts reject HEAD; GET is more reliable. We don't read the body.
-    const res = await fetch(url, {
-      method: 'GET',
-      redirect: 'follow',
-      signal: ctrl.signal,
-      headers: {
-        'user-agent': UA,
-        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'accept-language': 'en-US,en;q=0.9',
+  if (error) {
+    console.error(`Failed to load offers from Supabase: ${error.message}`);
+    process.exitCode = 1;
+  } else if (!rows?.length) {
+    console.error('Supabase returned 0 published offers — refusing to report false success.');
+    process.exitCode = 1;
+  } else {
+    const offers = rows.map((r) => ({
+      id: r.id,
+      slug: r.slug,
+      title: r.title ?? '(untitled)',
+      url: r.url ?? null,
+      expires: r.expires_at ?? null,
+      status: r.status,
+    }));
+    const checkedAt = new Date();
+
+    console.log(`Checking ${offers.length} offers…\n`);
+
+    const results = await pool(
+      offers,
+      async (offer) => {
+        const observation = offer.url
+          ? await fetchLinkWithRetry(offer.url)
+          : { status: 0, error: 'missing url' };
+        const classified = classifyOfferCheck(offer, observation, checkedAt);
+        const icon = classified.reportStatus === 'ok' ? '✓' : classified.reportStatus === 'BLOCKED' ? '⚠' : '✗';
+        console.log(`${icon} [${classified.reportStatus}] ${offer.title}`);
+        console.log(
+          `   ${offer.url ?? '(no url)'} ${observation.status ? `→ ${observation.status}` : ''}` +
+            `${observation.error ? ` (${observation.error})` : ''}`,
+        );
+        return { ...offer, observation, ...classified };
       },
-    });
-    const kind = res.status < 400 ? 'ok' : BLOCKED_CODES.has(res.status) ? 'blocked' : 'dead';
-    return { kind, status: res.status, finalUrl: res.url };
-  } catch (err) {
-    return { kind: 'dead', status: 0, error: err?.name === 'AbortError' ? 'timeout' : String(err?.message || err) };
-  } finally {
-    clearTimeout(timer);
+      CONCURRENCY,
+    );
+
+    const writes = dedupeWrites(results.map((r) => r.write));
+
+    // Circuit breaker. A result with no HTTP status at all is a network-level
+    // failure — which, if the runner itself lost DNS or egress, is every offer at
+    // once. Writing that batch would stamp the whole directory as broken on the
+    // strength of our own outage, and the site would tell students that healthy
+    // offers are dead. Past a majority, refuse to write and let the run fail
+    // loudly instead; a genuinely dead provider set does not appear in one run.
+    const networkFailures = results.filter((r) => !r.observation?.status).length;
+    const massFailure = results.length >= 3 && networkFailures > results.length / 2;
+
+    let writeBack = { status: 'skipped', reason: 'SUPABASE_SERVICE_ROLE_KEY is not configured.' };
+    if (massFailure) {
+      const reason =
+        `${networkFailures}/${results.length} offers failed at the network level — ` +
+        'refusing to write. This looks like a runner/network outage, not dead offers.';
+      console.error(`\n${reason}`);
+      writeBack = { status: 'aborted', reason };
+      process.exitCode = 1;
+    } else if (writeDb) {
+      const { error: writeError } = await writeDb.rpc('record_link_check_batch', { checks: writes });
+      if (writeError) {
+        console.error(`Failed to write verification results: ${writeError.message}`);
+        writeBack = { status: 'failed', reason: writeError.message };
+        process.exitCode = 1;
+      } else {
+        writeBack = { status: 'written', rows: writes.length };
+      }
+    } else {
+      console.warn('\nWrite-back skipped: SUPABASE_SERVICE_ROLE_KEY is not configured.');
+    }
+
+    const blocked = results.filter((r) => r.reportStatus === 'BLOCKED');
+    const problems = results.filter((r) => r.reportStatus === 'DEAD' || r.reportStatus === 'EXPIRED');
+    const report = {
+      checkedAt: checkedAt.toISOString(),
+      total: results.length,
+      ok: results.filter((r) => r.reportStatus === 'ok').length,
+      blocked: blocked.map((r) => ({ slug: r.slug, title: r.title, url: r.url, http: r.observation.status })),
+      problems: problems.map((r) => ({
+        slug: r.slug,
+        title: r.title,
+        url: r.url,
+        status: r.reportStatus,
+        http: r.observation.status || null,
+        error: r.observation.error ?? null,
+      })),
+      writeBack,
+    };
+    await writeFile(join(ROOT, 'link-report.json'), JSON.stringify(report, null, 2));
+
+    console.log(
+      `\n${report.ok}/${report.total} healthy · ${blocked.length} bot-blocked (warning) · ` +
+        `${problems.length} need attention · DB ${writeBack.status} → link-report.json`,
+    );
+    if (problems.length > 0) process.exitCode = 1;
   }
 }
-
-function isExpired(expires) {
-  if (!expires || expires === 'ongoing') return false;
-  const t = Date.parse(expires);
-  return !Number.isNaN(t) && t < Date.now();
-}
-
-async function pool(items, worker, size) {
-  const out = new Array(items.length);
-  let i = 0;
-  await Promise.all(
-    Array.from({ length: Math.min(size, items.length) }, async () => {
-      while (i < items.length) {
-        const idx = i++;
-        out[idx] = await worker(items[idx], idx);
-      }
-    }),
-  );
-  return out;
-}
-
-const { data: rows, error } = await db
-  .from('offers')
-  .select('slug,title,url,expires_at')
-  .eq('visibility', 'published');
-if (error) {
-  console.error(`Failed to load offers from Supabase: ${error.message}`);
-  process.exit(1);
-}
-
-const offers = (rows ?? []).map((r) => ({
-  slug: r.slug,
-  title: r.title ?? '(untitled)',
-  url: r.url,
-  expires: r.expires_at ?? 'ongoing',
-}));
-
-console.log(`Checking ${offers.length} offers…\n`);
-
-const results = await pool(
-  offers,
-  async (o) => {
-    const link = o.url ? await checkUrl(o.url) : { kind: 'dead', status: 0, error: 'missing url' };
-    const expired = isExpired(o.expires);
-    const status = expired ? 'EXPIRED' : link.kind === 'ok' ? 'ok' : link.kind === 'blocked' ? 'BLOCKED' : 'DEAD';
-    const icon = status === 'ok' ? '✓' : status === 'BLOCKED' ? '⚠' : '✗';
-    console.log(`${icon} [${status}] ${o.title}`);
-    console.log(`   ${o.url ?? '(no url)'} ${link.status ? `→ ${link.status}` : ''}${link.error ? ` (${link.error})` : ''}`);
-    return { ...o, link, expired, status };
-  },
-  CONCURRENCY,
-);
-
-// BLOCKED = live site refusing the bot (403/429/…). Reported as a warning but
-// does NOT fail CI. Only dead links and expired offers are real problems.
-const blocked = results.filter((r) => r.status === 'BLOCKED');
-const problems = results.filter((r) => r.status === 'DEAD' || r.status === 'EXPIRED');
-const report = {
-  checkedAt: new Date().toISOString(),
-  total: results.length,
-  ok: results.filter((r) => r.status === 'ok').length,
-  blocked: blocked.map((p) => ({ slug: p.slug, title: p.title, url: p.url, http: p.link.status })),
-  problems: problems.map((p) => ({ slug: p.slug, title: p.title, url: p.url, status: p.status, http: p.link.status, error: p.link.error })),
-};
-await writeFile(join(ROOT, 'link-report.json'), JSON.stringify(report, null, 2));
-
-console.log(
-  `\n${report.ok}/${report.total} healthy · ${blocked.length} bot-blocked (ok) · ${problems.length} need attention → link-report.json`,
-);
-if (problems.length > 0) process.exit(1);

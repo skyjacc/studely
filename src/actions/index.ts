@@ -14,9 +14,9 @@ import type { AstroCookies } from 'astro';
 import { createSupabaseServer, isStaff, type StaffProfile } from '@core/supabase';
 import { validateOfferInput, type OfferFormRaw } from '@domain/offers/offer-input';
 import {
-  createOffer, updateOffer, setVisibility, deleteOffer, replaceAttributes, getOfferForEdit,
+  createOffer, updateOfferWithAttributes, setVisibility, deleteOffer, getOfferForEdit,
 } from '@domain/offers/admin-offers';
-import { triggerDeploy } from '@services/deploy/deploy-hook';
+import { shouldTriggerDeployForVisibility, triggerDeploy } from '@services/deploy/deploy-hook';
 
 type Ctx = { request: Request; cookies: AstroCookies };
 
@@ -76,13 +76,13 @@ export const server = {
         if (!existing) throw new ActionError({ code: 'NOT_FOUND', message: 'Offer not found.' });
         const { errors, value } = validateOfferInput(raw as OfferFormRaw, { requireSlug: false });
         if (!value) return { ok: false as const, errors };
-        const u = await updateOffer(supabase, raw.slug, value);
+        const u = await updateOfferWithAttributes(supabase, raw.slug, value, raw.attrs ?? []);
         if (!u.ok) return { ok: false as const, errors: { _: u.error ?? 'Could not save' } };
-        const a = await replaceAttributes(supabase, existing.row.id, raw.attrs ?? []);
-        if (!a.ok) return { ok: false as const, errors: { _: a.error ?? 'Fields saved, attributes failed' } };
-        if (existing.row.visibility === 'published') await triggerDeploy('save ' + raw.slug);
-        const after = await getOfferForEdit(supabase, raw.slug);
-        return { ok: true as const, score: after?.row.score ?? null };
+        const deploy =
+          existing.row.visibility === 'published'
+            ? await triggerDeploy('save ' + raw.slug)
+            : null;
+        return { ok: true as const, score: u.score ?? null, deploy };
       },
     }),
 
@@ -90,10 +90,14 @@ export const server = {
       input: z.object({ slug: z.string(), visibility: z.enum(['draft', 'published', 'archived']) }),
       handler: async ({ slug, visibility }, ctx) => {
         const { supabase } = await requireStaff(ctx);
+        const existing = await getOfferForEdit(supabase, slug);
+        if (!existing) throw new ActionError({ code: 'NOT_FOUND', message: 'Offer not found.' });
         const res = await setVisibility(supabase, slug, visibility);
         if (!res.ok) throw new ActionError({ code: 'BAD_REQUEST', message: res.error ?? 'Could not change visibility' });
-        await triggerDeploy(`${visibility} ${slug}`);
-        return { ok: true as const, visibility };
+        const deploy = shouldTriggerDeployForVisibility(existing.row.visibility, visibility)
+          ? await triggerDeploy(`${visibility} ${slug}`)
+          : null;
+        return { ok: true as const, visibility, deploy };
       },
     }),
 
@@ -105,8 +109,8 @@ export const server = {
         const wasPublished = existing?.row.visibility === 'published';
         const res = await deleteOffer(supabase, slug);
         if (!res.ok) throw new ActionError({ code: 'BAD_REQUEST', message: res.error ?? 'Could not delete' });
-        if (wasPublished) await triggerDeploy('delete ' + slug);
-        return { ok: true as const };
+        const deploy = wasPublished ? await triggerDeploy('delete ' + slug) : null;
+        return { ok: true as const, deploy };
       },
     }),
   },

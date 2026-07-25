@@ -10,33 +10,20 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
 
-      # `npm install`, not `npm ci`, on purpose.
-      #
-      # The lockfile is generated on Windows, where npm never unpacks the
-      # platform-specific optional packages (@rolldown/binding-wasm32-wasi,
-      # @bruits/satteri-wasm32-wasi) and so cannot record their nested deps. On Linux
-      # npm does resolve them, finds @emnapi/* pinned a patch behind, and `npm ci`
-      # refuses with EUSAGE. Neither `npm install` nor `--package-lock-only` on Windows
-      # can produce those entries, so the lock cannot be made ci-clean from there.
-      #
-      # This job exists to catch regressions, not to build the artifact — Vercel runs
-      # its own install for deploys. Reproducibility is worth less here than a check
-      # that actually runs. Switch back to `npm ci` if the lock is ever regenerated
-      # on Linux.
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
 
       # The auth gate lives in src/middleware.ts, which only runs for routes that
       # are rendered on demand. An admin route that forgets `prerender = false` is
       # prerendered at build time instead, the middleware never runs for it, and the
       # page ships to the CDN with no session check and no way to notice.
-      # This is the single highest-risk consequence of having no tests yet.
+      # This is the single highest-risk consequence of hybrid rendering.
       - name: Every admin route must opt out of prerendering
         run: |
           missing=0
@@ -61,6 +48,9 @@ jobs:
 
       - name: Type check
         run: npm run check
+
+      - name: Unit tests
+        run: npm test
 
       - name: Build
         run: npm run build

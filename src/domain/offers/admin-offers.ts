@@ -62,6 +62,7 @@ export interface MutationResult {
   ok: boolean;
   error?: string;
   slug?: string;
+  score?: number;
 }
 
 /** Columns the editor may write — never score, visibility, slug (post-create), or the audit fields. */
@@ -108,6 +109,31 @@ export async function updateOffer(db: SupabaseClient, slug: string, input: Offer
   const { error } = await db.from('offers').update(toRow(input)).eq('slug', slug);
   if (error) return { ok: false, error: friendly(error) };
   return { ok: true, slug };
+}
+
+/**
+ * Update editable fields and replace scoring attributes in one Postgres
+ * transaction. The RPC is SECURITY INVOKER, so the signed-in staff session and
+ * existing RLS policies remain the authorization boundary.
+ */
+export async function updateOfferWithAttributes(
+  db: SupabaseClient,
+  slug: string,
+  input: OfferInput,
+  keys: string[],
+): Promise<MutationResult> {
+  const attributeRows = selectedAttributes(keys).map(({ key, label, points }) => ({
+    key,
+    label,
+    points,
+  }));
+  const { data, error } = await db.rpc('update_offer_with_attributes', {
+    offer_slug: slug,
+    offer_patch: toRow(input),
+    attribute_rows: attributeRows,
+  });
+  if (error) return { ok: false, error: friendly(error) };
+  return { ok: true, slug, score: typeof data === 'number' ? data : undefined };
 }
 
 /** draft ↔ published ↔ archived, by explicit operator action. */

@@ -12,7 +12,7 @@ interface Options {
 }
 
 export function bindOfferForm({ form, mode, slug }: Options) {
-  const banner = form.querySelector<HTMLElement>('[data-form-error]');
+  const banner = document.querySelector<HTMLElement>('[data-form-error]');
 
   const clearErrors = () => {
     form.querySelectorAll('.er[data-client]').forEach((e) => e.remove());
@@ -73,7 +73,12 @@ export function bindOfferForm({ form, mode, slug }: Options) {
       return;
     }
 
-    if (mode === 'create' && 'slug' in data) location.assign(`/admin/offers/${data.slug}?created=1`);
-    else location.assign(`/admin/offers/${slug}?done=save`);
+    if (mode === 'create' && 'slug' in data) {
+      location.assign(`/admin/offers/${data.slug}?created=1`);
+    } else {
+      const p = new URLSearchParams({ done: 'save' });
+      if ('deploy' in data && data.deploy) p.set('deploy', data.deploy.status);
+      location.assign(`/admin/offers/${slug}?${p}`);
+    }
   });
 }

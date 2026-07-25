@@ -11,15 +11,34 @@ if (!profile) return Astro.redirect('/admin/login', 302);
 const supabase = createSupabaseServer(Astro.request, Astro.cookies);
 
 const done = Astro.url.searchParams.get('done');
+const deploy = Astro.url.searchParams.get('deploy');
+const deployNotice = (verb: string) =>
+  deploy === 'triggered'
+    ? `${verb} Rebuild triggered.`
+    : deploy === 'skipped'
+      ? `${verb} Rebuild not triggered: deploy hook is not configured.`
+      : deploy === 'failed'
+        ? `${verb} Rebuild trigger failed; public site may still show the previous version.`
+        : verb;
 const notice =
-  done === 'publish' ? 'Offer published — a rebuild was triggered.'
-  : done === 'unpublish' ? 'Offer unpublished — a rebuild was triggered.'
-  : done === 'deleted' ? 'Offer deleted.'
+  done === 'publish' ? deployNotice('Offer published.')
+  : done === 'unpublish' ? deployNotice('Offer unpublished.')
+  : done === 'deleted' ? deployNotice('Offer deleted.')
   : null;
+const noticeKind = deploy === 'failed' || deploy === 'skipped' ? 'warn' : 'ok';
 
-const offers = await listAllOffers(supabase);
+const allOffers = await listAllOffers(supabase);
+const visibility = Astro.url.searchParams.get('visibility');
+const staleOnly = Astro.url.searchParams.get('stale') === '1';
+const staleCutoff = Date.now() - 7 * 86_400_000;
+const offers = allOffers.filter((offer) => {
+  if (visibility && offer.visibility !== visibility) return false;
+  if (staleOnly && Date.parse(offer.last_checked) >= staleCutoff) return false;
+  return true;
+});
 const published = offers.filter((o) => o.visibility === 'published').length;
 const drafts = offers.filter((o) => o.visibility === 'draft').length;
+const filtered = offers.length !== allOffers.length;
 
 const tier = (s: number) => (s >= 9 ? 'hi' : s >= 7 ? 'mi' : 'lo');
 const initial = (p: string) => p.trim().slice(0, 1).toUpperCase();
@@ -29,12 +48,20 @@ const checked = (iso: string) => {
 };
 ---
 
-<AdminLayout title="Offers" subtitle={`${offers.length} total · ${published} live · ${drafts} draft`} handle={profile.handle} role={profile.role}>
-  {notice && <p class="banner ok">{notice}</p>}
+<AdminLayout
+  title="Offers"
+  subtitle={`${offers.length}${filtered ? ` of ${allOffers.length}` : ''} total · ${published} live · ${drafts} draft`}
+  handle={profile.handle}
+  role={profile.role}
+>
+  {notice && <p class={`banner ${noticeKind}`}>{notice}</p>}
   <p class="banner bad" id="listerr" hidden></p>
 
   <div class="bar">
-    <span class="mono">The library</span>
+    <span class="mono">
+      {visibility ? `${visibility} offers` : staleOnly ? 'not checked in 7 days' : 'The library'}
+      {filtered && <a class="clear" href="/admin/offers">clear filter</a>}
+    </span>
     <a class="btn pri" href="/admin/offers/new">＋ New offer</a>
   </div>
 
@@ -91,7 +118,9 @@ const checked = (iso: string) => {
         showErr(error?.message ?? 'Could not update visibility');
         return;
       }
-      location.assign(`/admin/offers?done=${action}`);
+      const p = new URLSearchParams({ done: action });
+      if (data.deploy) p.set('deploy', data.deploy.status);
+      location.assign(`/admin/offers?${p}`);
     });
   }
 </script>
@@ -99,10 +128,12 @@ const checked = (iso: string) => {
 <style>
   .banner { padding: 0.7rem 1rem; border-radius: 10px; font-size: var(--step--1); margin-bottom: 1rem; border: 1px solid var(--border-strong); }
   .banner.ok { color: #7fd6b0; background: rgba(84,201,162,.08); border-color: rgba(84,201,162,.3); }
+  .banner.warn { color: #e6bd78; background: rgba(224,164,74,.08); border-color: rgba(224,164,74,.3); }
   .banner.bad { color: #e88f88; background: rgba(224,101,92,.08); border-color: rgba(224,101,92,.3); }
 
   .bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
   .mono { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); }
+  .clear { margin-left: .75rem; letter-spacing: 0; text-transform: none; color: var(--ink); text-decoration: underline; }
   .btn { display: inline-flex; align-items: center; gap: 6px; font-size: var(--step--1); font-weight: 500; padding: 8px 14px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink); cursor: pointer; transition: background .18s var(--ease-out), transform .1s; }
   .btn:hover { background: var(--surface-2); }
   .btn:active { transform: scale(.98); }

@@ -31,12 +31,21 @@ const errors: Record<string, string> = {};
 
 const done = Astro.url.searchParams.get('done');
 const created = Astro.url.searchParams.get('created');
-const wasPublished = row.visibility === 'published';
+const deploy = Astro.url.searchParams.get('deploy');
 let notice: string | null = null;
 if (created) notice = 'Draft created. Set its attributes and publish when it is ready.';
-if (done === 'save') notice = 'Saved.' + (wasPublished ? ' A rebuild was triggered.' : '');
-if (done === 'publish') notice = 'Published — a rebuild was triggered.';
-if (done === 'unpublish') notice = 'Unpublished — a rebuild was triggered.';
+const deployNotice = (verb: string) =>
+  deploy === 'triggered'
+    ? `${verb} Rebuild triggered.`
+    : deploy === 'skipped'
+      ? `${verb} Rebuild not triggered: deploy hook is not configured.`
+      : deploy === 'failed'
+        ? `${verb} Rebuild trigger failed; public site may still show the previous version.`
+        : verb;
+if (done === 'save') notice = deployNotice('Saved.');
+if (done === 'publish') notice = deployNotice('Published.');
+if (done === 'unpublish') notice = deployNotice('Unpublished.');
+const noticeKind = deploy === 'failed' || deploy === 'skipped' ? 'warn' : 'ok';
 
 const groups: [string, string][] = [['value', 'What you get'], ['access', 'How hard to claim'], ['durability', 'Durability']];
 const checkedSet = new Set(attributeKeys);
@@ -44,7 +53,7 @@ const checkedSet = new Set(attributeKeys);
 
 <AdminLayout title={row.title as string} subtitle={`/offers/${slug}`} handle={profile.handle} role={profile.role}>
   <a class="back" href="/admin/offers">← All offers</a>
-  {notice && <p class="banner ok">{notice}</p>}
+  {notice && <p class={`banner ${noticeKind}`}>{notice}</p>}
   <p class="banner bad" data-form-error hidden></p>
 
   <div class="layout">
@@ -112,7 +121,9 @@ const checkedSet = new Set(attributeKeys);
       btn.disabled = true;
       const { data, error } = await actions.offers.setVisibility({ slug: s, visibility });
       if (error || !data?.ok) { btn.disabled = false; showErr(error?.message ?? 'Could not change visibility'); return; }
-      location.assign(`/admin/offers/${s}?done=${action}`);
+      const p = new URLSearchParams({ done: action });
+      if (data.deploy) p.set('deploy', data.deploy.status);
+      location.assign(`/admin/offers/${s}?${p}`);
     });
   }
 
@@ -122,7 +133,9 @@ const checkedSet = new Set(attributeKeys);
     del.disabled = true;
     const { data, error } = await actions.offers.remove({ slug: del.dataset.slug! });
     if (error || !data?.ok) { del.disabled = false; showErr(error?.message ?? 'Could not delete'); return; }
-    location.assign('/admin/offers?done=deleted');
+    const p = new URLSearchParams({ done: 'deleted' });
+    if (data.deploy) p.set('deploy', data.deploy.status);
+    location.assign(`/admin/offers?${p}`);
   });
 </script>
 
@@ -131,6 +144,7 @@ const checkedSet = new Set(attributeKeys);
   .back:hover { color: var(--ink); }
   .banner { padding: 0.7rem 1rem; border-radius: 10px; font-size: var(--step--1); margin-bottom: 1rem; border: 1px solid var(--border-strong); }
   .banner.ok { color: #7fd6b0; background: rgba(84,201,162,.08); border-color: rgba(84,201,162,.3); }
+  .banner.warn { color: #e6bd78; background: rgba(224,164,74,.08); border-color: rgba(224,164,74,.3); }
   .banner.bad { color: #e88f88; background: rgba(224,101,92,.08); border-color: rgba(224,101,92,.3); }
 
   .layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 1.6rem; align-items: start; }

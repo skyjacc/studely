@@ -1,4 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["fra1"]
+  "regions": ["fra1"],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "claimly-seven.vercel.app"
+        }
+      ],
+      "destination": "https://studely.app/:path*",
+      "permanent": true
+    }
+  ]
 }

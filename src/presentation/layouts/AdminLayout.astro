@@ -26,8 +26,6 @@ const path = Astro.url.pathname;
 const nav = [
   { href: '/admin', label: 'Overview', exact: true },
   { href: '/admin/offers', label: 'Offers' },
-  { href: '/admin/submissions', label: 'Submissions' },
-  { href: '/admin/comments', label: 'Comments' },
 ];
 const active = (item: (typeof nav)[number]) =>
   item.exact ? path === item.href : path.startsWith(item.href);
