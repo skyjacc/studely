@@ -6,7 +6,6 @@ import Pipeline from '@ui/components/Pipeline.astro';
 import OfferCard from '@ui/components/OfferCard.astro';
 import AdSlot from '@ui/components/AdSlot.astro';
 import Hero3D from '@ui/components/Hero3D.astro';
-import { categories } from '@domain/offers/categories';
 import { site } from '@core/config/site';
 import { sortOffers, isExpired } from '@domain/offers/offers';
 
@@ -15,7 +14,12 @@ const counts = new Map<string, number>();
 for (const o of all) counts.set(o.data.category, (counts.get(o.data.category) ?? 0) + 1);
 
 const featured = sortOffers(all.filter((o) => o.data.featured || o.data.sponsored)).slice(0, 6);
-const featuredList = featured.length >= 3 ? featured : sortOffers(all).slice(0, 6);
+const isCurated = featured.length >= 3;
+const featuredList = isCurated ? featured : sortOffers(all).slice(0, 6);
+// Name the section for what it actually is: with too few flagged offers this
+// falls back to the highest-scored ones, and calling that "featured" (let alone
+// "this week", a cadence nothing enforces) would be a claim we can't back.
+const featuredHeading = isCurated ? 'Featured offers' : 'Top-scored offers';
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -64,7 +68,7 @@ const jsonLd = {
   <section class="section">
     <div class="wrap">
       <header class="sec-head" data-reveal>
-        <h2 data-split>Featured this week</h2>
+        <h2 data-split>{featuredHeading}</h2>
         <a href="/offers" class="btn btn-ghost" data-magnetic>See all {all.length} ↗</a>
       </header>
       <div class="grid grid-offers" data-reveal-group>

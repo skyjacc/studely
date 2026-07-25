@@ -38,16 +38,17 @@ const base: OfferFormRaw = {
   value: 'Pro plan free',
   url: 'https://figma.com/education',
   verification: 'SheerID',
+  eligibility: 'Students at accredited institutions',
   offer_type: 'free',
   status: 'active',
 };
 
 describe('validateOfferInput', () => {
-  it('accepts a valid create and fills slug + eligibility defaults', () => {
+  it('accepts a valid create and fills the slug default', () => {
     const r = validateOfferInput(base, { requireSlug: true });
     expect(r.errors).toEqual({});
     expect(r.value?.slug).toBe('figma-education');
-    expect(r.value?.eligibility).toBe('Verified students worldwide');
+    expect(r.value?.eligibility).toBe('Students at accredited institutions');
     expect(r.value?.discount_percent).toBeNull();
   });
 
@@ -57,6 +58,16 @@ describe('validateOfferInput', () => {
     expect(r.errors.title).toBeDefined();
     expect(r.errors.url).toBeDefined();
     expect(r.errors.verification).toBeDefined();
+  });
+
+  // Integrity: eligibility is published as "Who can apply". It must never be
+  // defaulted to a claim we can't back (it used to become "Verified students
+  // worldwide" — an unrun verification and a reach most offers don't have).
+  it('requires eligibility rather than inventing one', () => {
+    const { eligibility, ...withoutEligibility } = base;
+    const r = validateOfferInput(withoutEligibility, { requireSlug: true });
+    expect(r.value).toBeNull();
+    expect(r.errors.eligibility).toBe('Required');
   });
 
   it('rejects a non-http url', () => {

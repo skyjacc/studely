@@ -9,7 +9,7 @@ if (!profile) return Astro.redirect('/admin/login', 302);
 
 // The form submits to the offers.create action from the client; there is no
 // server POST here. Defaults for a fresh draft:
-const v: Record<string, any> = { offer_type: 'free', status: 'active', eligibility: 'Verified students worldwide' };
+const v: Record<string, any> = { offer_type: 'free', status: 'active' };
 const errors: Record<string, string> = {};
 ---
 

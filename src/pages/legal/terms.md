@@ -1,7 +1,7 @@
 ---
 layout: ../../presentation/layouts/LegalLayout.astro
 title: "Terms of Service"
-description: "The terms for using Studely, a verified directory of free tools and discounts for students."
+description: "The terms for using Studely, a scored directory of free tools and discounts for students."
 draft: false
 ---
 
@@ -32,7 +32,7 @@ Your relationship for any tool, credit, course, or discount is **solely with the
 
 ## 3. No warranty that Offers are current or available
 
-Offers change constantly. Providers alter, restrict, geo-limit, pause, or withdraw them without notice. We verify each Offer before publishing on a **best-effort** basis at a point in time, and we re-check periodically, but:
+Offers change constantly. Providers alter, restrict, geo-limit, pause, or withdraw them without notice. We select and score each Offer editorially before publishing, on a **best-effort** basis at a point in time. We do not continuously monitor Offers, and:
 
 - we do **not** guarantee that any Offer is currently live, available in your country, or open to you;
 - we do **not** guarantee that eligibility criteria, discount amounts, credit values, or deadlines shown are accurate at the moment you act on them;
@@ -47,7 +47,7 @@ Always confirm the current terms on the Provider's own site before relying on an
 Some outbound links on the Service are, or will become, **affiliate links**: if you click through and take a qualifying action with a Provider, we may earn a commission or referral fee at no additional cost to you.
 
 > **This does not change what we list or how we rank it**
-> Offers are selected and verified editorially. An affiliate relationship does not determine whether an Offer appears, and it does not change the price you pay. Where an Offer is monetised, we aim to make that transparent.
+> Offers are selected and scored editorially. An affiliate relationship does not determine whether an Offer appears, and it does not change the price you pay. Where an Offer is monetised, we aim to make that transparent.
 
 We currently plan affiliate links and Google AdSense advertising; **neither is live as of the effective date above.** Advertising and cookie details are covered in the [Privacy Policy](/legal/privacy) and [Cookie Policy](/legal/cookies).
 

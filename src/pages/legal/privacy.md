@@ -10,7 +10,7 @@ draft: false
 
 This Privacy Policy explains how **an individual based in Romania (full controller identity available on request via privacy@studely.app)** ("Studely", "we", "us", "our") collects, uses, shares and protects personal data when you visit **https://studely.app** (the "Site") or sign in to an account. It also describes your rights and how to exercise them.
 
-Studely is a verified directory of free tools, cloud credits, online courses and discounts for students. Reading the directory requires no account. An account exists only to enable a small number of features (see [Section 2](#2-what-we-collect-and-why)).
+Studely is a scored directory of free tools, cloud credits, online courses and discounts for students. Reading the directory requires no account. An account exists only to enable a small number of features (see [Section 2](#2-what-we-collect-and-why)).
 
 ---
 

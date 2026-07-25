@@ -10,7 +10,6 @@ const OFFER_TYPES: OfferType[] = ['free', 'discount', 'credit', 'trial'];
 const STATUSES: OfferStatus[] = ['active', 'expiring', 'expired', 'unverified'];
 const CATEGORIES = new Set<string>(categorySlugs);
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const DEFAULT_ELIGIBILITY = 'Verified students worldwide';
 
 /** URL-safe slug from a title: strip diacritics, lowercase, non-alnum → single dash. */
 export function slugify(s: string): string {
@@ -116,6 +115,7 @@ export function validateOfferInput(raw: OfferFormRaw, opts: { requireSlug: boole
   const value = str(raw.value);
   const url = str(raw.url);
   const verification = str(raw.verification);
+  const eligibility = str(raw.eligibility);
 
   if (!title) errors.title = 'Required';
   if (!provider) errors.provider = 'Required';
@@ -124,6 +124,10 @@ export function validateOfferInput(raw: OfferFormRaw, opts: { requireSlug: boole
   if (!summary) errors.summary = 'Required';
   if (!value) errors.value = 'Required';
   if (!verification) errors.verification = 'Required';
+  // Public "Who can apply" copy. No default: an unwritten answer used to become
+  // "Verified students worldwide", which claims a verification we never ran and
+  // a reach most offers don't have. If we don't know, we don't publish a guess.
+  if (!eligibility) errors.eligibility = 'Required';
   if (!url) errors.url = 'Required';
   else if (!/^https?:\/\//i.test(url)) errors.url = 'Must start with http:// or https://';
 
@@ -180,7 +184,7 @@ export function validateOfferInput(raw: OfferFormRaw, opts: { requireSlug: boole
       body: typeof raw.body === 'string' ? raw.body : '',
       url,
       verification,
-      eligibility: str(raw.eligibility) || DEFAULT_ELIGIBILITY,
+      eligibility,
       offer_type,
       discount_percent,
       status,

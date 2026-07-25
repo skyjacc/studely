@@ -16,6 +16,13 @@ Studely is **the most trusted database of verified student benefits** — it hel
 
 We do not try to collect the most offers. We collect the **most useful and most current** ones.
 
+> **This section is the destination, not a description of today.** It must never
+> be quoted into user-facing copy. On the site we may claim only what the data
+> proves right now: the Studely score and its visible breakdown. "Verified",
+> "re-checked weekly", "always current" and similar stay out of the product until
+> a real record backs them (a passing row in `verifications`, a real
+> `link_checks` run). Overclaiming costs more trust than an unfinished feature.
+
 ---
 
 ## 2. The core principle
@@ -113,4 +120,15 @@ Verified Student Benefits Platform
 
 ## Where we are now
 
-Public site live and DB-driven · magic-link auth · admin offers CRUD (typed JSON API) · verification = manual + a weekly link checker. Revenue channels are **off** ($0 — ads not serving, no affiliate links yet). So the current work is **Sprint 1 — Revenue Foundation**: earn, and start measuring. Everything else waits.
+As of **2026-07-24**, public site is live and DB-driven; `/go/<slug>` click
+tracking and admin offers CRUD exist; CI runs tests, type-check, and build; and
+operations hardening is being rolled out. Migration `0007` is applied in
+Supabase, adding atomic offer+attribute saves and transactional link-check
+write-back. Production still needs Vercel environment confirmation, deploy-hook
+configuration, a deployment carrying the legacy-host redirect, and GitHub's
+service-role secret before scheduled checks can write back.
+
+Revenue remains **$0**: no affiliate links are configured, and AdSense is under
+Google review with ad-unit slots intentionally empty. Next work should close
+those operator rollout gaps, then measure verification freshness and outbound
+clicks before adding more product surface.
