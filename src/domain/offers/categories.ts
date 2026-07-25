@@ -1,6 +1,13 @@
-// Central list of offer categories ("departments").
-// Every offer references one of these slugs. Displayed as the card grid on the
-// homepage and used to build /category/[slug] pages.
+// Central list of offer categories.
+// Every offer references one of these slugs. Rendered on the homepage explorer,
+// the /categories index and the /offers filter rail.
+//
+// Descriptions describe the DEPARTMENT, never its current contents. Naming a
+// brand ("Figma, Canva, Adobe") or asserting an access fact ("with no card")
+// makes this file a second, silently drifting source of truth: those strings
+// claimed Adobe, AWS, Copilot and YouTube offers we have never listed, and
+// promised "no card" for a category whose Google Cloud offer is scored
+// card_required. Per-offer facts belong on the offer, where the data backs them.
 //
 // `accent` is a mono warm-grey in the MONOLOG theme — tints stay neutral.
 
@@ -18,16 +25,16 @@ export interface Category {
 const MONO = '#cfcabf';
 
 export const categories: Category[] = [
-  { slug: 'dev-tools', name: 'Developer Tools', description: 'IDEs, APIs, CI and hosting, free for students.', emoji: '🛠️', accent: MONO },
-  { slug: 'design', name: 'Design & Creative', description: 'Figma, Canva, Adobe and more, unlocked.', emoji: '🎨', accent: MONO },
-  { slug: 'cloud', name: 'Cloud & Hosting', description: 'AWS, Azure and GCP credits with no card.', emoji: '☁️', accent: MONO },
-  { slug: 'ai', name: 'AI & Machine Learning', description: 'Copilot, Perplexity and model credits.', emoji: '🤖', accent: MONO },
-  { slug: 'learning', name: 'Courses & Learning', description: 'Free courses, certificates and textbooks.', emoji: '📚', accent: MONO },
-  { slug: 'domains', name: 'Domains & Web', description: 'Free domains, SSL and CDN for your projects.', emoji: '🌐', accent: MONO },
-  { slug: 'productivity', name: 'Productivity', description: 'Notion, note apps and planners with free Pro tiers.', emoji: '⚡', accent: MONO },
-  { slug: 'entertainment', name: 'Entertainment', description: 'Spotify, YouTube and streaming student rates.', emoji: '🎧', accent: MONO },
-  { slug: 'hardware', name: 'Hardware & Discounts', description: 'Student pricing on laptops and devices.', emoji: '💻', accent: MONO },
-  { slug: 'finance', name: 'Finance & Perks', description: 'Student banking, cashback and everyday perks.', emoji: '💳', accent: MONO },
+  { slug: 'dev-tools', name: 'Developer Tools', description: 'IDEs, editors and the big student tool bundles.', emoji: '🛠️', accent: MONO },
+  { slug: 'design', name: 'Design & Creative', description: 'Design, illustration and creative software.', emoji: '🎨', accent: MONO },
+  { slug: 'cloud', name: 'Cloud & Hosting', description: 'Compute credits and hosting for student projects.', emoji: '☁️', accent: MONO },
+  { slug: 'ai', name: 'AI & Machine Learning', description: 'Assistants, model access and AI tooling.', emoji: '🤖', accent: MONO },
+  { slug: 'learning', name: 'Courses & Learning', description: 'Courses, certificates and academic software licences.', emoji: '📚', accent: MONO },
+  { slug: 'domains', name: 'Domains & Web', description: 'Domains and SSL for your own projects.', emoji: '🌐', accent: MONO },
+  { slug: 'productivity', name: 'Productivity', description: 'Notes, docs and planning apps.', emoji: '⚡', accent: MONO },
+  { slug: 'entertainment', name: 'Entertainment', description: 'Music and streaming at student rates.', emoji: '🎧', accent: MONO },
+  { slug: 'hardware', name: 'Hardware & Discounts', description: 'Education-store pricing on computers and tablets.', emoji: '💻', accent: MONO },
+  { slug: 'finance', name: 'Finance & Perks', description: 'Memberships that unlock everyday student discounts.', emoji: '💳', accent: MONO },
 ];
 
 export const categorySlugs = categories.map((c) => c.slug) as [string, ...string[]];

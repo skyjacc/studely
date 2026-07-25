@@ -8,7 +8,7 @@ const idx = index !== undefined ? String(index).padStart(2, '0') : '';
 ---
 
 <a class="cat-row" href={`/offers?cat=${category.slug}`} style={`--cat: ${category.accent}`}>
-  <span class="cat-idx">{idx}</span>
+  <span class="cat-idx" aria-hidden="true">{idx}</span>
   <span class="cat-ico-tile"><Icon category={category.slug} /></span>
   <span class="cat-body">
     <span class="cat-name">{category.name}</span>
@@ -35,22 +35,32 @@ const idx = index !== undefined ? String(index).padStart(2, '0') : '';
     background: var(--surface); transform: scaleX(0); transform-origin: left center;
     transition: transform .55s cubic-bezier(0.2, 1, 0.36, 1);
   }
-  .cat-row:hover::before { transform: scaleX(1); }
-  .cat-row:hover { border-bottom-color: var(--border-strong); }
+  /* Keyboard gets the same affordances as the mouse. Without this the row's only
+     "this navigates" mark — the arrow — never appears for a keyboard user, and
+     an :active fallback gives a tap something to answer with on touch, where
+     :hover does not exist. */
+  .cat-row:hover::before,
+  .cat-row:focus-visible::before { transform: scaleX(1); }
+  .cat-row:hover,
+  .cat-row:focus-visible { border-bottom-color: var(--border-strong); }
+  .cat-row:active::before { transform: scaleX(1); transition: none; }
 
   .cat-idx { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); letter-spacing: 0.05em; transition: color .4s var(--ease-out); }
-  .cat-row:hover .cat-idx { color: var(--ink); }
+  .cat-row:hover .cat-idx,
+  .cat-row:focus-visible .cat-idx { color: var(--ink); }
 
   .cat-ico-tile {
     display: grid; place-items: center; width: 46px; height: 46px; border-radius: 11px;
     border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted);
     transition: background .4s var(--ease-out), color .4s var(--ease-out), border-color .4s var(--ease-out);
   }
-  .cat-row:hover .cat-ico-tile { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .cat-row:hover .cat-ico-tile,
+  .cat-row:focus-visible .cat-ico-tile { background: var(--ink); color: var(--bg); border-color: var(--ink); }
   .cat-ico-tile :global(.cat-ico) { width: 22px; height: 22px; }
 
   .cat-body { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; transition: transform .5s var(--ease-out); }
-  .cat-row:hover .cat-body { transform: translateX(6px); }
+  .cat-row:hover .cat-body,
+  .cat-row:focus-visible .cat-body { transform: translateX(6px); }
   .cat-name {
     font-family: var(--font-display); font-weight: 500; color: var(--ink);
     font-size: clamp(1.35rem, 0.9rem + 1.7vw, 2.05rem); letter-spacing: -0.035em; line-height: 1.02;
@@ -61,7 +71,8 @@ const idx = index !== undefined ? String(index).padStart(2, '0') : '';
   .cat-count { color: var(--ink); font-weight: 500; }
 
   .cat-arrow { color: var(--text-muted); opacity: 0; transform: translate(-6px, 6px); transition: opacity .45s var(--ease-out), transform .45s var(--ease-out), color .4s var(--ease-out); }
-  .cat-row:hover .cat-arrow { opacity: 1; transform: translate(0, 0); color: var(--ink); }
+  .cat-row:hover .cat-arrow,
+  .cat-row:focus-visible .cat-arrow { opacity: 1; transform: translate(0, 0); color: var(--ink); }
 
   @media (max-width: 800px) {
     .cat-row { grid-template-columns: 42px minmax(0, 1fr) auto; gap: 0.85rem; }

@@ -14,7 +14,7 @@ const items = categories.map((c, i) => ({ ...c, i, idx: String(i + 1).padStart(2
     {items.map((c) => (
       <li>
         <a class={`cat-link ${c.i === 0 ? 'is-active' : ''}`} href={`/offers?cat=${c.slug}`} data-cat={c.i}>
-          <span class="cat-num">{c.idx}</span>
+          <span class="cat-num" aria-hidden="true">{c.idx}</span>
           <span class="cat-main">
             <span class="cat-title">{c.name}</span>
             <span class="cat-desc-m">{c.description}</span>
