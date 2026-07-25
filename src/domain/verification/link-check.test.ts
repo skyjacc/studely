@@ -45,9 +45,19 @@ describe('classifyOfferCheck', () => {
 
   it('records network errors without pretending status 0 is an HTTP code', () => {
     const result = classifyOfferCheck(offer, { status: 0, error: 'timeout' }, checkedAt);
-    expect(result.reportStatus).toBe('DEAD');
+    expect(result.reportStatus).toBe('UNREACHABLE');
     expect(result.write.status_code).toBeNull();
     expect(result.write.error).toBe('timeout');
+  });
+
+  // A timeout, reset or TLS failure is us not reaching the offer — not the
+  // provider saying it is gone. Autodesk and Azure both answer in a browser but
+  // time out from CI, so demoting them would publish a false "broken" claim.
+  it('does not demote an offer we simply could not reach', () => {
+    const result = classifyOfferCheck({ ...offer, status: 'active' }, { status: 0, error: 'timeout' }, checkedAt);
+    expect(result.write.result).toBe('warn');
+    expect(result.write.ok).toBe(true);
+    expect(result.write.offer_status).toBe('active');
   });
 
   it('marks an offer expired only after its inclusive expiry date has passed', () => {

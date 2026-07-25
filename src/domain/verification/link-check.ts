@@ -1,6 +1,6 @@
 export type OfferHealthStatus = 'active' | 'expiring' | 'expired' | 'unverified';
 export type LinkCheckResult = 'pass' | 'warn' | 'fail';
-export type ReportStatus = 'ok' | 'BLOCKED' | 'DEAD' | 'EXPIRED';
+export type ReportStatus = 'ok' | 'BLOCKED' | 'UNREACHABLE' | 'DEAD' | 'EXPIRED';
 
 export interface CheckedOffer {
   id: string;
@@ -62,16 +62,25 @@ export function classifyOfferCheck(
   const receivedHttp = Number.isInteger(observation.status) && observation.status > 0;
   const blocked = receivedHttp && BLOCKED_CODES.has(observation.status);
   const passed = receivedHttp && observation.status < 400;
+  // No HTTP response at all: a timeout, DNS failure, reset connection or TLS
+  // error. That is us failing to reach the offer, not the provider saying the
+  // page is gone — and it is what aggressive bot protection looks like when it
+  // drops the connection instead of answering 403. Treating it as dead would
+  // publish "this offer is broken" on the strength of our own failed request.
+  // Warn instead: it shows up in the report, but never demotes the offer.
+  const unreachable = !receivedHttp;
 
-  const result: LinkCheckResult = passed ? 'pass' : blocked ? 'warn' : 'fail';
+  const result: LinkCheckResult = passed ? 'pass' : blocked || unreachable ? 'warn' : 'fail';
   const ok = result !== 'fail';
   const reportStatus: ReportStatus = expired
     ? 'EXPIRED'
     : result === 'pass'
       ? 'ok'
-      : result === 'warn'
-        ? 'BLOCKED'
-        : 'DEAD';
+      : unreachable
+        ? 'UNREACHABLE'
+        : result === 'warn'
+          ? 'BLOCKED'
+          : 'DEAD';
 
   return {
     reportStatus,

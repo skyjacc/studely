@@ -79,7 +79,12 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
           ? await fetchLinkWithRetry(offer.url)
           : { status: 0, error: 'missing url' };
         const classified = classifyOfferCheck(offer, observation, checkedAt);
-        const icon = classified.reportStatus === 'ok' ? '✓' : classified.reportStatus === 'BLOCKED' ? '⚠' : '✗';
+        const icon =
+          classified.reportStatus === 'ok'
+            ? '✓'
+            : classified.reportStatus === 'BLOCKED' || classified.reportStatus === 'UNREACHABLE'
+              ? '⚠'
+              : '✗';
         console.log(`${icon} [${classified.reportStatus}] ${offer.title}`);
         console.log(
           `   ${offer.url ?? '(no url)'} ${observation.status ? `→ ${observation.status}` : ''}` +
@@ -123,12 +128,17 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     }
 
     const blocked = results.filter((r) => r.reportStatus === 'BLOCKED');
+    // Unreachable is a warning, not a problem: we failed to get an answer, which
+    // is not evidence the offer is gone. Listed separately so a link that is
+    // unreachable week after week is still visible and can be checked by hand.
+    const unreachable = results.filter((r) => r.reportStatus === 'UNREACHABLE');
     const problems = results.filter((r) => r.reportStatus === 'DEAD' || r.reportStatus === 'EXPIRED');
     const report = {
       checkedAt: checkedAt.toISOString(),
       total: results.length,
       ok: results.filter((r) => r.reportStatus === 'ok').length,
       blocked: blocked.map((r) => ({ slug: r.slug, title: r.title, url: r.url, http: r.observation.status })),
+      unreachable: unreachable.map((r) => ({ slug: r.slug, title: r.title, url: r.url, error: r.observation.error ?? null })),
       problems: problems.map((r) => ({
         slug: r.slug,
         title: r.title,
@@ -142,8 +152,9 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     await writeFile(join(ROOT, 'link-report.json'), JSON.stringify(report, null, 2));
 
     console.log(
-      `\n${report.ok}/${report.total} healthy · ${blocked.length} bot-blocked (warning) · ` +
-        `${problems.length} need attention · DB ${writeBack.status} → link-report.json`,
+      `\n${report.ok}/${report.total} healthy · ${blocked.length} bot-blocked · ` +
+        `${unreachable.length} unreachable · ${problems.length} need attention · ` +
+        `DB ${writeBack.status} → link-report.json`,
     );
     if (problems.length > 0) process.exitCode = 1;
   }
