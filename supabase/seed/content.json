@@ -1,0 +1,837 @@
+{
+  "schemaVersion": 1,
+  "source": "public RLS view; drafts, profiles, evidence and analytics excluded",
+  "categories": [
+    {
+      "slug": "dev-tools",
+      "name": "Developer Tools",
+      "description": "IDEs, APIs, CI and hosting, free for students.",
+      "accent": "#cfcabf",
+      "position": 0,
+      "created_at": "2026-07-21T12:59:26.586386+00:00"
+    },
+    {
+      "slug": "design",
+      "name": "Design & Creative",
+      "description": "Figma, Canva, Adobe and more, unlocked.",
+      "accent": "#cfcabf",
+      "position": 1,
+      "created_at": "2026-07-21T12:59:26.586386+00:00"
+    },
+    {
+      "slug": "cloud",
+      "name": "Cloud & Hosting",
+      "description": "AWS, Azure and GCP credits with no card.",
+      "accent": "#cfcabf",
+      "position": 2,
+      "created_at": "2026-07-21T12:59:26.586386+00:00"
+    },
+    {
+      "slug": "ai",
+      "name": "AI & Machine Learning",
+      "description": "Copilot, Perplexity and model credits.",
+      "accent": "#cfcabf",
+      "position": 3,
+      "created_at": "2026-07-21T12:59:26.586386+00:00"
+    },
+    {
+      "slug": "learning",
+      "name": "Courses & Learning",
+      "description": "Free courses, certificates and textbooks.",
+      "accent": "#cfcabf",
+      "position": 4,
+      "created_at": "2026-07-21T12:59:26.586386+00:00"
+    },
+    {
+      "slug": "domains",
+      "name": "Domains & Web",
+      "description": "Free domains, SSL and CDN for your projects.",
+      "accent": "#cfcabf",
+      "position": 5,
+      "created_at": "2026-07-21T12:59:26.586386+00:00"
+    },
+    {
+      "slug": "productivity",
+      "name": "Productivity",
+      "description": "Notion, note apps and planners with free Pro tiers.",
+      "accent": "#cfcabf",
+      "position": 6,
+      "created_at": "2026-07-21T12:59:26.586386+00:00"
+    },
+    {
+      "slug": "entertainment",
+      "name": "Entertainment",
+      "description": "Spotify, YouTube and streaming student rates.",
+      "accent": "#cfcabf",
+      "position": 7,
+      "created_at": "2026-07-21T12:59:26.586386+00:00"
+    },
+    {
+      "slug": "hardware",
+      "name": "Hardware & Discounts",
+      "description": "Student pricing on laptops and devices.",
+      "accent": "#cfcabf",
+      "position": 8,
+      "created_at": "2026-07-21T12:59:26.586386+00:00"
+    },
+    {
+      "slug": "finance",
+      "name": "Finance & Perks",
+      "description": "Student banking, cashback and everyday perks.",
+      "accent": "#cfcabf",
+      "position": 9,
+      "created_at": "2026-07-21T12:59:26.586386+00:00"
+    }
+  ],
+  "offers": [
+    {
+      "id": "61e6f1fa-d4a2-42c9-8e7a-e860cac98698",
+      "slug": "apple-education-store",
+      "title": "Apple Education Store student pricing",
+      "provider": "Apple",
+      "category": "hardware",
+      "summary": "Discounted Mac and iPad pricing for students, plus seasonal free-gift-card promotions.",
+      "value": "Student pricing on Mac & iPad",
+      "body": "The Apple Education Store offers **lower prices on Mac and iPad** for students. During the back-to-school season, you can often get a **free gift card or accessory** on qualifying purchases.\n\n## What you get\n- Education pricing on most Mac and iPad models\n- Discounted AppleCare+\n- Seasonal promos (gift cards / free accessories) at certain times of year\n\n## How to claim\n1. Visit the [Apple Education Store](https://www.apple.com/us-edu/store) for your country.\n2. Confirm eligibility (often via UNiDAYS student verification).\n3. The education price shows automatically for eligible products.\n\n## Good to know\nDiscount amounts and the back-to-school promo vary by region and season. Verification may be requested after purchase.",
+      "offer_type": "discount",
+      "discount_percent": null,
+      "url": "https://www.apple.com/us-edu/store",
+      "affiliate": false,
+      "sponsored": false,
+      "featured": false,
+      "verification": "UNiDAYS / education store eligibility",
+      "eligibility": "Current and newly accepted college students, parents, and staff",
+      "tags": [
+        "apple",
+        "mac",
+        "ipad",
+        "hardware",
+        "laptop"
+      ],
+      "score": 7,
+      "status": "active",
+      "visibility": "published",
+      "expires_at": null,
+      "last_checked": "2026-07-19T00:00:00+00:00",
+      "created_at": "2026-07-21T13:01:00.253422+00:00",
+      "updated_at": "2026-07-21T14:30:40.932702+00:00",
+      "created_by": null,
+      "affiliate_url": null,
+      "fallback_url": null,
+      "tracking_source": null,
+      "tracking_campaign": null,
+      "offer_attributes": [
+        {
+          "key": "instant_verification",
+          "label": "Instant automated verification",
+          "points": 1
+        },
+        {
+          "key": "no_card_required",
+          "label": "No payment method needed",
+          "points": 1
+        }
+      ]
+    },
+    {
+      "id": "76a5dad2-c43c-4bf7-833c-89e62a91920e",
+      "slug": "autodesk-education",
+      "title": "Autodesk Education licences",
+      "provider": "Autodesk",
+      "category": "learning",
+      "summary": "Free education access to Fusion 360, AutoCAD, Maya, Revit and more for eligible students.",
+      "value": "Pro CAD/3D software free",
+      "body": "Autodesk gives students **free education licences** to its professional design and engineering software: the same tools used across architecture, product design and film.\n\n## What you get\n- Fusion 360, AutoCAD, Maya, 3ds Max, Revit, Inventor and more\n- Full professional features under an education licence\n- Access for the duration of your eligibility\n\n## How to claim\n1. Go to [autodesk.com/education](https://www.autodesk.com/education/edu-software/overview).\n2. Create an Autodesk account and verify academic status via SheerID.\n3. Download and activate the products you need.\n\n## Good to know\nEducation licences are for **learning, not commercial work**. They renew while you stay verified. Re-confirm your status yearly.",
+      "offer_type": "free",
+      "discount_percent": null,
+      "url": "https://www.autodesk.com/education/edu-software/overview",
+      "affiliate": false,
+      "sponsored": false,
+      "featured": false,
+      "verification": "SheerID academic verification",
+      "eligibility": "Students and educators 13+ at accredited institutions",
+      "tags": [
+        "autodesk",
+        "cad",
+        "3d",
+        "fusion360",
+        "engineering"
+      ],
+      "score": 8,
+      "status": "active",
+      "visibility": "published",
+      "expires_at": null,
+      "last_checked": "2026-07-19T00:00:00+00:00",
+      "created_at": "2026-07-21T13:01:00.253422+00:00",
+      "updated_at": "2026-07-21T14:30:40.932702+00:00",
+      "created_by": null,
+      "affiliate_url": null,
+      "fallback_url": null,
+      "tracking_source": null,
+      "tracking_campaign": null,
+      "offer_attributes": [
+        {
+          "key": "instant_verification",
+          "label": "Instant automated verification",
+          "points": 1
+        },
+        {
+          "key": "full_tier_free",
+          "label": "Full paid tier, free",
+          "points": 2
+        }
+      ]
+    },
+    {
+      "id": "5aded787-70b9-4b66-9da9-2698d742f3ca",
+      "slug": "azure-students",
+      "title": "Microsoft Azure for Students",
+      "provider": "Microsoft",
+      "category": "cloud",
+      "summary": "$100 in Azure credit plus free developer services, no credit card required.",
+      "value": "$100 free credit",
+      "body": "Azure for Students gives you **$100 of cloud credit with no credit card**. It's one of the easiest ways to host projects, run VMs and try managed databases for free.\n\n## What you get\n- $100 Azure credit, valid for 12 months\n- Free tiers of popular services (App Service, Functions, databases)\n- Free access to select developer tools and learning paths\n\n## How to claim\n1. Go to [azure.microsoft.com/free/students](https://azure.microsoft.com/free/students/).\n2. Sign in with your school account and verify academic status.\n3. No payment method is required to start.\n\n## Good to know\nRenewable yearly while you stay a verified student. If you have the GitHub Student Pack, additional Azure benefits may stack.",
+      "offer_type": "credit",
+      "discount_percent": null,
+      "url": "https://azure.microsoft.com/free/students/",
+      "affiliate": false,
+      "sponsored": false,
+      "featured": true,
+      "verification": "School email / academic verification",
+      "eligibility": "Students 18+ at accredited institutions (no card needed)",
+      "tags": [
+        "azure",
+        "microsoft",
+        "cloud",
+        "credit",
+        "hosting"
+      ],
+      "score": 8,
+      "status": "active",
+      "visibility": "published",
+      "expires_at": null,
+      "last_checked": "2026-07-19T00:00:00+00:00",
+      "created_at": "2026-07-21T13:01:00.253422+00:00",
+      "updated_at": "2026-07-21T14:30:40.932702+00:00",
+      "created_by": null,
+      "affiliate_url": null,
+      "fallback_url": null,
+      "tracking_source": null,
+      "tracking_campaign": null,
+      "offer_attributes": [
+        {
+          "key": "credit_expires",
+          "label": "Credit expires after a term",
+          "points": -1
+        },
+        {
+          "key": "instant_verification",
+          "label": "Instant automated verification",
+          "points": 1
+        },
+        {
+          "key": "no_card_required",
+          "label": "No payment method needed",
+          "points": 1
+        },
+        {
+          "key": "credit_grant",
+          "label": "Spendable credit, no card",
+          "points": 2
+        }
+      ]
+    },
+    {
+      "id": "37b8078b-6c34-4890-b212-8913cf7785ad",
+      "slug": "canva-education",
+      "title": "Canva for Education",
+      "provider": "Canva",
+      "category": "design",
+      "summary": "Canva Pro features free for eligible students and teachers: templates, brand kit, background remover.",
+      "value": "Pro features free",
+      "body": "Canva for Education gives eligible schools **Canva Pro-level tools for free**: premium templates, the Background Remover, Magic tools, and a brand kit.\n\n## What you get\n- Thousands of premium templates and design elements\n- Background Remover and Magic design tools\n- Class and group collaboration features\n\n## How to claim\n1. Visit [canva.com/education](https://www.canva.com/education/).\n2. Verify as a teacher, or join as a student via a teacher invite or eligible institution.\n3. Access applies once your school is verified.\n\n## Good to know\nEligibility for higher-ed students varies by country and institution. If Canva for Education isn't available to you, students can still get a free Pro trial.",
+      "offer_type": "free",
+      "discount_percent": null,
+      "url": "https://www.canva.com/education/",
+      "affiliate": false,
+      "sponsored": false,
+      "featured": false,
+      "verification": "School verification (teacher-invited or eligible institution)",
+      "eligibility": "K-12 and eligible higher-ed students and educators",
+      "tags": [
+        "canva",
+        "design",
+        "graphics",
+        "templates"
+      ],
+      "score": 7,
+      "status": "active",
+      "visibility": "published",
+      "expires_at": null,
+      "last_checked": "2026-07-19T00:00:00+00:00",
+      "created_at": "2026-07-21T13:01:00.253422+00:00",
+      "updated_at": "2026-07-21T14:30:40.932702+00:00",
+      "created_by": null,
+      "affiliate_url": null,
+      "fallback_url": null,
+      "tracking_source": null,
+      "tracking_campaign": null,
+      "offer_attributes": [
+        {
+          "key": "institution_gated",
+          "label": "Only if your school participates",
+          "points": -1
+        },
+        {
+          "key": "no_card_required",
+          "label": "No payment method needed",
+          "points": 1
+        },
+        {
+          "key": "full_tier_free",
+          "label": "Full paid tier, free",
+          "points": 2
+        }
+      ]
+    },
+    {
+      "id": "a7620cb6-2f7d-4fcb-9100-8ea29f16ea60",
+      "slug": "coursera-financial-aid",
+      "title": "Coursera Financial Aid",
+      "provider": "Coursera",
+      "category": "learning",
+      "summary": "Apply for financial aid to take paid courses and earn certificates for free.",
+      "value": "Free certificates",
+      "body": "Coursera lets you **apply for financial aid on most paid courses**. If approved, you take the full course and earn the certificate **for free**.\n\n## What you get\n- Full access to graded assignments and the shareable certificate\n- Works on individual courses (and many Specializations, course by course)\n\n## How to claim\n1. Open a paid course and choose **Financial aid available** below the Enroll button.\n2. Fill in the short application (why you need aid, how the course helps).\n3. Approval typically takes about 15 days; then enroll for free.\n\n## Good to know\nYou apply per course, and there's a short waiting period. Auditing many courses is also free if you only need the material, not the certificate.",
+      "offer_type": "free",
+      "discount_percent": null,
+      "url": "https://www.coursera.support/s/article/209819033-Apply-for-Financial-Aid-or-a-Scholarship",
+      "affiliate": false,
+      "sponsored": false,
+      "featured": false,
+      "verification": "Financial aid application (per course)",
+      "eligibility": "Anyone who can't afford the course fee",
+      "tags": [
+        "coursera",
+        "courses",
+        "certificate",
+        "learning"
+      ],
+      "score": 8,
+      "status": "active",
+      "visibility": "published",
+      "expires_at": null,
+      "last_checked": "2026-07-19T00:00:00+00:00",
+      "created_at": "2026-07-21T13:01:00.253422+00:00",
+      "updated_at": "2026-07-21T14:30:40.932702+00:00",
+      "created_by": null,
+      "affiliate_url": null,
+      "fallback_url": null,
+      "tracking_source": null,
+      "tracking_campaign": null,
+      "offer_attributes": [
+        {
+          "key": "manual_application",
+          "label": "Manual application per item",
+          "points": -1
+        },
+        {
+          "key": "worldwide",
+          "label": "Available worldwide",
+          "points": 1
+        },
+        {
+          "key": "no_card_required",
+          "label": "No payment method needed",
+          "points": 1
+        },
+        {
+          "key": "full_tier_free",
+          "label": "Full paid tier, free",
+          "points": 2
+        }
+      ]
+    },
+    {
+      "id": "7801a8f1-68e2-4bc9-80be-937b1db722e6",
+      "slug": "figma-education",
+      "title": "Figma Education plan",
+      "provider": "Figma",
+      "category": "design",
+      "summary": "Figma's paid Professional features, free for verified students and educators.",
+      "value": "Pro plan free",
+      "body": "The Figma Education plan gives students the **Professional tier for free**: unlimited files, version history, team libraries and dev-friendly handoff.\n\n## What you get\n- Unlimited Figma design files and projects\n- Shared team libraries and advanced prototyping\n- FigJam for whiteboarding and planning\n\n## How to claim\n1. Go to [figma.com/education](https://www.figma.com/education/) and apply.\n2. Verify your student/educator status via SheerID.\n3. The plan applies to your account and any education team you create.\n\n## Good to know\nVerification lasts about a year; you'll be asked to re-verify to keep the plan. Great paired with the design skills in the GitHub Student Pack.",
+      "offer_type": "free",
+      "discount_percent": null,
+      "url": "https://www.figma.com/education/",
+      "affiliate": false,
+      "sponsored": false,
+      "featured": true,
+      "verification": "SheerID (school email or enrolment proof)",
+      "eligibility": "Students and educators 13+ at accredited institutions",
+      "tags": [
+        "figma",
+        "design",
+        "ui",
+        "prototyping"
+      ],
+      "score": 9,
+      "status": "active",
+      "visibility": "published",
+      "expires_at": null,
+      "last_checked": "2026-07-19T00:00:00+00:00",
+      "created_at": "2026-07-21T13:01:00.253422+00:00",
+      "updated_at": "2026-07-21T14:31:26.92665+00:00",
+      "created_by": null,
+      "affiliate_url": null,
+      "fallback_url": null,
+      "tracking_source": null,
+      "tracking_campaign": null,
+      "offer_attributes": [
+        {
+          "key": "instant_verification",
+          "label": "Instant automated verification",
+          "points": 1
+        },
+        {
+          "key": "no_card_required",
+          "label": "No payment method needed",
+          "points": 1
+        },
+        {
+          "key": "full_tier_free",
+          "label": "Full paid tier, free",
+          "points": 2
+        }
+      ]
+    },
+    {
+      "id": "144f692e-e8ee-4c52-be6e-e7d6b70ae1b2",
+      "slug": "github-student-pack",
+      "title": "GitHub Student Developer Pack",
+      "provider": "GitHub",
+      "category": "dev-tools",
+      "summary": "The biggest bundle of free developer tools for students: 100+ offers in one verification.",
+      "value": "$200k+ in tools",
+      "body": "The GitHub Student Developer Pack is the best first stop for any student who codes. One verification gets you **100+ partner offers**: cloud credits, free Pro tiers, domains, learning platforms and more.\n\n## What you get\n- **GitHub Copilot Pro** free while you're a verified student\n- Free credits on DigitalOcean, Microsoft Azure and Heroku alternatives\n- A **free `.me` domain + SSL** via Namecheap\n- Free tiers of JetBrains, Sentry, Datadog, and dozens more\n\n## How to claim\n1. Sign in to GitHub with the email your school issued.\n2. Go to [education.github.com/pack](https://education.github.com/pack) and click **Get student benefits**.\n3. Verify with SheerID (school email or proof of enrolment).\n\n## Good to know\nApproval is usually instant with a `.edu`-style email; otherwise upload proof of enrolment. Benefits refresh while you stay verified, so re-verify each year.",
+      "offer_type": "free",
+      "discount_percent": null,
+      "url": "https://education.github.com/pack",
+      "affiliate": false,
+      "sponsored": false,
+      "featured": true,
+      "verification": "SheerID / school-issued email",
+      "eligibility": "Students 13+ enrolled in a degree or diploma-granting course",
+      "tags": [
+        "github",
+        "bundle",
+        "developer",
+        "cloud",
+        "domains"
+      ],
+      "score": 10,
+      "status": "active",
+      "visibility": "published",
+      "expires_at": null,
+      "last_checked": "2026-07-19T00:00:00+00:00",
+      "created_at": "2026-07-21T13:01:00.253422+00:00",
+      "updated_at": "2026-07-21T14:31:26.92665+00:00",
+      "created_by": null,
+      "affiliate_url": null,
+      "fallback_url": null,
+      "tracking_source": null,
+      "tracking_campaign": null,
+      "offer_attributes": [
+        {
+          "key": "instant_verification",
+          "label": "Instant automated verification",
+          "points": 1
+        },
+        {
+          "key": "no_card_required",
+          "label": "No payment method needed",
+          "points": 1
+        },
+        {
+          "key": "bundle",
+          "label": "Bundle of many paid products",
+          "points": 3
+        }
+      ]
+    },
+    {
+      "id": "727bfd91-bb11-4848-b25c-86c4321335d4",
+      "slug": "google-cloud-credits",
+      "title": "Google Cloud free tier + trial credit",
+      "provider": "Google Cloud",
+      "category": "cloud",
+      "summary": "$300 in free trial credit plus an always-free tier for small workloads and student projects.",
+      "value": "$300 trial credit",
+      "body": "Google Cloud's free offering combines a **$300 trial credit** (90 days) with an **always-free tier**. That's enough to host side projects, run a small VM, or learn managed services.\n\n## What you get\n- $300 in credit for the first 90 days\n- Always-free tier: a small e2-micro VM, Cloud Storage, Cloud Functions quota and more\n- Occasional extra credits through Google's student and cloud-skills programs\n\n## How to claim\n1. Start at [cloud.google.com/free](https://cloud.google.com/free).\n2. Add a card to start the $300 trial (you won't be auto-charged when it ends).\n3. Check your institution for Google Cloud student / skills-boost credits.\n\n## Good to know\nThe trial needs a card for identity, but Google does not auto-bill when the trial ends. You choose whether to upgrade.",
+      "offer_type": "credit",
+      "discount_percent": null,
+      "url": "https://cloud.google.com/free",
+      "affiliate": false,
+      "sponsored": false,
+      "featured": false,
+      "verification": "Google account (card required for trial); student programs vary",
+      "eligibility": "Anyone for the trial; extra credits via student programs",
+      "tags": [
+        "gcp",
+        "google",
+        "cloud",
+        "credit",
+        "hosting"
+      ],
+      "score": 5,
+      "status": "active",
+      "visibility": "published",
+      "expires_at": null,
+      "last_checked": "2026-07-19T00:00:00+00:00",
+      "created_at": "2026-07-21T13:01:00.253422+00:00",
+      "updated_at": "2026-07-21T14:31:26.92665+00:00",
+      "created_by": null,
+      "affiliate_url": null,
+      "fallback_url": null,
+      "tracking_source": null,
+      "tracking_campaign": null,
+      "offer_attributes": [
+        {
+          "key": "credit_expires",
+          "label": "Credit expires after a term",
+          "points": -1
+        },
+        {
+          "key": "card_required",
+          "label": "Credit card required up front",
+          "points": -2
+        },
+        {
+          "key": "instant_verification",
+          "label": "Instant automated verification",
+          "points": 1
+        },
+        {
+          "key": "credit_grant",
+          "label": "Spendable credit, no card",
+          "points": 2
+        }
+      ]
+    },
+    {
+      "id": "0eff5211-2e06-4115-b88c-d49949d00d9f",
+      "slug": "jetbrains-students",
+      "title": "JetBrains: free for students",
+      "provider": "JetBrains",
+      "category": "dev-tools",
+      "summary": "Every JetBrains IDE (IntelliJ Ultimate, PyCharm Pro, WebStorm, more) free with a student licence.",
+      "value": "All IDEs free",
+      "body": "A free JetBrains student licence gives you the **full professional versions** of every JetBrains IDE. These are the same paid tools used in industry, at no cost while you study.\n\n## What you get\n- IntelliJ IDEA **Ultimate**, PyCharm **Professional**, WebStorm, CLion, Rider, DataGrip and the rest\n- The AI Assistant and all Pro features\n- Works on Windows, macOS and Linux\n\n## How to claim\n1. Apply at [jetbrains.com/community/education](https://www.jetbrains.com/community/education/#students).\n2. Verify with a university email, an ISIC card, or official enrolment documents.\n3. Activate through your JetBrains Account or the Toolbox App.\n\n## Good to know\nThe licence renews yearly while you remain eligible. If you graduate, you keep a perpetual fallback licence for the version you had.",
+      "offer_type": "free",
+      "discount_percent": null,
+      "url": "https://www.jetbrains.com/community/education/#students",
+      "affiliate": false,
+      "sponsored": false,
+      "featured": false,
+      "verification": ".edu email / ISIC / official documents",
+      "eligibility": "Enrolled students and teachers at accredited institutions",
+      "tags": [
+        "ide",
+        "intellij",
+        "pycharm",
+        "webstorm",
+        "jetbrains"
+      ],
+      "score": 9,
+      "status": "active",
+      "visibility": "published",
+      "expires_at": null,
+      "last_checked": "2026-07-19T00:00:00+00:00",
+      "created_at": "2026-07-21T13:01:00.253422+00:00",
+      "updated_at": "2026-07-21T14:31:26.92665+00:00",
+      "created_by": null,
+      "affiliate_url": null,
+      "fallback_url": null,
+      "tracking_source": null,
+      "tracking_campaign": null,
+      "offer_attributes": [
+        {
+          "key": "instant_verification",
+          "label": "Instant automated verification",
+          "points": 1
+        },
+        {
+          "key": "no_card_required",
+          "label": "No payment method needed",
+          "points": 1
+        },
+        {
+          "key": "full_tier_free",
+          "label": "Full paid tier, free",
+          "points": 2
+        }
+      ]
+    },
+    {
+      "id": "348a1f93-4004-4689-851d-b6abaa04e2fd",
+      "slug": "namecheap-student-domain",
+      "title": "Free domain + SSL (Namecheap via Student Pack)",
+      "provider": "Namecheap",
+      "category": "domains",
+      "summary": "A free `.me` domain for one year plus a free SSL certificate, claimed through the GitHub Student Pack.",
+      "value": "Free .me domain + SSL",
+      "body": "Good for a portfolio or first project: a **free `.me` domain for a year** plus a **free SSL certificate**, delivered through the GitHub Student Developer Pack and Namecheap's student program.\n\n## What you get\n- One free `.me` domain registration for 12 months\n- A free SSL certificate to secure your site\n- Standard Namecheap DNS management\n\n## How to claim\n1. First get the [GitHub Student Developer Pack](https://education.github.com/pack).\n2. From the pack, open the Namecheap offer (or go to [nc.me](https://nc.me/)).\n3. Register your `.me` domain and claim the SSL.\n\n## Good to know\nThe first year is free; renewals are paid at normal rates, so set a reminder if you don't want to keep it. One domain per verified student.",
+      "offer_type": "free",
+      "discount_percent": null,
+      "url": "https://nc.me/",
+      "affiliate": false,
+      "sponsored": false,
+      "featured": false,
+      "verification": "GitHub Student Developer Pack",
+      "eligibility": "GitHub Student Pack members",
+      "tags": [
+        "domain",
+        "namecheap",
+        "ssl",
+        "web",
+        "portfolio"
+      ],
+      "score": 8,
+      "status": "active",
+      "visibility": "published",
+      "expires_at": null,
+      "last_checked": "2026-07-19T00:00:00+00:00",
+      "created_at": "2026-07-21T13:01:00.253422+00:00",
+      "updated_at": "2026-07-25T09:17:28.551074+00:00",
+      "created_by": null,
+      "affiliate_url": null,
+      "fallback_url": null,
+      "tracking_source": null,
+      "tracking_campaign": null,
+      "offer_attributes": [
+        {
+          "key": "instant_verification",
+          "label": "Instant automated verification",
+          "points": 1
+        },
+        {
+          "key": "requires_other_program",
+          "label": "Requires another program first",
+          "points": -1
+        },
+        {
+          "key": "no_card_required",
+          "label": "No payment method needed",
+          "points": 1
+        },
+        {
+          "key": "full_tier_free",
+          "label": "Full paid tier, free",
+          "points": 2
+        }
+      ]
+    },
+    {
+      "id": "1d6e9cd7-f7fc-4170-b474-d2fa88d6cb76",
+      "slug": "notion-education",
+      "title": "Notion for Education",
+      "provider": "Notion",
+      "category": "productivity",
+      "summary": "Notion's Plus plan with AI, free for students and educators with a school email.",
+      "value": "Plus plan free",
+      "body": "Notion for Education gives students the **Plus plan for free**: unlimited blocks, more collaboration, and Notion's note-taking and planning tools for coursework and projects.\n\n## What you get\n- Notion Plus features on your personal account\n- Unlimited pages and blocks for notes, wikis and databases\n- Templates for classes, assignments and study planning\n\n## How to claim\n1. Go to [notion.com/product/notion-for-education](https://www.notion.com/product/notion-for-education).\n2. Sign up or add your school email to your account.\n3. Verify the email to switch your personal plan to the education plan.\n\n## Good to know\nThe education plan covers your **personal** workspace. AI features and exact inclusions can change, so check the current page for what's bundled.",
+      "offer_type": "free",
+      "discount_percent": null,
+      "url": "https://www.notion.com/product/notion-for-education",
+      "affiliate": false,
+      "sponsored": false,
+      "featured": false,
+      "verification": "School (.edu) email",
+      "eligibility": "Students and educators with a valid school email",
+      "tags": [
+        "notion",
+        "notes",
+        "productivity",
+        "planner"
+      ],
+      "score": 8,
+      "status": "active",
+      "visibility": "published",
+      "expires_at": null,
+      "last_checked": "2026-07-19T00:00:00+00:00",
+      "created_at": "2026-07-21T13:01:00.253422+00:00",
+      "updated_at": "2026-07-21T14:32:07.433658+00:00",
+      "created_by": null,
+      "affiliate_url": null,
+      "fallback_url": null,
+      "tracking_source": null,
+      "tracking_campaign": null,
+      "offer_attributes": [
+        {
+          "key": "instant_verification",
+          "label": "Instant automated verification",
+          "points": 1
+        },
+        {
+          "key": "full_tier_free",
+          "label": "Full paid tier, free",
+          "points": 2
+        }
+      ]
+    },
+    {
+      "id": "1324f059-7a06-4f94-b10c-a52284f6bf3c",
+      "slug": "perplexity-students",
+      "title": "Perplexity Pro for students",
+      "provider": "Perplexity",
+      "category": "ai",
+      "summary": "Free or heavily discounted Perplexity Pro for students through its campus and .edu offers.",
+      "value": "Free Pro (campus offers)",
+      "body": "Perplexity regularly runs **student campaigns that make Pro free** (or a full year free) for verified `.edu` students and participating campuses. It helps with research, citations and coding.\n\n## What you get\n- Perplexity Pro: more powerful models, unlimited Pro searches, file uploads\n- Better sourcing and follow-up reasoning for coursework and research\n\n## How to claim\n1. Check the current student offer on [perplexity.ai](https://www.perplexity.ai/) (look for the students / campus page).\n2. Verify with your school email.\n3. Some campaigns require signing up before a deadline or inviting classmates.\n\n## Good to know\nStudent AI offers change often and vary by region. Confirm the exact current terms on Perplexity's site before relying on it.",
+      "offer_type": "free",
+      "discount_percent": null,
+      "url": "https://www.perplexity.ai/",
+      "affiliate": false,
+      "sponsored": false,
+      "featured": false,
+      "verification": ".edu email / campus program",
+      "eligibility": "Students; terms vary by country and campaign",
+      "tags": [
+        "ai",
+        "research",
+        "perplexity",
+        "search"
+      ],
+      "score": 7,
+      "status": "active",
+      "visibility": "published",
+      "expires_at": null,
+      "last_checked": "2026-07-19T00:00:00+00:00",
+      "created_at": "2026-07-21T13:01:00.253422+00:00",
+      "updated_at": "2026-07-25T09:17:28.551074+00:00",
+      "created_by": null,
+      "affiliate_url": null,
+      "fallback_url": null,
+      "tracking_source": null,
+      "tracking_campaign": null,
+      "offer_attributes": [
+        {
+          "key": "institution_gated",
+          "label": "Only if your school participates",
+          "points": -1
+        },
+        {
+          "key": "no_card_required",
+          "label": "No payment method needed",
+          "points": 1
+        },
+        {
+          "key": "full_tier_free",
+          "label": "Full paid tier, free",
+          "points": 2
+        }
+      ]
+    },
+    {
+      "id": "3826c3f4-1d94-4ad5-88be-41ccd057d16e",
+      "slug": "spotify-premium-student",
+      "title": "Spotify Premium Student",
+      "provider": "Spotify",
+      "category": "entertainment",
+      "summary": "Premium at 50% off for students: ad-free music, offline listening, often bundled with extras.",
+      "value": "50% off Premium",
+      "body": "Spotify Premium Student is **half price** for verified higher-ed students. You get the full Premium experience for the cost of a coffee.\n\n## What you get\n- Ad-free, on-demand music and podcasts\n- Offline downloads and higher audio quality\n- In some regions, bundled extras (e.g. an ad-supported streaming add-on)\n\n## How to claim\n1. Go to [spotify.com/student](https://www.spotify.com/student/).\n2. Verify your enrolment through SheerID.\n3. The discount applies to your existing Spotify account.\n\n## Good to know\nYou can renew the student rate up to a set number of years (commonly 4) while you stay verified. Bundled extras vary by country.",
+      "offer_type": "discount",
+      "discount_percent": 50,
+      "url": "https://www.spotify.com/student/",
+      "affiliate": false,
+      "sponsored": false,
+      "featured": false,
+      "verification": "SheerID (accredited institution)",
+      "eligibility": "Students 18+ at accredited higher-ed institutions",
+      "tags": [
+        "spotify",
+        "music",
+        "streaming",
+        "entertainment"
+      ],
+      "score": 8,
+      "status": "active",
+      "visibility": "published",
+      "expires_at": null,
+      "last_checked": "2026-07-19T00:00:00+00:00",
+      "created_at": "2026-07-21T13:01:00.253422+00:00",
+      "updated_at": "2026-07-21T14:32:07.433658+00:00",
+      "created_by": null,
+      "affiliate_url": null,
+      "fallback_url": null,
+      "tracking_source": null,
+      "tracking_campaign": null,
+      "offer_attributes": [
+        {
+          "key": "instant_verification",
+          "label": "Instant automated verification",
+          "points": 1
+        },
+        {
+          "key": "large_discount",
+          "label": "Discount of 50% or more",
+          "points": 2
+        }
+      ]
+    },
+    {
+      "id": "74e28220-31b5-441c-9f6f-d1570bb55bf3",
+      "slug": "unidays-perks",
+      "title": "UNiDAYS student discounts",
+      "provider": "UNiDAYS",
+      "category": "finance",
+      "summary": "One free membership that gets you student discounts across hundreds of brands: fashion, tech, food, more.",
+      "value": "100s of student discounts",
+      "body": "UNiDAYS is a **free student-discount platform**. Verify once and get codes and deals across hundreds of brands in tech, fashion, food, software and travel.\n\n## What you get\n- Ongoing student discounts (often 10–40% off) at partner brands\n- Tech and software deals (including some dev and creative tools)\n- A single verification that works across the catalogue\n\n## How to claim\n1. Sign up free at [myunidays.com](https://www.myunidays.com/).\n2. Verify your student status with your school email or documents.\n3. Browse brands and reveal the discount codes.\n\n## Good to know\nBrand coverage and discount sizes vary by country. It's a discount marketplace, not a single deal, so treat it as a place to check before you buy.",
+      "offer_type": "free",
+      "discount_percent": null,
+      "url": "https://www.myunidays.com/",
+      "affiliate": false,
+      "sponsored": false,
+      "featured": false,
+      "verification": "Student verification (school email / documents)",
+      "eligibility": "Students registered with UNiDAYS (coverage varies by country)",
+      "tags": [
+        "unidays",
+        "discounts",
+        "perks",
+        "shopping"
+      ],
+      "score": 7,
+      "status": "active",
+      "visibility": "published",
+      "expires_at": null,
+      "last_checked": "2026-07-19T00:00:00+00:00",
+      "created_at": "2026-07-21T13:01:00.253422+00:00",
+      "updated_at": "2026-07-25T09:17:28.551074+00:00",
+      "created_by": null,
+      "affiliate_url": null,
+      "fallback_url": null,
+      "tracking_source": null,
+      "tracking_campaign": null,
+      "offer_attributes": [
+        {
+          "key": "discount_only",
+          "label": "A discount, not a free tier",
+          "points": -1
+        },
+        {
+          "key": "instant_verification",
+          "label": "Instant automated verification",
+          "points": 1
+        },
+        {
+          "key": "many_discounts",
+          "label": "Hundreds of partner discounts",
+          "points": 2
+        }
+      ]
+    }
+  ]
+}

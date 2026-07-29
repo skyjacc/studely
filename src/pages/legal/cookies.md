@@ -13,7 +13,7 @@ Studely is operated by **an individual based in Romania** (full controller ident
 Questions about this notice can be sent to **privacy@studely.app**.
 
 - **Effective date:** 23 July 2026
-- **Last updated:** 2026-07-23
+- **Last updated:** 2026-07-29
 
 ---
 
@@ -38,9 +38,14 @@ They can also be:
 
 ## 2. What we use today
 
-Today Studely is a mostly-static editorial directory. The public site is prerendered and
-does **not** currently set advertising or analytics cookies. The only cookies set today are
-**strictly necessary** cookies used for staff sign-in to the private `/admin` area.
+Today Studely is a mostly-static editorial directory. It runs **no analytics** of any kind.
+The only cookies *we* set are **strictly necessary** cookies used for staff sign-in to the
+private `/admin` area.
+
+One third-party script is present on every page: the **Google AdSense tag** (see 2.2). No
+advertisement is displayed anywhere on the site, but the tag is loaded, and Google may set
+cookies or read device identifiers as a result — so this notice does not claim the site is
+advertising-cookie-free.
 
 There is **no public user account system** on the site today: sign-in exists only for
 Studely staff. If you are simply browsing the public catalogue, the strictly-necessary
@@ -59,7 +64,28 @@ They are **not** used for advertising or analytics.
   (not readable by JavaScript), `Secure`, and `sameSite=lax`.
 - A short-lived PKCE code-verifier cookie is set during the sign-in exchange only.
 
-### 2.2 Local / session storage
+### 2.2 Google AdSense tag (present on every page — no ads shown yet)
+
+The AdSense script (`adsbygoogle.js`) is loaded site-wide. It is there because Google
+requires the tag on the site in order to review and verify it. **No ad unit is configured,
+so no advertisement is served or rendered anywhere on Studely today.**
+
+Being loaded, the tag can still cause Google to set cookies or access information already
+on your device. We therefore treat it as an advertising technology that is *live*, not
+planned:
+
+- In the **EEA, UK and Switzerland**, consent is collected by **Google's certified consent
+  management platform**, which loads with the tag and is shown before consent-dependent
+  purposes are activated. You can reopen it to change or withdraw your choice.
+- Outside those regions, the tag operates under Google's own terms; see
+  [How Google uses information from sites that use its services](https://policies.google.com/technologies/partner-sites).
+- If you would rather block it entirely, a content blocker or a browser that blocks
+  third-party scripts will prevent the tag from loading; the site works without it.
+
+When ad units are switched on, this notice will be updated and the change described in
+Section 3.
+
+### 2.3 Local / session storage
 
 Studely does not rely on browser local storage or session storage to store personal data.
 The site's motion and design libraries (GSAP, Lenis, WebGL effects) run in the page and do
@@ -68,18 +94,21 @@ be updated.
 
 ---
 
-## 3. What will be added (not live yet)
+## 3. What is not switched on yet
 
-The following are **planned** and are **not active today**. When any of them goes live, this
-notice will be updated and — for the EU/UK — a **consent banner must be in place first**
-(see Section 4).
+The following are **planned**. No advertisement is served and no analytics run today. When
+any of them goes live, this notice will be updated and — for the EU/UK — consent must be in
+place first (see Section 4). Note that the AdSense **tag** itself is already present and is
+described in 2.2; this section covers what changes when ads actually start serving.
 
-### 3.1 Advertising cookies — Google AdSense (planned)
+### 3.1 Advertising cookies — Google AdSense ad units (not serving yet)
 
-We plan to monetise via **Google AdSense**. AdSense and Google's advertising partners set
-cookies used to serve and measure ads, to limit how often you see an ad, and — depending on
-configuration — to personalise ads. These are **not strictly necessary** and, in the EU/UK,
-**require your prior consent** before any such cookie is set.
+The AdSense **tag** is already loaded on every page (see 2.2); what is not yet live is any
+**ad unit**. Once units are configured and ads begin to serve, AdSense and Google's
+advertising partners set cookies used to serve and measure ads, to limit how often you see
+an ad, and — depending on configuration — to personalise ads. These are **not strictly
+necessary** and, in the EU/UK, **require your prior consent** before any such cookie is set;
+that consent is collected by Google's certified CMP described in 2.2.
 
 ### 3.2 Analytics cookies (planned / undecided)
 
@@ -105,9 +134,10 @@ informed and freely-given consent**. Practically, for EU/UK visitors this means:
   user opts in** via a consent banner. Rejecting must be as easy as accepting, and no
   non-essential cookie may fire before a choice is made.
 
-Because AdSense advertising cookies are planned, **a consent banner/CMP will be required
-before AdSense is switched on** for EU/UK traffic. Consent must be logged, renewable, and
-withdrawable at any time.
+Because the AdSense tag is already loaded (2.2), **Google's certified CMP is what collects
+this consent today** for EEA/UK/Swiss traffic — it is not a future step. It must remain in
+place, and consent must stay logged, renewable, and withdrawable at any time, before any ad
+unit is switched on.
 
 > **Students and minors**
 > Studely's audience is students and may include minors (roughly ages 13–17). Consent and

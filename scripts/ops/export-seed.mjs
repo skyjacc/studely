@@ -1,6 +1,17 @@
 #!/usr/bin/env node
 // Portable, reviewable content export. Reads public catalogue rows with the anon
 // key; internal evidence/click data belongs in encrypted pg_dump backups instead.
+//
+// Writes TWO files:
+//
+//   supabase/seed/content.json  — committed. The catalogue is the product, and
+//     until this existed it lived in exactly one place: the live Supabase
+//     project. Losing that project lost every offer, with no way to rebuild.
+//     This is only published rows read through the anon key — the same data the
+//     site already serves to the public — so it carries nothing secret.
+//
+//   backups/studely-content-<ts>.json — gitignored, 0600. A dated snapshot for
+//     point-in-time recovery, kept out of git so history doesn't bloat.
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -23,14 +34,26 @@ if (categoryError) throw new Error(`Failed to export categories: ${categoryError
 if (offerError) throw new Error(`Failed to export offers: ${offerError.message}`);
 if (!offers?.length) throw new Error('Refusing to export an empty published catalogue.');
 
-const output = {
+const exportedAt = new Date().toISOString();
+const body = {
   schemaVersion: 1,
-  exportedAt: new Date().toISOString(),
   source: 'public RLS view; drafts, profiles, evidence and analytics excluded',
   categories,
   offers,
 };
+
+// Committed copy. `exportedAt` is deliberately NOT in this file: a timestamp that
+// changes on every run would make the seed dirty in git even when the catalogue
+// is byte-identical, and a seed that is always dirty stops getting reviewed.
+await mkdir(join('supabase', 'seed'), { recursive: true });
+const seedFile = join('supabase', 'seed', 'content.json');
+await writeFile(seedFile, JSON.stringify(body, null, 2) + '\n');
+
+// Dated private snapshot.
 await mkdir('backups', { recursive: true });
-const file = join('backups', `studely-content-${output.exportedAt.replace(/[:.]/g, '-')}.json`);
-await writeFile(file, JSON.stringify(output, null, 2), { mode: 0o600 });
-console.log(`${categories?.length ?? 0} categories · ${offers.length} offers → ${file}`);
+const snapshot = join('backups', `studely-content-${exportedAt.replace(/[:.]/g, '-')}.json`);
+await writeFile(snapshot, JSON.stringify({ exportedAt, ...body }, null, 2), { mode: 0o600 });
+
+console.log(`${categories?.length ?? 0} categories · ${offers.length} offers`);
+console.log(`  committed seed → ${seedFile}`);
+console.log(`  private snapshot → ${snapshot}`);

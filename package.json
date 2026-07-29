@@ -14,7 +14,8 @@
     "check-links": "node scripts/check-links.mjs",
     "db:backup": "bash scripts/ops/backup-db.sh",
     "db:restore": "bash scripts/ops/restore-db.sh",
-    "db:export-seed": "node scripts/ops/export-seed.mjs"
+    "db:export-seed": "node scripts/ops/export-seed.mjs",
+    "db:import-seed": "node scripts/ops/import-seed.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
