@@ -36,7 +36,14 @@ export const ATTRIBUTES: readonly AttributeDef[] = [
   // ---- what you actually get
   { key: 'bundle', label: 'Bundle of many paid products', points: 3, group: 'value' },
   { key: 'full_tier_free', label: 'Full paid tier, free', points: 2, group: 'value' },
-  { key: 'credit_grant', label: 'Spendable credit, no card', points: 2, group: 'value' },
+  // Label describes the VALUE only. It used to read "Spendable credit, no card",
+  // which smuggled an access fact into a value attribute — and Google Cloud
+  // carries both credit_grant and card_required, so the breakdown rendered
+  // "Spendable credit, no card +2" directly above "Credit card required up
+  // front -2". The score is the one thing we claim is attributable; it cannot
+  // contradict itself in public. Card requirements are card_required /
+  // no_card_required and belong to the access group.
+  { key: 'credit_grant', label: 'Spendable credit', points: 2, group: 'value' },
   { key: 'many_discounts', label: 'Hundreds of partner discounts', points: 2, group: 'value' },
   { key: 'large_discount', label: 'Discount of 50% or more', points: 2, group: 'value' },
   { key: 'discount_only', label: 'A discount, not a free tier', points: -1, group: 'value' },
