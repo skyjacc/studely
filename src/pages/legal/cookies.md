@@ -170,11 +170,10 @@ governed by **their** policies, not only ours:
 | **Affiliate vendors** | Outbound offer links | On the vendor's own site | Clicking an offer takes you to a third-party site that may set its own cookies |
 
 > **Affiliate outbound links**
-> Studely's catalogue links out to third-party vendors, and some links are or will be
-> affiliate links (we may earn a commission at no extra cost to you). Cookies set **after**
-> you click through are governed by the destination site's own cookie and privacy notices.
-> See our affiliate disclosure in the [Privacy Policy](/legal/privacy) / site footer (FTC-style
-> disclosure).
+> Studely's catalogue links out to third-party vendors. None of those links is an affiliate
+> link today, though some are expected to become one. Cookies set **after** you click
+> through are governed by the destination site's own cookie and privacy notices — we have no
+> control over them. See the [Affiliate & Advertising Disclosure](/legal/disclosure).
 
 ---
 

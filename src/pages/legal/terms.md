@@ -44,7 +44,7 @@ Always confirm the current terms on the Provider's own site before relying on an
 
 ## 4. Affiliate relationship disclosure
 
-Some outbound links on the Service are, or will become, **affiliate links**: if you click through and take a qualifying action with a Provider, we may earn a commission or referral fee at no additional cost to you.
+No outbound link on the Service is currently an **affiliate link**, and we earn no commission from any Provider today. Some links are expected to become affiliate links: from that point, if you click through and take a qualifying action with a Provider, we may earn a commission or referral fee at no additional cost to you.
 
 > **This does not change what we list or how we rank it**
 > Offers are selected and scored editorially. An affiliate relationship does not determine whether an Offer appears, and it does not change the price you pay. Where an Offer is monetised, we aim to make that transparent.
@@ -87,8 +87,10 @@ You agree not to:
 
 We may investigate and take appropriate action, including removing content, restricting access, and reporting to authorities.
 
-> **Some features referenced here are not yet built**
-> Comment and community-submission features are planned but not live as of the effective date (see FEATURES / ROADMAP). The acceptable-use rules above apply to any such feature once launched, and to any user-generated content you submit.
+> **These rules cover features that are not live yet**
+> Studely does not currently accept comments or community submissions. The acceptable-use
+> rules above apply to any such feature from the day it launches, and to any content you
+> submit through it.
 
 ---
 
@@ -149,8 +151,13 @@ You may stop using the Service at any time and request deletion of your account 
 
 ## 15. Governing law and dispute resolution
 
-> **Jurisdiction is unknown and must not be invented**
-> These Terms are governed by the laws of **Romania**, and the courts of **Romania** have jurisdiction, subject to any mandatory consumer-protection rights you have in your country of residence. The governing-law choice, venue, and any mandatory-consumer-forum carve-out must be set by a qualified lawyer once `an individual based in Romania (full controller identity available on request via privacy@studely.app)` and `Romania` are known. Consumer forum rules (UK/EU) can override a bare choice-of-law clause.
+These Terms are governed by the laws of **Romania**, and the courts of Romania have
+jurisdiction.
+
+This does not remove any mandatory consumer-protection right you have under the law of your
+own country of residence. If you are a consumer in the EU or UK, you keep the right to rely
+on the protections of your local law and, where your local rules give you that right, to
+bring proceedings in your local courts.
 
 ---
 

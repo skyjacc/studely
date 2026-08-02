@@ -151,7 +151,7 @@ Studely's audience is students, which may include people aged **13 to 17**.
 
 ## 11. How we protect your data
 
-Access to the database is governed by row-level security on every table, the authentication system stores no passwords, and administrative access is gated behind the same magic-link sign-in. A structured security audit was carried out and its findings remediated. No system is perfectly secure, but we take reasonable technical and organisational measures appropriate to the limited data we hold. See HANDOFF and the internal security notes for engineering detail.
+Access to the database is governed by row-level security on every table, the authentication system stores no passwords, and administrative access is gated behind the same magic-link sign-in. A structured security audit was carried out and its findings remediated. No system is perfectly secure, but we take reasonable technical and organisational measures appropriate to the limited data we hold.
 
 ---
 
@@ -173,4 +173,4 @@ Questions, requests, or complaints about privacy:
 
 ## Related
 
-Legal · Legal Pages Plan · [Cookie Notice](/legal/cookies) · PROJECT_STATUS · ENVIRONMENT · DECISIONS · HANDOFF · AUTH
+[Cookie Notice](/legal/cookies) · [Terms of Service](/legal/terms) · [Affiliate & Advertising Disclosure](/legal/disclosure)

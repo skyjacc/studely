@@ -7,7 +7,13 @@ draft: false
 
 ## In one line
 
-Some links on Studely are affiliate links. If you use them, we may earn a commission **at no extra cost to you**. This never changes how we rate an offer. Ads on Studely are served by Google.
+**Right now, Studely earns nothing.** No link on the site is an affiliate link, and no
+advertising is being served.
+
+We intend to add both. When we do, any affiliate link will earn us a commission **at no
+extra cost to you**, it will be labelled on the offer itself, and this page will say so in
+the present tense. It will never change how we rate an offer. Advertising, when it starts,
+will be served by Google.
 
 ---
 
@@ -37,7 +43,7 @@ When advertising goes live, ads on Studely will be served by **Google AdSense**.
 - In California and other U.S. states with similar laws, you can opt out of the "sale" or "sharing" of personal information for cross-context behavioural advertising under the CCPA/CPRA. A **"Do Not Sell or Share My Personal Information"** / opt-out control will be provided.
 - How Google uses data from sites that use its services is described at `https://policies.google.com/technologies/partner-sites`.
 
-> **Studely's audience includes students who may be minors (16–17).** Serving **personalised** ads to users who are, or may be, children triggers extra obligations (e.g. GDPR Art. 8, the UK Age Appropriate Design Code, and the U.S. COPPA regime). Whether Studely should serve only non-personalised ads, gate on age, or restrict advertising entirely is a decision a qualified lawyer must sign off before AdSense is enabled.
+> **Studely's audience includes students who may be minors (16–17).** Serving **personalised** ads to users who are, or may be, children triggers extra obligations (e.g. GDPR Art. 8, the UK Age Appropriate Design Code, and the U.S. COPPA regime). Because of that, Studely will not enable personalised advertising for this audience: when ads are switched on, they will be served as non-personalised unless and until an age-assurance mechanism is in place.
 
 ### Editorial independence
 
@@ -59,7 +65,7 @@ The only personal data Studely collects directly is your **email address**, used
 | Google AdSense *(planned)* | Advertising | May set advertising cookies subject to your consent |
 | Supabase, Vercel, Cloudflare, Resend | Our processors (hosting, auth, email, DNS) | Handle site operation and sign-in email delivery |
 
-Full detail lives in the Privacy Policy and Cookie Policy (see Legal Pages Plan).
+Full detail lives in the [Privacy Policy](/legal/privacy) and [Cookie Notice](/legal/cookies).
 
 ---
 
@@ -72,18 +78,6 @@ Effective date: **23 July 2026**.
 
 ---
 
-## Short inline banner (reusable)
-
-> Use this wherever affiliate links appear (e.g. top of an offer page, or under a "Get it" button). Keep the link to the full disclosure.
-
-**Plain text:**
-> Some links below are affiliate links: if you use them, Studely may earn a commission at no extra cost to you. It never affects how we score an offer. [Read our full disclosure.]
-
-**Even shorter (inline label):**
-> *Affiliate link — we may earn a commission, at no cost to you. [Details]*
-
----
-
 ## Related
 
-Legal · Legal Pages Plan
+[Privacy Policy](/legal/privacy) · [Cookie Notice](/legal/cookies) · [Terms of Service](/legal/terms)
