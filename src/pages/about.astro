@@ -1,0 +1,102 @@
+---
+import Layout from '@ui/layouts/Layout.astro';
+import { site } from '@core/config/site';
+import { getAllOffers } from '@domain/offers/offers-source';
+import { categories } from '@domain/offers/categories';
+
+// Counts come from the catalogue, so this page cannot drift into claiming a size
+// the directory does not have.
+const offers = await getAllOffers();
+const offerCount = offers.length;
+const categoryCount = categories.filter((c) => offers.some((o) => o.data.category === c.slug)).length;
+---
+
+<Layout
+  title="About"
+  description="Who runs Studely, how offers are chosen and scored, what the site deliberately does not do, and how it is funded."
+>
+  <section class="section">
+    <div class="wrap prose">
+      <p class="eyebrow">About</p>
+      <h1>Who runs Studely</h1>
+      <p class="lead">
+        Studely is made by one person, in Romania. It is not a company, not a team, and not
+        a content farm — which is worth saying plainly, because it explains both what the
+        site is good at and what it is not.
+      </p>
+
+      <h2>Why it exists</h2>
+      <p>
+        Student discounts are scattered across provider pages that rarely say the thing you
+        actually need to know: whether you qualify, whether it is genuinely free, what
+        happens when the free part runs out, and whether the deal is even still alive. The
+        lists that aggregate them are mostly link dumps, ordered by nothing in particular
+        and rarely updated.
+      </p>
+      <p>
+        So Studely is small on purpose. There are <strong>{offerCount} offers</strong> across
+        {categoryCount} categories right now. Each one was read, checked against the
+        provider's own terms, and scored by hand before it was published. Adding a hundred
+        more by scraping would take an afternoon and would make the site worse.
+      </p>
+
+      <h2>How an offer gets on the site</h2>
+      <p>
+        An offer is listed only if the eligibility path is clear — a school email, SheerID,
+        the provider's own student programme, or similar. If I cannot work out who actually
+        qualifies, it does not go up.
+      </p>
+      <p>
+        Everything is then scored against the same fixed criteria, starting from a neutral 5
+        and moving up or down for named reasons: a bundle of paid products, an instant
+        eligibility check, a credit card required up front, credit that expires. Every point
+        is shown on the offer's own page, so you can disagree with a specific reason instead
+        of a mystery number. The full method is on <a href="/methodology">How we score</a>.
+      </p>
+
+      <h2>What Studely deliberately does not do</h2>
+      <ul>
+        <li>
+          <strong>It does not claim to verify offers.</strong> There is no human
+          verification log yet, so no page here says "verified" — that would be a promise
+          without a record behind it. A weekly job re-fetches every link, and anything it
+          cannot reach gets looked at by hand.
+        </li>
+        <li>
+          <strong>It does not sell placement.</strong> No offer is here because someone paid
+          for it, and payment can never move a score. If a sponsored placement ever runs, it
+          will be labelled on the offer itself.
+        </li>
+        <li>
+          <strong>It does not collect anything about you.</strong> Reading the directory
+          needs no account, and there is no analytics of any kind — I genuinely do not know
+          how many people visit. Sign-in exists only for me, to edit the catalogue.
+        </li>
+        <li>
+          <strong>It does not pretend to be bigger than it is.</strong> The counts above are
+          read from the database when the page is built.
+        </li>
+      </ul>
+
+      <h2>How it is funded</h2>
+      <p>{site.affiliateDisclosure}</p>
+      <p>
+        The intention is affiliate links and advertising, because a directory that costs
+        nothing to read has to pay for itself somehow. When either starts earning, it will
+        be stated here and on the affected offer in plain language — not buried in a
+        footer. The
+        <a href="/legal/disclosure">disclosure page</a> is kept in the present tense for
+        exactly this reason.
+      </p>
+
+      <h2>Getting it wrong</h2>
+      <p>
+        Offers change without warning, and some of what is on this site will be out of date
+        before I notice. If you find a dead link, a changed price, or eligibility rules that
+        no longer match what we say — <a href="/contact">tell me</a> and I will fix or pull
+        the listing. Always confirm the current terms on the provider's own site before
+        relying on an offer.
+      </p>
+    </div>
+  </section>
+</Layout>

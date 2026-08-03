@@ -1,0 +1,71 @@
+---
+import Layout from '@ui/layouts/Layout.astro';
+import { site } from '@core/config/site';
+
+// One address, read from config, so the site cannot advertise a channel the legal
+// pages do not also point at. If site.email ever changes, every route in and out
+// changes with it.
+const email = site.email;
+---
+
+<Layout
+  title="Contact"
+  description="How to reach Studely — corrections to an offer, suggestions, privacy requests, or anything else."
+>
+  <section class="section">
+    <div class="wrap prose">
+      <p class="eyebrow">Contact</p>
+      <h1>Get in touch</h1>
+      <p class="lead">
+        Studely is run by one person, so email is the only channel — but it is read by a
+        human rather than a helpdesk.
+      </p>
+
+      <p>
+        <a class="btn btn-primary" href={`mailto:${email}`}>{email}</a>
+      </p>
+
+      <h2>What is worth writing about</h2>
+      <ul>
+        <li>
+          <strong>An offer is wrong or dead.</strong> The most useful message I can get.
+          Include the offer and what you saw — a broken link, a price that changed,
+          eligibility rules that no longer match. Corrections get priority over everything
+          else.
+        </li>
+        <li>
+          <strong>An offer is missing.</strong> Send the provider's own page rather than a
+          referral link. It will be read, checked and scored by the same criteria as
+          everything already listed; being suggested does not get anything listed.
+        </li>
+        <li>
+          <strong>You disagree with a score.</strong> Every point is named on the offer's
+          page, so tell me which reason is wrong and why. That is a more useful argument
+          than the number itself, and it has changed scores before.
+        </li>
+        <li>
+          <strong>Privacy and your data.</strong> Access, correction, deletion, or anything
+          else under GDPR — see the <a href="/legal/privacy">Privacy Policy</a> for what is
+          held. Almost nothing is: no account is needed to read the directory.
+        </li>
+        <li>
+          <strong>Something looks like a security problem.</strong> Please write before
+          publishing it anywhere.
+        </li>
+      </ul>
+
+      <h2>What to expect</h2>
+      <p>
+        There is no support team and no promised response time — one person answers when
+        they can. What I will not do is leave a reported dead link sitting there: the
+        catalogue is the whole product, and a listing that is wrong is worse than a listing
+        that is missing.
+      </p>
+      <p>
+        Studely is not the provider of any offer. If your problem is with a signup,
+        eligibility check, billing or refund, that has to go to the provider directly —
+        their terms govern it, not ours. See <a href="/legal/terms">Terms</a>.
+      </p>
+    </div>
+  </section>
+</Layout>
