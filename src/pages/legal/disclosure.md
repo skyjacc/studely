@@ -21,17 +21,20 @@ will be served by Google.
 
 ### Affiliate links
 
-Studely is a free directory of tools, cloud credits, courses and discounts for students. Some of the outbound links to third-party vendors are **affiliate links**. If you click one and later sign up or buy, the vendor may pay Studely a commission.
+Studely is a free directory of tools, cloud credits, courses and discounts for students. **None of the outbound links is an affiliate link at present**, so no vendor pays us anything when you click through.
+
+We expect that to change. When a link does become an affiliate link, the vendor may pay Studely a commission if you sign up or buy afterwards, and the following will apply:
 
 - You never pay more because a link is an affiliate link. The price is the same as going to the vendor directly.
-- Not every link is an affiliate link, and we do not always know in advance which vendors run a programme.
-- We may earn a commission whether or not the product is free — some vendors pay for a qualified sign-up.
+- Not every link will be an affiliate link — we do not always know in advance which vendors run a programme.
+- A commission can be earned whether or not the product is free; some vendors pay for a qualified sign-up.
+- The offer itself will carry a label, and this page will say so in the present tense.
 
 This is disclosed to comply with the U.S. Federal Trade Commission (FTC) *Guides Concerning the Use of Endorsements and Testimonials in Advertising* and, for UK readers, the Advertising Standards Authority (ASA) / CAP Code rules on identifiable advertising and affiliate marketing.
 
 ### It does not influence our scoring
 
-Every offer on Studely is scored from a fixed, published list of **named attributes** — for example *"no card required"* or *"full paid tier, free"* — each worth a set number of points. The score is the sum of those attributes and nothing else. Commercial relationships, affiliate payouts and ad revenue are **not** attributes and carry no points. See Attributable Scoring for how this works.
+Every offer on Studely is scored from a fixed, published list of **named attributes** — for example *"no card required"* or *"full paid tier, free"* — each worth a set number of points. The score is the sum of those attributes and nothing else. Commercial relationships, affiliate payouts and ad revenue are **not** attributes and carry no points. Every offer page shows its own full breakdown, and the criteria are set out on [How we score](/methodology).
 
 Because the score comes only from attributes a reader can see and check, an affiliate deal cannot move an offer up or down the rankings.
 
@@ -57,12 +60,12 @@ Studely's catalogue is **editorially independent**. Each offer is scored against
 
 ## What we collect (context)
 
-The only personal data Studely collects directly is your **email address**, used for magic-link sign-in (no passwords). Affiliate links and ads do involve third parties:
+The only personal data Studely collects directly is your **email address**, used for magic-link sign-in (no passwords). Outbound links and the ad tag do involve third parties:
 
 | Party | Role | What it means for you |
 |---|---|---|
-| Affiliate vendors | Destination of outbound links | May set their own cookies and may pay Studely a commission |
-| Google AdSense *(planned)* | Advertising | May set advertising cookies subject to your consent |
+| Vendor sites | Destination of outbound links — **none is an affiliate link today, and no vendor pays us** | Once you arrive, the vendor may set its own cookies under its own policy |
+| Google AdSense | Advertising. **The tag loads on every page; no ad unit is configured, so no ad is served** | Google may set cookies or read device identifiers; in the EEA/UK/CH its consent platform asks you first |
 | Supabase, Vercel, Cloudflare, Resend | Our processors (hosting, auth, email, DNS) | Handle site operation and sign-in email delivery |
 
 Full detail lives in the [Privacy Policy](/legal/privacy) and [Cookie Notice](/legal/cookies).

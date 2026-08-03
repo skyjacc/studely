@@ -5,7 +5,8 @@ description: "The terms for using Studely, a scored directory of free tools and 
 draft: false
 ---
 
-**Effective date:** 23 July 2026
+**Effective date:** 23 July 2026  
+**Last updated:** 2 August 2026
 **Operator:** an individual based in Romania (full controller identity available on request via privacy@studely.app) ("Studely", "we", "us", "our")
 **Service:** the website at https://studely.app and its subdomains (the "Service")
 
@@ -13,7 +14,7 @@ draft: false
 
 ## 1. Agreement to these Terms
 
-These Terms of Service ("Terms") are a binding agreement between you and an individual based in Romania (full controller identity available on request via privacy@studely.app) governing your access to and use of the Service. By accessing, browsing, or creating an account on Studely, you agree to these Terms and to our [Privacy Policy](/legal/privacy). If you do not agree, do not use the Service.
+These Terms of Service ("Terms") are a binding agreement between you and Studely governing your access to and use of the Service. By accessing, browsing, or creating an account on Studely, you agree to these Terms and to our [Privacy Policy](/legal/privacy). If you do not agree, do not use the Service.
 
 If you are using the Service on behalf of an organisation, you represent that you have authority to bind that organisation to these Terms.
 
@@ -49,7 +50,7 @@ No outbound link on the Service is currently an **affiliate link**, and we earn 
 > **This does not change what we list or how we rank it**
 > Offers are selected and scored editorially. An affiliate relationship does not determine whether an Offer appears, and it does not change the price you pay. Where an Offer is monetised, we aim to make that transparent.
 
-We currently plan affiliate links and Google AdSense advertising; **neither is live as of the effective date above.** Advertising and cookie details are covered in the [Privacy Policy](/legal/privacy) and [Cookie Policy](/legal/cookies).
+We plan to run both affiliate links and Google AdSense advertising. **Neither earns anything today:** no link is an affiliate link, and although the AdSense tag loads on every page, no ad unit is configured, so no advertisement is served. Advertising and cookie details are covered in the [Privacy Policy](/legal/privacy) and [Cookie Notice](/legal/cookies).
 
 ---
 
@@ -102,7 +103,7 @@ If and when the Service offers comments or Offer submissions, you retain ownersh
 
 ## 8. Intellectual property
 
-The Service's editorial content, catalogue structure, verification write-ups, text, design, layout, logos, and code are owned by an individual based in Romania (full controller identity available on request via privacy@studely.app) or its licensors and are protected by intellectual-property laws.
+The Service's editorial content, catalogue structure, verification write-ups, text, design, layout, logos, and code are owned by Studely or its licensors and are protected by intellectual-property laws.
 
 - **Provider marks:** Provider names, logos, and trademarks belong to their respective owners and are used for identification and editorial reference only. Their appearance does not imply endorsement of Studely by the Provider, or vice versa.
 - **Your permitted use:** you may view and share links to pages of the Service for personal, non-commercial use. You may not copy, republish, resell, or create derivative works from our editorial catalogue without written permission, except as allowed by applicable law (e.g. quotation).
@@ -125,7 +126,7 @@ To the fullest extent permitted by law, the Service and all Offers, listings, an
 
 ## 11. Limitation of liability
 
-To the fullest extent permitted by law, an individual based in Romania (full controller identity available on request via privacy@studely.app) and its officers, employees, and agents will **not** be liable for any indirect, incidental, special, consequential, or punitive damages, or for any loss of profits, data, goodwill, or opportunity, arising out of or relating to your use of (or inability to use) the Service or any Offer — including any dealing with, or reliance on, a Provider.
+To the fullest extent permitted by law, Studely, its operator and anyone working on Studely will **not** be liable for any indirect, incidental, special, consequential, or punitive damages, or for any loss of profits, data, goodwill, or opportunity, arising out of or relating to your use of (or inability to use) the Service or any Offer — including any dealing with, or reliance on, a Provider.
 
 Because Studely is a free editorial directory and is not a party to your dealings with Providers, we are not liable for a Provider's acts or omissions, for an Offer being withdrawn or misdescribed by the Provider, or for any loss arising from an outbound link.
 
@@ -133,7 +134,7 @@ Because Studely is a free editorial directory and is not a party to your dealing
 
 ## 12. Indemnity
 
-You agree to indemnify and hold an individual based in Romania (full controller identity available on request via privacy@studely.app) harmless from claims, losses, and reasonable costs arising from your breach of these Terms, your misuse of the Service, or your unlawful conduct — to the extent permitted by applicable law and subject to the consumer-law carve-outs in sections 10 and 11.
+You agree to indemnify and hold Studely harmless from claims, losses, and reasonable costs arising from your breach of these Terms, your misuse of the Service, or your unlawful conduct — to the extent permitted by applicable law and subject to the consumer-law carve-outs in sections 10 and 11.
 
 ---
 

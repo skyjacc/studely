@@ -31,8 +31,11 @@ const verifyFacets = [...new Set(all.map((o) => verifyGroup(o.data.verification)
   .map((g) => ({ g, n: all.filter((o) => verifyGroup(o.data.verification) === g).length }))
   .sort((a, b) => b.n - a.n);
 
-// "No card required" — an offer needs a card only if the scoring flags card_required.
-const noCardCount = all.filter((o) => !o.attributes.some((a) => a.key === 'card_required')).length;
+// "No card required" is asserted, never inferred. Counting the ABSENCE of
+// card_required silently vouched for every offer nobody had scored on that axis —
+// which put Spotify Premium Student, a paid subscription, in a facet promising no
+// payment method. An offer qualifies only if it carries no_card_required.
+const noCardCount = all.filter((o) => o.attributes.some((a) => a.key === 'no_card_required')).length;
 
 const daysLeft = (o: (typeof sorted)[number]) => {
   const d = daysUntil(o.data.expires);
@@ -45,7 +48,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
   'data-score': String(o.data.score),
   'data-checked': String(o.data.lastChecked.getTime()),
   'data-expires': String(daysLeft(o)),
-  'data-card': o.attributes.some((a) => a.key === 'card_required') ? 'yes' : 'no',
+  'data-card': o.attributes.some((a) => a.key === 'no_card_required') ? 'no' : 'yes',
   'data-name': o.data.title.toLowerCase(),
   'data-text': `${o.data.title} ${o.data.provider} ${o.data.summary} ${o.data.tags.join(' ')} ${getCategory(o.data.category)?.name ?? ''}`.toLowerCase(),
 });

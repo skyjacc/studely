@@ -13,7 +13,7 @@ Studely is operated by **an individual based in Romania** (full controller ident
 Questions about this notice can be sent to **privacy@studely.app**.
 
 - **Effective date:** 23 July 2026
-- **Last updated:** 2026-07-29
+- **Last updated:** 2 August 2026
 
 ---
 
@@ -165,9 +165,9 @@ governed by **their** policies, not only ours:
 | **Supabase** | Auth / database (session tokens) | Yes — strictly necessary | Sets the sign-in session cookies described in 2.1 |
 | **Vercel** | Hosting / CDN | Possibly (operational) | May set operational cookies at the platform edge |
 | **Cloudflare** | DNS | Not expected on-page | DNS only; no first-party page cookie expected |
-| **Google (AdSense)** | Advertising (**planned**) | **No — not live** | Will set advertising cookies once enabled; consent-gated in EU/UK |
+| **Google (AdSense)** | Advertising | **Yes — the tag loads on every page** | No ad unit is configured, so no ad is served; the tag may still set Google cookies. Consent-gated in the EEA/UK/CH by Google's CMP |
 | **Resend** | Transactional email delivery | No (not on-page) | Delivers the magic-link email; sets no cookies in your browser |
-| **Affiliate vendors** | Outbound offer links | On the vendor's own site | Clicking an offer takes you to a third-party site that may set its own cookies |
+| **Vendor sites** | Outbound offer links (**none is an affiliate link today**) | On the vendor's own site | Clicking an offer takes you to a third-party site that may set its own cookies |
 
 > **Affiliate outbound links**
 > Studely's catalogue links out to third-party vendors. None of those links is an affiliate
@@ -187,8 +187,8 @@ are typical and follow Google's current documentation.
 |---|---|---|---|---|---|
 | `sb-<project>-auth-token` (and split chunks) | Supabase (first-party) | Strictly necessary | Holds the signed-in session (access + refresh token) for `/admin` | Up to the refresh-token lifetime (long-lived; ~400 days unless you sign out) | **Live** (staff sign-in only) |
 | PKCE code-verifier cookie | Supabase (first-party) | Strictly necessary | Completes the magic-link sign-in exchange securely | Short-lived (cleared after the exchange) | **Live** (during sign-in only) |
-| Vercel operational cookie(s) | Vercel | Strictly necessary | Platform routing / security, if set | Session / provider-defined | **To confirm** |
-| Google `__gads`, `__gpi`, `IDE`, `test_cookie`, etc. | Google AdSense (third-party) | Advertising | Serve/measure/frequency-cap and (if configured) personalise ads | Provider-defined (commonly up to ~13 months) | **Planned — not live** |
+| Vercel operational cookie(s) | Vercel | Strictly necessary | Platform routing and security, where the platform sets them | Session / provider-defined | **Live** (set by the host, not by Studely) |
+| Google `__gads`, `__gpi`, `IDE`, `test_cookie`, etc. | Google AdSense (third-party) | Advertising | Serve/measure/frequency-cap and (if configured) personalise ads. **No ad unit is configured, so no ad is served; the tag is loaded and may still set these** | Provider-defined (commonly up to ~13 months) | **Tag live — no ads served** |
 | Analytics cookie(s) (e.g. `_ga`, `_ga_*`) | Analytics provider (if adopted) | Analytics | Measure site usage | Provider-defined (commonly up to ~2 years) | **Planned / undecided** |
 
 ---
@@ -197,7 +197,7 @@ are typical and follow Google's current documentation.
 
 You can control or delete cookies in several ways:
 
-- **Consent banner (when live):** once the CMP is deployed, use it to accept or reject
+- **Consent banner:** in the EEA, UK and Switzerland Google's certified consent platform loads with the ad tag — use it to accept or reject
   advertising and analytics cookies, and to change your choice at any time. For strictly-
   necessary cookies there is no opt-out, because the sign-in service cannot work without
   them.
@@ -235,4 +235,4 @@ Questions about cookies or this notice: **privacy@studely.app** (privacy contact
 
 ## Related
 
-Legal
+[Privacy Policy](/legal/privacy) · [Terms of Service](/legal/terms) · [Affiliate & Advertising Disclosure](/legal/disclosure)

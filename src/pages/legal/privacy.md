@@ -6,7 +6,7 @@ draft: false
 ---
 
 **Effective date:** 23 July 2026
-**Last updated:** 23 July 2026
+**Last updated:** 2 August 2026
 
 This Privacy Policy explains how **an individual based in Romania (full controller identity available on request via privacy@studely.app)** ("Studely", "we", "us", "our") collects, uses, shares and protects personal data when you visit **https://studely.app** (the "Site") or sign in to an account. It also describes your rights and how to exercise them.
 
@@ -32,7 +32,7 @@ We practise data minimisation: we collect as little as possible. The table below
 |---|---|---|---|
 | **Email address** | Only if you sign in. Authentication is passwordless "magic link" — you enter your email, we email you a one-time sign-in link. **No passwords are stored.** | To create and secure your account, send the magic-link sign-in email, and (in future) associate features such as comments or submissions with you | Art. 6(1)(b) — performance of a contract / service you requested; and Art. 6(1)(f) — legitimate interest in securing accounts |
 | **Server and access logs** | Automatically, on every request | Security, abuse prevention, debugging, and keeping the Site available. Logs may include IP address, timestamp, user agent, and requested URL, held by our hosting and network providers | Art. 6(1)(f) — legitimate interest in a secure, reliable service |
-| **Advertising / analytics cookies** | **Not yet.** Only once Google AdSense is enabled (not live as of 23 July 2026) | To display advertising and, where applicable, measure and personalise it | **Consent** — Art. 6(1)(a), collected via a cookie banner before any non-essential cookie is set (see [Section 7](#7-cookies)) |
+| **Advertising cookies** | The Google AdSense tag loads on every page, so Google may set cookies or read device identifiers. No ad unit is configured, so no advertisement is served. No analytics run at all. | To review the site for the AdSense programme, and — once ad units exist — to display, measure and (subject to consent) personalise advertising | **Consent** — Art. 6(1)(a), collected in the EEA/UK/CH by Google's certified consent platform, which loads with the tag (see [Section 7](#7-cookies)) |
 
 We do **not** collect names, postal addresses, phone numbers, payment details, or passwords. We do **not** knowingly collect special-category data (health, religion, biometrics, etc.).
 
@@ -50,11 +50,11 @@ We do **not** sell your personal data for money, and we do not currently "share"
 
 ---
 
-## 4. Affiliate links and outbound tracking
+## 4. Outbound links to vendors
 
-Studely earns revenue from **affiliate links**. When you click through to a third-party vendor, that vendor may set an affiliate tracking cookie or append a tracking parameter so the vendor can attribute a resulting sign-up or purchase to Studely. This happens **on the vendor's site, under the vendor's privacy policy**, not on Studely.
+**No outbound link on Studely is an affiliate link today, and we earn no commission from any vendor.** Clicking an offer sends you to the provider's own site, where that site's privacy policy applies.
 
-Per FTC guidance and equivalent norms, offers that pay us an affiliate commission are disclosed. Affiliate revenue never changes whether an offer is listed or how it is scored — the editorial catalogue is ranked independently of monetisation.
+We intend to add affiliate links. From the point one exists, the vendor may set a tracking cookie or append a tracking parameter so it can attribute a sign-up to Studely — always **on the vendor's site, under the vendor's privacy policy**, never on Studely. Any such offer will be labelled, per FTC guidance and equivalent norms. Monetisation will never change whether an offer is listed or how it is scored.
 
 ---
 
@@ -68,7 +68,7 @@ We rely on the following third parties to run Studely. Each acts as a **processo
 | **Resend** | Processor — transactional email (SMTP) | Delivers the magic-link sign-in email to your address | See Resend's terms |
 | **Vercel** | Processor — application hosting | Serves the Site; generates request/access logs | See Vercel's terms |
 | **Cloudflare** | Processor — DNS and network | Resolves studely.app; may process request metadata at the network edge | See Cloudflare's terms |
-| **Google AdSense** | Independent controller / processor — advertising (**not live yet**) | Sets advertising cookies and processes ad-related identifiers once enabled | See Google's terms |
+| **Google AdSense** | Independent controller — advertising. Its tag loads on every page; **no ad unit is configured, so no advertisement is served** | May set cookies or process device identifiers while the tag is loaded, and will serve and measure ads once units are enabled | See Google's terms |
 
 We do not sell or rent your data to any of the above; they process it only to provide their service to us.
 
@@ -82,9 +82,9 @@ Some of the providers in [Section 5](#5-who-processes-your-data-processors-and-s
 
 ## 7. Cookies
 
-The public directory is a mostly static site and **sets no non-essential cookies today**. A minimal, strictly-necessary cookie may be used to keep you signed in after you use a magic link; strictly-necessary cookies do not require consent.
+The only cookies **Studely itself** sets are strictly necessary: a session cookie to keep you signed in after a magic link, and a short-lived cookie during the sign-in exchange. Strictly-necessary cookies do not require consent. Studely runs no analytics.
 
-Once **Google AdSense** is enabled, advertising cookies will be set **only after you consent** via a cookie banner. Until you consent, no advertising or analytics cookies are placed. Consent is per the ePrivacy Directive ("cookie law") and GDPR.
+The **Google AdSense tag loads on every page** — Google requires it on the site in order to review it. No ad unit is configured, so no advertisement is served anywhere; but the tag being present means Google may set cookies or read device identifiers. In the EEA, UK and Switzerland that consent is collected by **Google's certified consent management platform**, which loads with the tag. This is the position today, not a future step. Consent is per the ePrivacy Directive ("cookie law") and GDPR.
 
 Full details of every cookie, its purpose and duration, and how to change your choice, are in the **[Cookie Notice](/legal/cookies)**.
 
