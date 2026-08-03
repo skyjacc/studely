@@ -39,33 +39,6 @@ const realCheck = offer.verification.verified && offer.verification.at ? offer.v
 // they don't wrap ragged against the right edge; short ones stay inline.
 const STACK_AT = 20;
 
-// Practical pre-click questions, answered ONLY from real offer fields — never a
-// generic claim. A question is omitted when the data can't back its answer
-// (e.g. "do I need a card?" only appears when card_required is actually scored).
-const cardRequired = offer.attributes.some((a) => a.key === 'card_required');
-const moneyAnswer =
-  d.offerType === 'discount'
-    ? `It's a ${d.discountPercent ? `${d.discountPercent}% ` : ''}student discount, not free — you still pay the rest.`
-    : d.offerType === 'credit'
-      ? 'You get free credit to spend; usage beyond it is billed at the normal rate.'
-      : d.offerType === 'trial'
-        ? 'Free during the student trial, then it converts to a paid plan.'
-        : 'Yes — free for students, no purchase required. You confirm eligibility first.';
-const faqs: { q: string; a: string }[] = [
-  { q: 'Is it actually free?', a: moneyAnswer },
-  ...(cardRequired
-    ? [{ q: 'Do I need a credit card?', a: 'Yes — this offer asks for a payment method up front.' }]
-    : []),
-  {
-    q: 'When does it expire?',
-    a:
-      d.expires === 'ongoing'
-        ? 'No fixed end date we track. Student offers can still change, so confirm on the official page.'
-        : `Listed through ${formatDate(new Date(d.expires))}. Confirm the current terms on the official page before relying on it.`,
-  },
-  { q: "How do I prove I'm a student?", a: `Student status is confirmed through ${d.verification}.` },
-];
-
 const pageUrl = new URL(`/offers/${offer.id}`, site.url).href;
 // Product + nested Offer is an eligible rich result (a bare Offer is not); add a BreadcrumbList.
 const jsonLd = {
@@ -93,18 +66,6 @@ const jsonLd = {
         { '@type': 'ListItem', position: 3, name: d.title, item: pageUrl },
       ],
     },
-    ...(faqs.length
-      ? [
-          {
-            '@type': 'FAQPage',
-            mainEntity: faqs.map((f) => ({
-              '@type': 'Question',
-              name: f.q,
-              acceptedAnswer: { '@type': 'Answer', text: f.a },
-            })),
-          },
-        ]
-      : []),
   ],
 };
 ---
@@ -197,22 +158,10 @@ const jsonLd = {
           <h2 class="sec-h">Eligibility &amp; terms</h2>
           <dl class="rec-list" data-reveal-group>
             <div class:list={[{ stack: d.eligibility.length > STACK_AT }]}><dt>Who can apply</dt><dd>{d.eligibility}</dd></div>
-            <div class:list={[{ stack: d.verification.length > STACK_AT }]}><dt>Student eligibility</dt><dd>{d.verification}</dd></div>
             <div><dt>Offer duration</dt><dd>{d.expires === 'ongoing' ? 'Ongoing' : d.expires}</dd></div>
           </dl>
         </section>
 
-        <section class="rec faq" aria-label="Common questions" data-reveal>
-          <h2 class="sec-h">Common questions</h2>
-          <div class="faq-list" data-reveal-group>
-            {faqs.map((f) => (
-              <details class="faq-item">
-                <summary>{f.q}</summary>
-                <p class="faq-a">{f.a}</p>
-              </details>
-            ))}
-          </div>
-        </section>
 
         {related.length > 0 && (
           <section class="related">
@@ -306,24 +255,6 @@ const jsonLd = {
   .rec-link:hover { color: var(--accent-ink); border-color: var(--accent-ink); }
   .vbadge { display: inline-flex; align-items: center; gap: 4px; font-weight: 500; color: #6fd0ac; background: rgba(84,201,162,.12); border: 1px solid rgba(84,201,162,.32); border-radius: 20px; padding: 2px 9px; font-size: 0.72rem; }
 
-  /* FAQ — native details/summary accordion (no JS, keyboard-accessible) */
-  .faq-list { border-top: 1px solid var(--border); }
-  .faq-item { border-bottom: 1px solid var(--border-soft); }
-  .faq-item summary {
-    list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between;
-    gap: 1rem; padding: 0.9rem 0; font-weight: 500; color: var(--ink); transition: color .2s var(--ease-out);
-  }
-  .faq-item summary::-webkit-details-marker { display: none; }
-  .faq-item summary::after {
-    content: ''; flex: none; width: 9px; height: 9px; margin-right: 2px;
-    border-right: 1.5px solid var(--text-muted); border-bottom: 1.5px solid var(--text-muted);
-    transform: rotate(45deg); transition: transform .25s var(--ease-out), border-color .2s var(--ease-out);
-  }
-  .faq-item[open] summary::after { transform: rotate(-135deg); }
-  .faq-item summary:hover { color: var(--accent-ink); }
-  .faq-item summary:hover::after { border-color: var(--ink); }
-  .faq-item summary:focus-visible { outline: 2px solid var(--border-control); outline-offset: 3px; border-radius: 3px; }
-  .faq-a { margin: 0 0 0.95rem; color: var(--text-muted); font-size: var(--step--1); line-height: 1.55; max-width: 60ch; }
 
   .body { margin-top: 2rem; }
   .in-article { margin: 2.5rem 0; }
