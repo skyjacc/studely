@@ -7,7 +7,7 @@ draft: false
 
 **Effective date:** 23 July 2026  
 **Last updated:** 2 August 2026
-**Operator:** an individual based in Romania (full controller identity available on request via privacy@studely.app) ("Studely", "we", "us", "our")
+**Operator:** Studely, operated by a sole individual established in Romania ("Studely", "we", "us", "our")
 **Service:** the website at https://studely.app and its subdomains (the "Service")
 
 ---
@@ -168,4 +168,4 @@ Questions about these Terms:
 
 - **General / legal:** privacy@studely.app
 - **Privacy / data protection:** privacy@studely.app
-- **Operator:** an individual based in Romania (full controller identity available on request via privacy@studely.app)
+- **Operator:** Studely, operated by a sole individual established in Romania

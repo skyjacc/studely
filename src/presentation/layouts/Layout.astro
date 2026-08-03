@@ -86,9 +86,28 @@ const ogImage = new URL(image, Astro.site ?? Astro.url.origin).href;
       <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     )}
 
-    {/* Consent is handled by Google's certified CMP (AdSense → Privacy &
-        messaging), which loads with the ad tag below and shows only in the
-        EEA/UK/CH. It manages Consent Mode itself — no manual default here. */}
+    {/* Consent Mode default, set BEFORE the ad tag loads.
+        Previously there was no default at all: the tag went into <head>
+        unconditionally and everything depended on whether the CMP happened to be
+        switched on in the AdSense dashboard. Under ePrivacy/PECR a non-essential
+        cookie may not be set before the user chooses — and cookie/tracker cases
+        are the one category in which the Romanian authority has actually fined
+        small site operators. Denying by default costs nothing here (no ad unit is
+        configured, so nothing serves) and Google's certified CMP updates these
+        signals to granted once the user accepts. */}
+    {site.adsense.enabled && site.adsense.client && (
+      <script is:inline set:html={`
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('consent', 'default', {
+          ad_storage: 'denied',
+          ad_user_data: 'denied',
+          ad_personalization: 'denied',
+          analytics_storage: 'denied',
+          wait_for_update: 500
+        });
+      `}></script>
+    )}
     {site.adsense.enabled && site.adsense.client && (
       <script
         async

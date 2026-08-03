@@ -76,7 +76,7 @@ Full detail lives in the [Privacy Policy](/legal/privacy) and [Cookie Notice](/l
 
 Questions about this disclosure: **privacy@studely.app**.
 
-Studely is operated by **an individual based in Romania (full controller identity available on request via privacy@studely.app)** (Romania). Privacy queries: **privacy@studely.app**.
+Studely is operated by a sole individual established in Romania. Privacy queries: **privacy@studely.app**.
 Effective date: **23 July 2026**.
 
 ---

@@ -8,7 +8,7 @@ draft: false
 **Effective date:** 23 July 2026
 **Last updated:** 2 August 2026
 
-This Privacy Policy explains how **an individual based in Romania (full controller identity available on request via privacy@studely.app)** ("Studely", "we", "us", "our") collects, uses, shares and protects personal data when you visit **https://studely.app** (the "Site") or sign in to an account. It also describes your rights and how to exercise them.
+This Privacy Policy explains how **Studely**, operated by a sole individual established in Romania ("Studely", "we", "us", "our") collects, uses, shares and protects personal data when you visit **https://studely.app** (the "Site") or sign in to an account. It also describes your rights and how to exercise them.
 
 Studely is a scored directory of free tools, cloud credits, online courses and discounts for students. Reading the directory requires no account. An account exists only to enable a small number of features (see [Section 2](#2-what-we-collect-and-why)).
 
@@ -18,7 +18,7 @@ Studely is a scored directory of free tools, cloud credits, online courses and d
 
 The **data controller** for the purposes of the EU General Data Protection Regulation (GDPR) and the UK GDPR is:
 
-- **Controller:** an individual based in Romania (full controller identity available on request via privacy@studely.app)
+- **Controller:** Studely, operated by a sole individual established in Romania
 - **Registered/operating jurisdiction:** Romania
 - **Contact for privacy matters:** privacy@studely.app
 
@@ -167,7 +167,7 @@ Questions, requests, or complaints about privacy:
 
 - **Email:** privacy@studely.app
 - **Privacy contact:** privacy@studely.app
-- **Controller:** an individual based in Romania (full controller identity available on request via privacy@studely.app), Romania
+- **Controller:** Studely, operated by a sole individual established in Romania
 
 ---
 

@@ -9,7 +9,7 @@ This Cookie Notice explains how Studely ("Studely", "we", "us") uses cookies and
 technologies (local storage, session storage) on **[https://studely.app](https://studely.app)**.
 It should be read together with our [Privacy Policy](/legal/privacy).
 
-Studely is operated by **an individual based in Romania** (full controller identity available on request), established in **Romania**.
+Studely is operated by a sole individual established in Romania.
 Questions about this notice can be sent to **privacy@studely.app**.
 
 - **Effective date:** 23 July 2026
@@ -229,7 +229,7 @@ consent banner.
 ## 9. Contact
 
 Questions about cookies or this notice: **privacy@studely.app** (privacy contact:
-**privacy@studely.app**). Operator: **an individual based in Romania (full controller identity available on request via privacy@studely.app)**, **Romania**.
+**privacy@studely.app**). Operator: **Studely**, run by a sole individual established in Romania.
 
 ---
 
