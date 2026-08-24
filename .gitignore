@@ -40,3 +40,6 @@ graphify-out/
 # superpowers local state + generated planning artifacts (kept local, not in repo)
 .superpowers/
 docs/superpowers/
+
+# Local agent tooling
+.claude/
