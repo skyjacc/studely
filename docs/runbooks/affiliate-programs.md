@@ -1,6 +1,6 @@
 # Affiliate Program Operations
 
-## Current state — 2026-07-24
+## Current state — 2026-09-21 (write path live since P1.1)
 
 - 14 published offers.
 - `affiliate = false` on all offers.
@@ -25,8 +25,8 @@ Reject programs that require misleading copy, hide pricing, change Studely score
 ## Configure one offer
 
 1. Keep `url` as official non-affiliate fallback.
-2. Store partner link in `offers.affiliate_url`.
-3. Set `affiliate = true`.
+2. In the admin editor, fill **Affiliate URL** (`offers.affiliate_url`).
+3. Tick **Affiliate link** (`affiliate = true`) — the editor refuses to save a partner URL without it.
 4. Optionally set `tracking_source = 'studely'` and stable `tracking_campaign`.
 5. Never put secrets/API credentials in URL fields.
 6. Publish through admin and confirm deploy status says “Rebuild triggered”.
