@@ -131,7 +131,7 @@ const index = {
     position: fixed; inset: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none;
     margin: 0; padding: 0; border: 0; background: transparent; color: var(--ink);
   }
-  .palette::backdrop { background: rgba(8, 8, 7, 0.65); backdrop-filter: blur(3px); }
+  .palette::backdrop { background: rgba(var(--ink-rgb), 0.65); backdrop-filter: blur(3px); }
   .panel {
     position: absolute; left: 50%; top: min(12vh, 96px); transform: translateX(-50%);
     width: min(92vw, 40rem); max-height: 76dvh; display: flex; flex-direction: column;

@@ -1,42 +1,41 @@
 /* ============================================================
-   StudentPerks — design system  ·  "MONOLOG" monochrome
-   Dark-only, cinematic luxury: warm near-black, film grain,
-   drifting greyscale smoke hero, oversized grotesk + giant
-   wordmark, hairline borders, soft ambient shadows.
-   Ref DNA: bymonolog.com (monochrome, textured, editorial).
+   Studely — design system · "The Register" (paper)
+   Visual Direction v3: paper ground, ink text, hairline rules drawn
+   from ink, mono metadata, no surfaces, no shadows, no dark mode.
    ============================================================ */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* mono palette (dark-only) — exact bymonolog.com swatches */
-  --bg: #080807;          /* black-400 */
-  --bg-alt: #0e0d0c;
-  --surface: #121110;
-  --surface-2: #1a1815;
-  --ink: #e8e8e3;         /* beige-100 (brand text) */
-  --text: #e8e8e3;
-  --text-muted: #8f897e;
-  --border: rgba(232, 232, 227, 0.13);        /* hairline */
-  --border-soft: rgba(232, 232, 227, 0.08);
-  --border-strong: rgba(232, 232, 227, 0.26);
-  --border-control: rgba(232, 232, 227, 0.42);  /* interactive controls — WCAG 1.4.11 non-text >=3:1 */
-  --accent: #e8e8e3;      /* mono: beige carries the "accent" role */
-  --accent-ink: #ffffff;
-  --accent-contrast: #080807;
-  --pop: #e8e8e3;
-  --pop-ink: #080807;
+  /* paper + ink — the only two colours; everything else is an alpha of ink */
+  --bg: #f4f2ec;          /* paper */
+  --bg-alt: #efede6;      /* a second sheet: sheets, palette, ad interruption */
+  --surface: #f4f2ec;     /* legacy name — same as paper (no cards) */
+  --surface-2: #e9e6de;   /* hover / active fill, ≈ 5% ink over paper */
+  --ink: #141311;
+  --text: #141311;
+  --text-muted: #66625a;  /* 5.4:1 on paper */
+  --ink-rgb: 20, 19, 17;
+  /* rules — the structure. Alphas of ink over paper; --rule-control-alpha is
+     the WCAG 1.4.11 boundary for interactive controls (≥3:1), read by the tests. */
+  --rule-control-alpha: 0.5;
+  --rule-soft: rgba(var(--ink-rgb), 0.08);
+  --rule: rgba(var(--ink-rgb), 0.14);
+  --rule-strong: rgba(var(--ink-rgb), 0.4);
+  --rule-control: rgba(var(--ink-rgb), var(--rule-control-alpha));
+  /* legacy names kept so migrated components keep working until each is rebuilt */
+  --border-soft: var(--rule-soft);
+  --border: var(--rule);
+  --border-strong: var(--rule-strong);
+  --border-control: var(--rule-control);
+  --accent: #141311;
+  --accent-ink: #000000;
+  --accent-contrast: #f4f2ec;
+  --pop: #141311;
+  --pop-ink: #f4f2ec;
 
-  --shadow-soft: 0 24px 70px -30px rgba(0, 0, 0, 0.8);
-  --shadow-hard: 0 24px 70px -30px rgba(0, 0, 0, 0.8);      /* legacy alias → soft */
-  --shadow-hard-lg: 0 40px 110px -34px rgba(0, 0, 0, 0.9);
-
-  /* badges — all mono outline, distinguished by label */
-  --free-bg: rgba(232, 232, 227, 0.08);   --free-ink: #efece6;
-  --disc-bg: rgba(232, 232, 227, 0.05);   --disc-ink: #cfcabf;
-  --cred-bg: rgba(232, 232, 227, 0.05);   --cred-ink: #cfcabf;
-  --warn-bg: rgba(232, 232, 227, 0.05);   --warn-ink: #b6b0a4;
-  --spon-bg: #efece6;                      --spon-ink: #0b0a09;
+  /* the one loud label (sponsored) stays inverted */
+  --spon-bg: #141311;  --spon-ink: #f4f2ec;
 
   /* type — neutral Swiss grotesk (Khteka-adjacent) */
   --font-display: "Schibsted Grotesk Variable", "Schibsted Grotesk", system-ui, sans-serif;
@@ -71,10 +70,9 @@
   --space-l-xl: clamp(2rem, 1.39rem + 3.04vw, 3.75rem);
   --space-xl-2xl: clamp(3rem, 2.3rem + 3.48vw, 5rem);
 
-  /* problem states — the only hues on the site (decision 5). Positive trust
-     states stay mono. Values are the ones the admin already ships. */
-  --state-warn: #e0a44a;      --state-warn-ink: #e6bd78;   /* stale · blocked */
-  --state-bad: #e0655c;       --state-bad-ink: #e88f88;    /* dead · expired */
+  /* problem states — the only hues on the site. Tuned for paper (tests hold ≥4.5:1). */
+  --state-warn: #8a5a00;   --state-warn-ink: #8a5a00;   /* stale · blocked */
+  --state-bad: #a8261f;    --state-bad-ink: #a8261f;    /* dead · expired */
 
   --radius: 10px;
   --radius-lg: 16px;
@@ -108,12 +106,6 @@ body {
   min-height: 100dvh;
   position: relative;
 }
-/* film grain — site-wide, fixed, subtle */
-body::after {
-  content: ''; position: fixed; inset: 0; z-index: 9998; pointer-events: none;
-  opacity: 0.05;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
 img, picture, svg { display: block; max-width: 100%; }
 a { color: inherit; text-decoration: none; }
 h1, h2, h3, h4 {
@@ -130,12 +122,8 @@ p { text-wrap: pretty; }
 .wrap { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: clamp(1rem, 0.5rem + 2vw, 2.25rem); }
 .section { padding-block: clamp(3rem, 2rem + 4vw, 6.5rem); }
 
-/* fixed transparent nav overlays content: pad main, pull full-bleed hero up behind nav */
-#main { padding-top: var(--nav-h); }
 /* Layout chrome={false}: there is no nav to clear, so the padding would just be
    a band of empty page above a full-height screen. */
-body.no-chrome #main { padding-top: 0; }
-.hero-mono { margin-top: calc(-1 * var(--nav-h)); }
 .eyebrow {
   display: inline-block; font-family: var(--font-mono); font-weight: 500;
   text-transform: uppercase; letter-spacing: 0.2em; font-size: var(--step--1);
@@ -176,19 +164,6 @@ html.js-motion [data-split].is-in .split-word { transform: none; }
   html.js-motion [data-split] .split-word { opacity: 1; transform: none; filter: none; transition: none; }
 }
 
-/* nav intro — items rise from behind their mask (pure CSS, bulletproof) */
-@media (prefers-reduced-motion: no-preference) {
-  html.js-motion [data-nav-item] { animation: nav-rise 0.9s var(--ease-intro) both; }
-  html.js-motion .brand[data-nav-item] { animation-delay: 0.08s; }
-  html.js-motion .nav .nav-mask:nth-child(1) [data-nav-item] { animation-delay: 0.16s; }
-  html.js-motion .nav .nav-mask:nth-child(2) [data-nav-item] { animation-delay: 0.22s; }
-  html.js-motion .nav .nav-mask:nth-child(3) [data-nav-item] { animation-delay: 0.28s; }
-  html.js-motion .actions [data-nav-item] { animation-delay: 0.34s; }
-  /* the search box isn't inside a rise-mask — join the same entrance with a synced fade-rise */
-  html.js-motion .nav-search { animation: intro-fade-rise 0.9s var(--ease-intro) 0.3s both; }
-}
-@keyframes nav-rise { from { transform: translateY(125%); } to { transform: translateY(0); } }
-@keyframes intro-fade-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
 /* hero intro — MONOLOG: bg zooms out (1.25→1) + giant wordmark rises from below */
 @media (prefers-reduced-motion: no-preference) {
@@ -227,17 +202,13 @@ html.js-motion [data-split].is-in .split-word { transform: none; }
   letter-spacing: 0.08em; text-transform: uppercase;
   padding: 0.32em 0.6em; border-radius: 6px; white-space: nowrap; border: 1px solid var(--border);
 }
-.badge-free { background: var(--free-bg); color: var(--free-ink); }
-.badge-discount { background: var(--disc-bg); color: var(--disc-ink); }
-.badge-credit { background: var(--cred-bg); color: var(--cred-ink); }
-.badge-trial { background: var(--warn-bg); color: var(--warn-ink); }
 .badge-sponsored { background: var(--spon-bg); color: var(--spon-ink); border-color: var(--ink); }
-.badge-expiring { background: var(--warn-bg); color: var(--warn-ink); }
+.badge-expiring { background: transparent; color: var(--state-warn-ink); border-color: var(--state-warn-ink); }
 .badge-outline { background: transparent; color: var(--text-muted); }
 
 /* score tiers (mono): white chip = high, subtle = mid, ghost = low */
 .score-high { background: var(--ink); color: var(--bg); }
-.score-mid { background: rgba(232, 232, 227, 0.12); color: var(--ink); }
+.score-mid { background: var(--surface-2); color: var(--ink); }
 .score-low { background: transparent; color: var(--text-muted); }
 
 /* card — hairline + soft ambient shadow */
@@ -246,7 +217,7 @@ html.js-motion [data-split].is-in .split-word { transform: none; }
   border-radius: var(--radius-lg); box-shadow: none;
   transition: transform .35s var(--ease-out), box-shadow .35s var(--ease-out), border-color .35s var(--ease-out);
 }
-.card:hover { transform: translateY(-4px); box-shadow: var(--shadow-soft); border-color: var(--border-strong); }
+.card:hover { border-color: var(--rule-strong); }
 
 /* brand logo tile + category icon */
 .logo-tile {

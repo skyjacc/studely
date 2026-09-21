@@ -127,9 +127,9 @@ const checked = (iso: string) => {
 
 <style>
   .banner { padding: 0.7rem 1rem; border-radius: 10px; font-size: var(--step--1); margin-bottom: 1rem; border: 1px solid var(--border-strong); }
-  .banner.ok { color: #7fd6b0; background: rgba(84,201,162,.08); border-color: rgba(84,201,162,.3); }
-  .banner.warn { color: #e6bd78; background: rgba(224,164,74,.08); border-color: rgba(224,164,74,.3); }
-  .banner.bad { color: #e88f88; background: rgba(224,101,92,.08); border-color: rgba(224,101,92,.3); }
+  .banner.ok { color: var(--ink); background: var(--surface-2); border-color: var(--surface-2); }
+  .banner.warn { color: var(--state-warn-ink); background: rgba(138, 90, 0, 0.12); border-color: rgba(138, 90, 0, 0.12); }
+  .banner.bad { color: var(--state-bad-ink); background: rgba(168, 38, 31, 0.12); border-color: rgba(168, 38, 31, 0.12); }
 
   .bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
   .mono { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); }
@@ -149,23 +149,23 @@ const checked = (iso: string) => {
   .ttl:hover { text-decoration: underline; }
   .prov { display: block; font-size: 11.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .score { width: 30px; height: 30px; flex: none; border-radius: 8px; display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; font-size: 14px; border: 1px solid var(--border); font-variant-numeric: tabular-nums; }
-  .score.hi { color: #54c9a2; border-color: rgba(84,201,162,.35); }
+  .score.hi { color: var(--ink); border-color: var(--surface-2); }
   .score.mi { color: var(--ink); }
-  .score.lo { color: #e0a44a; border-color: rgba(224,164,74,.35); }
+  .score.lo { color: var(--state-warn-ink); border-color: rgba(138, 90, 0, 0.12); }
   .val { font-family: var(--font-display); font-weight: 600; font-size: 15px; letter-spacing: -.02em; margin: 12px 0 12px; }
   .foot { display: flex; flex-direction: column; gap: 10px; }
   .pills { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .pill { font-size: 11px; font-weight: 500; padding: 2px 9px; border-radius: 20px; text-transform: capitalize; }
-  .pill.v-published { background: rgba(84,201,162,.14); color: #6fd0ac; }
+  .pill.v-published { background: var(--surface-2); color: var(--ink); }
   .pill.v-draft { background: var(--surface-2); color: var(--text-muted); }
-  .pill.v-archived { background: rgba(224,101,92,.12); color: #e0918a; }
-  .pill.flag { background: rgba(224,164,74,.14); color: #e6bd78; }
+  .pill.v-archived { background: rgba(168, 38, 31, 0.12); color: #e0918a; }
+  .pill.flag { background: rgba(138, 90, 0, 0.12); color: var(--state-warn-ink); }
   .muted { font-size: 11.5px; color: var(--text-muted); }
   .acts { display: flex; align-items: center; gap: 14px; }
   .acts form { margin: 0; }
   .lnk { font-size: 12.5px; color: var(--text-muted); background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; }
   .lnk:hover { color: var(--ink); }
-  .lnk.go:hover { color: #6fd0ac; }
+  .lnk.go:hover { color: var(--ink); }
   .empty { color: var(--text-muted); font-size: var(--step--1); padding: 2rem 0; }
 
   @media (prefers-reduced-motion: reduce) { .of { transition: none; } }

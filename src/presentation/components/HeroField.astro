@@ -19,25 +19,25 @@ const { tone = 'hero', class: cls } = Astro.props;
 </div>
 
 <style>
-  .hero-field { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: #080807; }
+  .hero-field { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: var(--bg-alt); }
   /* smoke: three soft plumes, each on its own slow drift */
   .smoke {
     position: absolute; inset: -20%;
     background:
-      radial-gradient(38% 34% at 30% 42%, rgba(120, 116, 104, 0.55), transparent 70%),
-      radial-gradient(44% 30% at 68% 58%, rgba(96, 92, 84, 0.5), transparent 70%),
-      radial-gradient(30% 40% at 52% 30%, rgba(76, 74, 68, 0.45), transparent 72%),
-      #080807;
+      radial-gradient(38% 34% at 30% 42%, rgba(var(--ink-rgb), 0.16), transparent 70%),
+      radial-gradient(44% 30% at 68% 58%, rgba(var(--ink-rgb), 0.12), transparent 70%),
+      radial-gradient(30% 40% at 52% 30%, rgba(var(--ink-rgb), 0.1), transparent 72%),
+      var(--bg-alt);
     filter: blur(28px);
   }
   /* dots: a halftone screen, masked by a bright band so it appears where the smoke is */
   .dots {
     position: absolute; inset: 0;
-    background-image: radial-gradient(circle, rgba(232, 232, 227, 0.55) 0.9px, transparent 1.4px);
+    background-image: radial-gradient(circle, rgba(var(--ink-rgb), 0.55) 0.9px, transparent 1.4px);
     background-size: 5px 5px;
     -webkit-mask-image: radial-gradient(60% 50% at 50% 48%, #000 20%, transparent 78%);
     mask-image: radial-gradient(60% 50% at 50% 48%, #000 20%, transparent 78%);
-    mix-blend-mode: screen; opacity: 0.55;
+    mix-blend-mode: multiply; opacity: 0.35;
   }
   .tone-quiet .smoke { filter: blur(34px); opacity: 0.55; }
   .tone-quiet .dots { opacity: 0.28; background-size: 6px 6px; }

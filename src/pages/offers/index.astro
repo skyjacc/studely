@@ -573,7 +573,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
   }
   .check::before {
     content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
-    background: #393632; transform: scaleX(0); transform-origin: right center;
+    background: var(--surface-2); transform: scaleX(0); transform-origin: right center;
     transition: transform 0.45s cubic-bezier(0.2, 1, 0.36, 1);
   }
   .check:hover::before { transform: scaleX(1); transform-origin: left center; }
@@ -744,7 +744,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
   }
   .sel .sel-opt::before {
     content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
-    background: #393632; transform: scaleX(0); transform-origin: right center;
+    background: var(--surface-2); transform: scaleX(0); transform-origin: right center;
     transition: transform 0.4s cubic-bezier(0.2, 1, 0.36, 1);
   }
   .sel .sel-opt:hover::before, .sel .sel-opt.is-active::before { transform: scaleX(1); transform-origin: left center; }

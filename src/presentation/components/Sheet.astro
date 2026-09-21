@@ -69,7 +69,7 @@ const titleId = `${dialogId}-title`;
     position: fixed; inset: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none;
     margin: 0; padding: 0; border: 0; background: transparent; color: var(--ink);
   }
-  .sheet::backdrop { background: rgba(8, 8, 7, 0.6); backdrop-filter: blur(2px); }
+  .sheet::backdrop { background: rgba(var(--ink-rgb), 0.6); backdrop-filter: blur(2px); }
   .panel {
     position: absolute; display: flex; flex-direction: column; gap: var(--space-s);
     background: var(--bg-alt); border: 1px solid var(--border); padding: var(--space-s-m);
