@@ -120,15 +120,16 @@ Verified Student Benefits Platform
 
 ## Where we are now
 
-As of **2026-07-24**, public site is live and DB-driven; `/go/<slug>` click
-tracking and admin offers CRUD exist; CI runs tests, type-check, and build; and
-operations hardening is being rolled out. Migration `0007` is applied in
-Supabase, adding atomic offer+attribute saves and transactional link-check
-write-back. Production still needs Vercel environment confirmation, deploy-hook
-configuration, a deployment carrying the legacy-host redirect, and GitHub's
-service-role secret before scheduled checks can write back.
+As of **2026-09-21** (full audit + execution plan): the public site is live, DB-driven
+and honest; admin offers CRUD works; `/go` logs clicks; the weekly link checker runs
+but has never written back (service-role secret missing — ADR-0030 amended to allow
+exactly that one secret); `verifications` holds zero rows; no analytics; `studely.app`
+has no MX. **AdSense rejected the site ~2026-08-02 for low-value content**: one offer
+body (`github-student-pack`) was rewritten deep as the standard, thirteen remain ~700
+character templates. Revenue is **$0** — no channel is switched on.
 
-Revenue remains **$0**: no affiliate links are configured, and AdSense is under
-Google review with ad-unit slots intentionally empty. Next work should close
-those operator rollout gaps, then measure verification freshness and outbound
-clicks before adding more product surface.
+Order of work: **P0 Config Day** (MX, checker write-back, www, legacy root, crawlers
+off `/go`, leaked-password toggle, vault sync) → **P1** write-path field registry with
+`affiliate_url` as the acceptance test · first affiliate programme · verification
+recorder · GA4 · thirteen deep bodies · AdSense re-submit only after all of that.
+Canonical status lives in the vault's `CURRENT_STATE.md`.
