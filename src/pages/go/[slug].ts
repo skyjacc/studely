@@ -2,7 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { createSupabaseBuild } from '@core/supabase';
-import { REDIRECT_COLUMNS, resolveTarget, logClick, type RedirectOffer } from '@domain/affiliate/clicks';
+import { REDIRECT_COLUMNS, resolveTarget, logClick, goRedirect, type RedirectOffer } from '@domain/affiliate/clicks';
 
 // The tracked exit for every offer: log the click, then 302 to the affiliate
 // destination. Public + unauthenticated — reads a published offer and writes a
@@ -20,9 +20,7 @@ export const GET: APIRoute = async ({ params, request, url }) => {
 
   const offer = (!error && data ? data : null) as RedirectOffer | null;
   const target = offer ? resolveTarget(offer) : null;
-  if (!offer || !target) {
-    return new Response(null, { status: 302, headers: { Location: '/offers', 'cache-control': 'no-store' } });
-  }
+  if (!offer || !target) return goRedirect('/offers');
 
   await logClick(db, {
     offerId: offer.id,
@@ -31,5 +29,5 @@ export const GET: APIRoute = async ({ params, request, url }) => {
     referrer: request.headers.get('referer'),
   });
 
-  return new Response(null, { status: 302, headers: { Location: target, 'cache-control': 'no-store' } });
+  return goRedirect(target);
 };

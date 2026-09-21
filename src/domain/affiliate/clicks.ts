@@ -47,3 +47,15 @@ export async function logClick(
   });
   if (error) console.error(`[clicks] failed to log ${input.slug}: ${error.message}`);
 }
+
+/**
+ * The /go response: a 302 to `location`, never cached (each hit must log), and
+ * never indexed — the exit URL is not content, and a crawler that indexes or
+ * re-walks it turns the click log into a bot log.
+ */
+export function goRedirect(location: string): Response {
+  return new Response(null, {
+    status: 302,
+    headers: { Location: location, 'cache-control': 'no-store', 'x-robots-tag': 'noindex' },
+  });
+}
