@@ -13,6 +13,7 @@ import { z } from 'astro:schema';
 import type { AstroCookies } from 'astro';
 import { createSupabaseServer, isStaff, type StaffProfile } from '@core/supabase';
 import { validateOfferInput, type OfferFormRaw } from '@domain/offers/offer-input';
+import { OFFER_FIELDS } from '@domain/offers/offer-fields';
 import {
   createOffer, updateOfferWithAttributes, setVisibility, deleteOffer, getOfferForEdit,
 } from '@domain/offers/admin-offers';
@@ -20,26 +21,16 @@ import { shouldTriggerDeployForVisibility, triggerDeploy } from '@services/deplo
 
 type Ctx = { request: Request; cookies: AstroCookies };
 
-const OfferFields = z.object({
-  title: z.string().optional(),
-  provider: z.string().optional(),
-  category: z.string().optional(),
-  summary: z.string().optional(),
-  value: z.string().optional(),
-  body: z.string().optional(),
-  url: z.string().optional(),
-  verification: z.string().optional(),
-  eligibility: z.string().optional(),
-  offer_type: z.string().optional(),
-  discount_percent: z.string().optional(),
-  status: z.string().optional(),
-  tags: z.string().optional(),
-  expires_at: z.string().optional(),
-  affiliate: z.boolean().optional(),
-  sponsored: z.boolean().optional(),
-  featured: z.boolean().optional(),
-  ongoing: z.boolean().optional(),
-});
+// One schema entry per registry field: strings for text-like controls, booleans
+// for checkboxes. Validation proper happens in validateOfferInput; this only
+// shapes the transport.
+const OfferFields = z
+  .object(
+    Object.fromEntries(
+      OFFER_FIELDS.map((f) => [f.name, f.input === 'checkbox' ? z.boolean().optional() : z.string().optional()]),
+    ),
+  )
+  .extend({ ongoing: z.boolean().optional() });
 
 async function requireStaff(ctx: Ctx) {
   const supabase = createSupabaseServer(ctx.request, ctx.cookies);

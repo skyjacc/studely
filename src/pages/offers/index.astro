@@ -27,8 +27,8 @@ const catFacets = categories
 const TYPES = ['free', 'discount', 'credit', 'trial'] as const;
 const typeFacets = TYPES.map((t) => ({ t, label: offerTypeLabel[t], n: all.filter((o) => o.data.offerType === t).length })).filter((x) => x.n > 0);
 
-const verifyFacets = [...new Set(all.map((o) => verifyGroup(o.data.verification)))]
-  .map((g) => ({ g, n: all.filter((o) => verifyGroup(o.data.verification) === g).length }))
+const verifyFacets = [...new Set(all.map((o) => verifyGroup(o.data.proofMethod)))]
+  .map((g) => ({ g, n: all.filter((o) => verifyGroup(o.data.proofMethod) === g).length }))
   .sort((a, b) => b.n - a.n);
 
 // "No card required" is asserted, never inferred. Counting the ABSENCE of
@@ -44,7 +44,7 @@ const daysLeft = (o: (typeof sorted)[number]) => {
 const dataAttrs = (o: (typeof sorted)[number]) => ({
   'data-cat': o.data.category,
   'data-type': o.data.offerType,
-  'data-verify': verifyGroup(o.data.verification),
+  'data-verify': verifyGroup(o.data.proofMethod),
   'data-score': String(o.data.score),
   'data-checked': String(o.data.lastChecked.getTime()),
   'data-expires': String(daysLeft(o)),
@@ -121,7 +121,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
             </fieldset>
 
             <fieldset class="fgroup">
-              <legend class="flabel">Student eligibility</legend>
+              <legend class="flabel">Proof</legend>
               {verifyFacets.map((v) => (
                 <label class="check">
                   <input type="checkbox" data-facet="verify" value={v.g} />
@@ -187,7 +187,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
                         </span>
                       </td>
                       <td class="tval" title={o.data.value}>{o.data.value}</td>
-                      <td class="muted tverify" title={o.data.verification}>{verifyGroup(o.data.verification)}</td>
+                      <td class="muted tverify" title={o.data.proofMethod}>{verifyGroup(o.data.proofMethod)}</td>
                       <td><a class="tgo" href={`/go/${o.id}`} target="_blank" rel={o.data.affiliate ? 'sponsored nofollow noopener' : 'nofollow noopener'} data-go data-slug={o.id} data-category={o.data.category} data-type={o.data.offerType} data-sponsored={o.data.sponsored ? '1' : '0'} data-affiliate={o.data.affiliate ? '1' : '0'}>Get ↗</a></td>
                     </tr>
                   );

@@ -41,7 +41,7 @@ export function formatDate(d: Date): string {
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-/** Bucket the free-text verification into a small facet set. */
+/** Bucket the free-text proof method into a small facet set. */
 export function verifyGroup(v: string): string {
   const s = v.toLowerCase();
   if (s.includes('sheerid')) return 'SheerID';

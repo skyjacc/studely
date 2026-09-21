@@ -2,14 +2,12 @@
 // attribute parsing. No Astro and no Supabase imports, so it is unit-testable in
 // isolation. The IO layer (admin-offers.ts) calls these before it writes.
 
-import { categorySlugs } from './categories';
 import { ATTRIBUTES, attributeByKey, type AttributeKey } from './attributes';
+import { OFFER_FIELDS } from './offer-fields';
 import type { OfferType, OfferStatus } from './offer-mapping';
 
-const OFFER_TYPES: OfferType[] = ['free', 'discount', 'credit', 'trial'];
-const STATUSES: OfferStatus[] = ['active', 'expiring', 'expired', 'unverified'];
-const CATEGORIES = new Set<string>(categorySlugs);
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const HTTP_RE = /^https?:\/\//i;
 
 /** URL-safe slug from a title: strip diacritics, lowercase, non-alnum → single dash. */
 export function slugify(s: string): string {
@@ -50,27 +48,14 @@ export function selectedAttributes(keys: string[]): { key: AttributeKey; label: 
 /** The full vocabulary, for rendering the editor's attribute chips. */
 export const attributeVocabulary = ATTRIBUTES;
 
-export interface OfferFormRaw {
+/**
+ * Raw form submission: a string per text-like control, a boolean per checkbox —
+ * keyed by registry name — plus the two controls that are not columns.
+ */
+export type OfferFormRaw = Partial<Record<string, string | boolean>> & {
   slug?: string;
-  title?: string;
-  provider?: string;
-  category?: string;
-  summary?: string;
-  value?: string;
-  body?: string;
-  url?: string;
-  verification?: string;
-  eligibility?: string;
-  offer_type?: string;
-  discount_percent?: string;
-  status?: string;
-  affiliate?: boolean;
-  sponsored?: boolean;
-  featured?: boolean;
-  tags?: string;
-  expires_at?: string;
   ongoing?: boolean;
-}
+};
 
 export interface OfferInput {
   slug?: string;
@@ -81,7 +66,10 @@ export interface OfferInput {
   value: string;
   body: string;
   url: string;
-  verification: string;
+  /** Partner destination for /go; null when the offer has none. */
+  affiliate_url: string | null;
+  /** How a student proves eligibility (SheerID, school email, ISIC…). */
+  proof_method: string;
   eligibility: string;
   offer_type: OfferType;
   discount_percent: number | null;
@@ -101,42 +89,35 @@ export interface ValidationResult {
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
 
 /**
+ * Checks every registry field can state about itself: required, URL shape,
+ * select membership. Rules that involve two fields (discount vs type, expiry
+ * vs ongoing, affiliate vs affiliate_url) live in validateOfferInput.
+ */
+function genericErrors(raw: OfferFormRaw): Record<string, string> {
+  const errors: Record<string, string> = {};
+  for (const f of OFFER_FIELDS) {
+    if (f.input === 'checkbox') continue;
+    const v = str(raw[f.name]);
+    if (f.required && !v) errors[f.name] = 'Required';
+    else if (f.input === 'url' && v && !HTTP_RE.test(v)) errors[f.name] = 'Must start with http:// or https://';
+    else if (f.input === 'select' && v && f.options && !f.options.includes(v)) {
+      errors[f.name] = `Unknown ${f.label.toLowerCase()}`;
+    }
+  }
+  return errors;
+}
+
+/**
  * Validate + coerce a raw form submission into an OfferInput. Mirrors the DB
  * constraints so bad input is a friendly field error, not a 500. Slug uniqueness
  * is NOT checked here (it needs the DB) — the IO layer does that.
  */
 export function validateOfferInput(raw: OfferFormRaw, opts: { requireSlug: boolean }): ValidationResult {
-  const errors: Record<string, string> = {};
+  const errors = genericErrors(raw);
 
   const title = str(raw.title);
-  const provider = str(raw.provider);
-  const category = str(raw.category);
-  const summary = str(raw.summary);
-  const value = str(raw.value);
-  const url = str(raw.url);
-  const verification = str(raw.verification);
-  const eligibility = str(raw.eligibility);
-
-  if (!title) errors.title = 'Required';
-  if (!provider) errors.provider = 'Required';
-  if (!category) errors.category = 'Required';
-  else if (!CATEGORIES.has(category)) errors.category = 'Unknown category';
-  if (!summary) errors.summary = 'Required';
-  if (!value) errors.value = 'Required';
-  if (!verification) errors.verification = 'Required';
-  // Public "Who can apply" copy. No default: an unwritten answer used to become
-  // "Verified students worldwide", which claims a verification we never ran and
-  // a reach most offers don't have. If we don't know, we don't publish a guess.
-  if (!eligibility) errors.eligibility = 'Required';
-  if (!url) errors.url = 'Required';
-  else if (!/^https?:\/\//i.test(url)) errors.url = 'Must start with http:// or https://';
-
   const offer_type = str(raw.offer_type) as OfferType;
-  if (!offer_type) errors.offer_type = 'Required';
-  else if (!OFFER_TYPES.includes(offer_type)) errors.offer_type = 'Invalid type';
-
   const status = (str(raw.status) || 'active') as OfferStatus;
-  if (!STATUSES.includes(status)) errors.status = 'Invalid status';
 
   // discount_percent is required for and only for discount offers.
   let discount_percent: number | null = null;
@@ -150,6 +131,14 @@ export function validateOfferInput(raw: OfferFormRaw, opts: { requireSlug: boole
     }
   } else if (dpRaw) {
     errors.discount_percent = 'Only discount offers carry a percentage';
+  }
+
+  // A partner link without the disclosure flag would be an undisclosed affiliate
+  // link on the public page. The flag is the operator's explicit choice — it is
+  // never set for them — so the save is refused instead.
+  const affiliate_url = str(raw.affiliate_url) || null;
+  if (affiliate_url && !raw.affiliate && !errors.affiliate_url) {
+    errors.affiliate_url = 'Affiliate URL is set. Enable "Affiliate link" before saving.';
   }
 
   // slug: prefilled from the title on create; format-checked; uniqueness in IO.
@@ -177,21 +166,22 @@ export function validateOfferInput(raw: OfferFormRaw, opts: { requireSlug: boole
     value: {
       slug,
       title,
-      provider,
-      category,
-      summary,
-      value,
+      provider: str(raw.provider),
+      category: str(raw.category),
+      summary: str(raw.summary),
+      value: str(raw.value),
       body: typeof raw.body === 'string' ? raw.body : '',
-      url,
-      verification,
-      eligibility,
+      url: str(raw.url),
+      affiliate_url,
+      proof_method: str(raw.proof_method),
+      eligibility: str(raw.eligibility),
       offer_type,
       discount_percent,
       status,
       affiliate: Boolean(raw.affiliate),
       sponsored: Boolean(raw.sponsored),
       featured: Boolean(raw.featured),
-      tags: parseTags(raw.tags),
+      tags: parseTags(typeof raw.tags === 'string' ? raw.tags : undefined),
       expires_at,
     },
   };

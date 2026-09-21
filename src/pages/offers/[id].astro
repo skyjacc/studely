@@ -137,7 +137,7 @@ const jsonLd = {
             {realCheck && (
               <div><dt>Status</dt><dd><span class="vbadge">✓ Verified</span></dd></div>
             )}
-            <div class:list={[{ stack: d.verification.length > STACK_AT }]}><dt>Eligibility</dt><dd>{d.verification}</dd></div>
+            <div class:list={[{ stack: d.proofMethod.length > STACK_AT }]}><dt>Proof</dt><dd>{d.proofMethod}</dd></div>
             <div class:list={[{ stack: `Official ${d.provider} page`.length > STACK_AT }]}><dt>Source</dt><dd><a class="rec-link" href={d.url} target="_blank" rel="nofollow noopener">Official {d.provider} page ↗</a></dd></div>
             {realCheck && (
               <div><dt>Last checked</dt><dd>{formatDate(new Date(realCheck))}</dd></div>

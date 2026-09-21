@@ -4,6 +4,7 @@
 // losing what the operator typed. Shared by /admin/offers/new and /[slug].
 
 import { actions } from 'astro:actions';
+import { OFFER_FIELDS } from '@domain/offers/offer-fields';
 
 interface Options {
   form: HTMLFormElement;
@@ -33,19 +34,19 @@ export function bindOfferForm({ form, mode, slug }: Options) {
     field.appendChild(span);
   };
 
+  // One entry per registry field; the two non-column controls (slug, ongoing)
+  // and the attribute chips are added by hand.
   const collect = () => {
     const fd = new FormData(form);
-    const s = (k: string) => String(fd.get(k) ?? '');
-    const b = (k: string) => fd.has(k);
-    return {
-      slug: mode === 'create' ? s('slug') : slug!,
-      title: s('title'), provider: s('provider'), category: s('category'), summary: s('summary'),
-      value: s('value'), body: s('body'), url: s('url'), verification: s('verification'),
-      eligibility: s('eligibility'), offer_type: s('offer_type'), discount_percent: s('discount_percent'),
-      status: s('status'), tags: s('tags'), expires_at: s('expires_at'),
-      affiliate: b('affiliate'), sponsored: b('sponsored'), featured: b('featured'), ongoing: b('ongoing'),
+    const out: Record<string, unknown> = {
+      slug: mode === 'create' ? String(fd.get('slug') ?? '') : slug!,
+      ongoing: fd.has('ongoing'),
       attrs: fd.getAll('attr').map(String),
     };
+    for (const f of OFFER_FIELDS) {
+      out[f.name] = f.input === 'checkbox' ? fd.has(f.name) : String(fd.get(f.name) ?? '');
+    }
+    return out;
   };
 
   form.addEventListener('submit', async (e) => {
@@ -54,7 +55,7 @@ export function bindOfferForm({ form, mode, slug }: Options) {
     const btn = (e.submitter as HTMLButtonElement | null) ?? form.querySelector<HTMLButtonElement>('button[type="submit"]');
     if (btn) btn.disabled = true;
 
-    const payload = collect();
+    const payload = collect() as Parameters<typeof actions.offers.update>[0];
     const { data, error } = mode === 'create'
       ? await actions.offers.create(payload)
       : await actions.offers.update(payload);

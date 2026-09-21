@@ -1,5 +1,11 @@
 ---
-import { categories } from '@domain/offers/categories';
+// The offer editor's fields, rendered from the registry (offer-fields.ts).
+// Nothing here names a column: FORM_LAYOUT decides the rows, each field decides
+// its own control, and offer-fields.test.ts fails when a registry field is
+// missing from the layout. The slug block is the one hand-written control: it
+// is not a registry column (locked after creation).
+import { FORM_LAYOUT, fieldByName, type OfferField } from '@domain/offers/offer-fields';
+import { getCategory } from '@domain/offers/categories';
 
 interface Props {
   v: Record<string, any>;
@@ -7,10 +13,10 @@ interface Props {
   createMode: boolean;
 }
 const { v, errors, createMode } = Astro.props;
-const OFFER_TYPES = ['free', 'discount', 'credit', 'trial'];
-const STATUSES = ['active', 'expiring', 'expired', 'unverified'];
 const val = (k: string) => (v[k] ?? '') as string;
 const err = (k: string) => errors[k];
+const optionLabel = (f: OfferField, o: string) => (f.name === 'category' ? (getCategory(o)?.name ?? o) : o);
+const rows = FORM_LAYOUT.map((names) => names.map((n) => fieldByName.get(n)!));
 ---
 
 <div class="fields">
@@ -27,107 +33,47 @@ const err = (k: string) => errors[k];
     </div>
   )}
 
-  <label class="f">
-    <span class="lb">Title</span>
-    <input name="title" value={val('title')} />
-    {err('title') && <span class="er">{err('title')}</span>}
-  </label>
-
-  <div class="two">
-    <label class="f">
-      <span class="lb">Provider</span>
-      <input name="provider" value={val('provider')} />
-      {err('provider') && <span class="er">{err('provider')}</span>}
-    </label>
-    <label class="f">
-      <span class="lb">Category</span>
-      <select name="category">
-        <option value="">—</option>
-        {categories.map((c) => (
-          <option value={c.slug} selected={val('category') === c.slug}>{c.name}</option>
+  {rows.map((fields) =>
+    fields.every((f) => f.input === 'checkbox') ? (
+      <div class="flags">
+        {fields.map((f) => (
+          <label class="ck"><input type="checkbox" name={f.name} checked={Boolean(v[f.name])} /> {f.label}</label>
         ))}
-      </select>
-      {err('category') && <span class="er">{err('category')}</span>}
-    </label>
-  </div>
-
-  <label class="f">
-    <span class="lb">Summary <em>one-line hook</em></span>
-    <input name="summary" value={val('summary')} />
-    {err('summary') && <span class="er">{err('summary')}</span>}
-  </label>
-
-  <div class="two">
-    <label class="f">
-      <span class="lb">Value <em>headline, e.g. "$200k+ in tools"</em></span>
-      <input name="value" value={val('value')} />
-      {err('value') && <span class="er">{err('value')}</span>}
-    </label>
-    <label class="f">
-      <span class="lb">Offer type</span>
-      <select name="offer_type">
-        {OFFER_TYPES.map((t) => <option value={t} selected={val('offer_type') === t}>{t}</option>)}
-      </select>
-      {err('offer_type') && <span class="er">{err('offer_type')}</span>}
-    </label>
-  </div>
-
-  <label class="f">
-    <span class="lb">Discount percent <em>only for a discount offer</em></span>
-    <input name="discount_percent" value={val('discount_percent')} inputmode="numeric" placeholder="50" style="max-width:140px" />
-    {err('discount_percent') && <span class="er">{err('discount_percent')}</span>}
-  </label>
-
-  <label class="f">
-    <span class="lb">Destination URL</span>
-    <input name="url" value={val('url')} placeholder="https://…" />
-    {err('url') && <span class="er">{err('url')}</span>}
-  </label>
-
-  <div class="two">
-    <label class="f">
-      <span class="lb">Verification <em>how a student proves eligibility</em></span>
-      <input name="verification" value={val('verification')} placeholder="SheerID" />
-      {err('verification') && <span class="er">{err('verification')}</span>}
-    </label>
-    <label class="f">
-      <span class="lb">Eligibility</span>
-      <input name="eligibility" value={val('eligibility')} placeholder="e.g. Students 18+ at accredited institutions (US only)" />
-    </label>
-  </div>
-
-  <div class="two">
-    <label class="f">
-      <span class="lb">Status</span>
-      <select name="status">
-        {STATUSES.map((s) => <option value={s} selected={val('status') === s}>{s}</option>)}
-      </select>
-    </label>
-    <label class="f">
-      <span class="lb">Expires <em>or tick ongoing</em></span>
-      <div class="row-exp">
-        <input type="date" name="expires_at" value={val('expires_at')} />
-        <label class="ck"><input type="checkbox" name="ongoing" checked={!val('expires_at')} /> ongoing</label>
       </div>
-      {err('expires_at') && <span class="er">{err('expires_at')}</span>}
-    </label>
-  </div>
-
-  <label class="f">
-    <span class="lb">Tags <em>comma-separated</em></span>
-    <input name="tags" value={val('tags')} placeholder="github, bundle, dev" />
-  </label>
-
-  <div class="flags">
-    <label class="ck"><input type="checkbox" name="affiliate" checked={Boolean(v.affiliate)} /> Affiliate link</label>
-    <label class="ck"><input type="checkbox" name="sponsored" checked={Boolean(v.sponsored)} /> Sponsored</label>
-    <label class="ck"><input type="checkbox" name="featured" checked={Boolean(v.featured)} /> Featured on homepage</label>
-  </div>
-
-  <label class="f">
-    <span class="lb">Body <em>Markdown — the offer detail page</em></span>
-    <textarea name="body" rows="10">{val('body')}</textarea>
-  </label>
+    ) : (
+      <div class={fields.length > 1 ? 'two' : 'one'}>
+        {fields.map((f) => (
+          <label class="f">
+            <span class="lb">{f.label}{f.hint && <em>{f.hint}</em>}</span>
+            {f.input === 'textarea' ? (
+              <textarea name={f.name} rows="10">{val(f.name)}</textarea>
+            ) : f.input === 'select' ? (
+              <select name={f.name}>
+                {f.name === 'category' && <option value="">—</option>}
+                {f.options!.map((o) => (
+                  <option value={o} selected={val(f.name) === o}>{optionLabel(f, o)}</option>
+                ))}
+              </select>
+            ) : f.name === 'expires_at' ? (
+              <div class="row-exp">
+                <input type="date" name={f.name} value={val(f.name)} />
+                <label class="ck"><input type="checkbox" name="ongoing" checked={!val(f.name)} /> ongoing</label>
+              </div>
+            ) : (
+              <input
+                name={f.name}
+                value={val(f.name)}
+                placeholder={f.placeholder}
+                inputmode={f.input === 'number' ? 'numeric' : undefined}
+                style={f.input === 'number' ? 'max-width:140px' : undefined}
+              />
+            )}
+            {err(f.name) && <span class="er">{err(f.name)}</span>}
+          </label>
+        ))}
+      </div>
+    ),
+  )}
 </div>
 
 <style>

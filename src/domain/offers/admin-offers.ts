@@ -5,6 +5,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { selectedAttributes, type OfferInput } from './offer-input';
+import { EDITABLE_COLUMNS } from './offer-fields';
 
 export interface AdminOfferRow {
   id: string;
@@ -65,27 +66,16 @@ export interface MutationResult {
   score?: number;
 }
 
-/** Columns the editor may write — never score, visibility, slug (post-create), or the audit fields. */
-function toRow(input: OfferInput) {
-  return {
-    title: input.title,
-    provider: input.provider,
-    category: input.category,
-    summary: input.summary,
-    value: input.value,
-    body: input.body,
-    offer_type: input.offer_type,
-    discount_percent: input.discount_percent,
-    url: input.url,
-    affiliate: input.affiliate,
-    sponsored: input.sponsored,
-    featured: input.featured,
-    verification: input.verification,
-    eligibility: input.eligibility,
-    tags: input.tags,
-    status: input.status,
-    expires_at: input.expires_at,
-  };
+/**
+ * Columns the editor may write: exactly the registry — never score, visibility,
+ * slug (post-create) or the audit fields. One place, derived, so a field added to
+ * offer-fields.ts reaches the database without a second edit here.
+ */
+function toRow(input: OfferInput): Record<string, unknown> {
+  const source = input as unknown as Record<string, unknown>;
+  const row: Record<string, unknown> = {};
+  for (const col of EDITABLE_COLUMNS) row[col] = source[col];
+  return row;
 }
 
 function friendly(error: { code?: string; message: string }): string {

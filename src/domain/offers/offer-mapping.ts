@@ -25,7 +25,8 @@ export interface OfferData {
   affiliate: boolean;
   sponsored: boolean;
   featured: boolean;
-  verification: string;
+  /** How a student proves eligibility (SheerID, school email…). Not a verification claim. */
+  proofMethod: string;
   eligibility: string;
   /** ISO date string (YYYY-MM-DD), or the literal "ongoing". */
   expires: string;
@@ -71,7 +72,7 @@ export interface OfferRow {
   affiliate: boolean;
   sponsored: boolean;
   featured: boolean;
-  verification: string;
+  proof_method: string;
   eligibility: string;
   tags: string[] | null;
   score: number;
@@ -112,7 +113,7 @@ export function mapOfferRow(
       affiliate: row.affiliate,
       sponsored: row.sponsored,
       featured: row.featured,
-      verification: row.verification,
+      proofMethod: row.proof_method,
       eligibility: row.eligibility,
       expires: row.expires_at ?? 'ongoing',
       lastChecked: new Date(row.last_checked),

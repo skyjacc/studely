@@ -6,6 +6,7 @@ import OfferFields from '@ui/components/admin/OfferFields.astro';
 import { createSupabaseServer } from '@core/supabase';
 import { attributeVocabulary } from '@domain/offers/offer-input';
 import { getOfferForEdit } from '@domain/offers/admin-offers';
+import { rowToForm } from '@domain/offers/offer-fields';
 
 const { profile } = Astro.locals;
 if (!profile) return Astro.redirect('/admin/login', 302);
@@ -16,16 +17,8 @@ const existing = await getOfferForEdit(supabase, slug);
 if (!existing) return Astro.redirect('/admin/offers?missing=' + slug, 302);
 const row = existing.row;
 
-const fromRow = (r: Record<string, any>) => ({
-  slug: r.slug, title: r.title, provider: r.provider, category: r.category,
-  summary: r.summary, value: r.value, body: r.body, url: r.url,
-  verification: r.verification, eligibility: r.eligibility, offer_type: r.offer_type,
-  discount_percent: r.discount_percent ?? '', status: r.status,
-  affiliate: r.affiliate, sponsored: r.sponsored, featured: r.featured,
-  tags: Array.isArray(r.tags) ? r.tags.join(', ') : '',
-  expires_at: r.expires_at ?? '',
-});
-const v = fromRow(row);
+// The form values come from the registry, so a new field shows up here without an edit.
+const v: Record<string, string | boolean> = { slug: row.slug, ...rowToForm(row) };
 const attributeKeys: string[] = existing.attributeKeys;
 const errors: Record<string, string> = {};
 
