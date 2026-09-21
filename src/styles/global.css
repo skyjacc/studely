@@ -144,25 +144,36 @@ body.no-chrome #main { padding-top: 0; }
 .muted { color: var(--text-muted); }
 .lead { font-size: var(--step-1); color: var(--text-muted); line-height: 1.5; }
 
-/* thin underline marker (mono, GSAP draws via --mark-scale) */
+/* thin underline marker */
 .mark { position: relative; white-space: nowrap; }
 .mark::after {
   content: ''; position: absolute; left: 0; right: 0; bottom: -0.02em; height: 0.06em;
-  background: var(--ink); transform: scaleX(var(--mark-scale, 1)); transform-origin: left center;
+  background: var(--ink);
 }
 
-/* motion initial states (only when JS+motion on) */
-html.js-motion [data-reveal] { opacity: 0; transform: translateY(20px); filter: blur(7px); }
-html.js-motion [data-reveal-group] > * { opacity: 0; transform: translateY(20px); }
-/* [data-enter]: orchestrated on-load entrance (subtler than a scroll reveal) */
-html.js-motion [data-enter] { opacity: 0; transform: translateY(14px); filter: blur(5px); }
-html.js-motion [data-hero-word] { display: inline-block; opacity: 0; transform: translateY(0.7em); }
-html.js-motion .mark { --mark-scale: 0; }
+/* reveals — CSS transitions, started by Motion.astro's IntersectionObserver.
+   Hidden ONLY under html.js-motion (content is visible without JS); `.is-in`
+   reveals; `--i` staggers on-load zones and grid children. */
+html.js-motion [data-reveal] { opacity: 0; transform: translateY(16px); transition: opacity .6s var(--ease-intro), transform .6s var(--ease-intro); transition-delay: calc(var(--i, 0) * 90ms); }
+html.js-motion [data-reveal].is-in { opacity: 1; transform: none; }
+html.js-motion [data-reveal-group] > * { opacity: 0; transform: translateY(16px); transition: opacity .55s var(--ease-intro), transform .55s var(--ease-intro); }
+html.js-motion [data-reveal-group].is-in > * { opacity: 1; transform: none; }
+html.js-motion [data-reveal-group].is-in > :nth-child(2) { transition-delay: 60ms; }
+html.js-motion [data-reveal-group].is-in > :nth-child(3) { transition-delay: 120ms; }
+html.js-motion [data-reveal-group].is-in > :nth-child(4) { transition-delay: 180ms; }
+html.js-motion [data-reveal-group].is-in > :nth-child(5) { transition-delay: 240ms; }
+html.js-motion [data-reveal-group].is-in > :nth-child(n+6) { transition-delay: 300ms; }
+/* [data-enter]: on-load entrance for above-the-fold zones without one [data-hero] wrapper */
+html.js-motion [data-enter] { opacity: 0; transform: translateY(12px); transition: opacity .5s var(--ease-intro), transform .5s var(--ease-intro); transition-delay: calc(120ms + var(--i, 0) * 70ms); }
+html.js-motion [data-enter].is-in { opacity: 1; transform: none; }
+/* split text: words rise from behind a clip mask */
+html.js-motion [data-split] .split-word { transform: translateY(118%); transition: transform .9s var(--ease-intro); transition-delay: calc(200ms + var(--i, 0) * 50ms); }
+html.js-motion [data-split].is-in .split-word { transform: none; }
 @media (prefers-reduced-motion: reduce) {
   html.js-motion [data-reveal],
   html.js-motion [data-enter],
   html.js-motion [data-reveal-group] > *,
-  html.js-motion [data-hero-word] { opacity: 1; transform: none; filter: none; }
+  html.js-motion [data-split] .split-word { opacity: 1; transform: none; filter: none; transition: none; }
 }
 
 /* nav intro — items rise from behind their mask (pure CSS, bulletproof) */
@@ -181,7 +192,7 @@ html.js-motion .mark { --mark-scale: 0; }
 
 /* hero intro — MONOLOG: bg zooms out (1.25→1) + giant wordmark rises from below */
 @media (prefers-reduced-motion: no-preference) {
-  html.js-motion .hero3d { animation: hero-zoom 2s var(--ease-intro) both; }
+  html.js-motion .hero-field { animation: hero-zoom 2s var(--ease-intro) both; }
   html.js-motion .hero-wordmark { animation: hero-word-rise 1.4s var(--ease-intro) 0.25s both; }
 }
 @keyframes hero-zoom { from { transform: scale(1.18); } to { transform: scale(1); } }
@@ -278,32 +289,10 @@ html.js-motion .mark { --mark-scale: 0; }
   background: var(--ink); color: var(--bg); border-radius: 8px; font-weight: 600;
 }
 
-/* Lenis smooth scroll */
-html.lenis, html.lenis body { height: auto; }
-.lenis.lenis-smooth { scroll-behavior: auto !important; }
-.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
-.lenis.lenis-stopped { overflow: hidden; }
-.lenis.lenis-smooth iframe { pointer-events: none; }
 
 /* masked split-text reveal (words rise from behind a mask) */
-html.js-motion [data-split] { visibility: hidden; }
 .split-mask { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.06em; }
 .split-word { display: inline-block; will-change: transform; }
-
-/* custom cursor bubble — native cursor stays; bubble shows only over opt-in
-   [data-cursor-text] / [data-cursor-hover] elements */
-.cursor {
-  position: fixed; top: 0; left: 0; z-index: 9997; pointer-events: none;
-  display: grid; place-items: center; width: 74px; height: 74px; border-radius: 50%;
-  background: var(--ink); color: var(--bg); mix-blend-mode: difference;
-  transform: translate(-50%, -50%); opacity: 0; scale: 0.35;
-  transition: opacity .3s var(--ease-out), scale .3s var(--ease-out);
-}
-.cursor.is-active { opacity: 1; scale: 1; }
-.cursor-label {
-  font-family: var(--font-mono); font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.06em;
-  text-align: center; line-height: 1.2; padding: 0 0.5em;
-}
 
 /* animated wireframe globe (meridian sweeps like it's rotating) */
 .hero-mark .meridian { transform-box: fill-box; transform-origin: center; }

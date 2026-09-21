@@ -1,6 +1,7 @@
 ---
 import Layout from '@ui/layouts/Layout.astro';
 import Wordmark from '@ui/components/Wordmark.astro';
+import HeroField from '@ui/components/HeroField.astro';
 import { notFound } from '@core/config/notFound';
 
 // A 404 on a link directory is an awkward moment: the whole promise of the site is
@@ -24,9 +25,7 @@ const { meta, status, method, code, heading, lead, exits } = notFound;
   chrome={false}
 >
   <section class="nf">
-    <div class="nf-field" aria-hidden="true">
-      <canvas id="nf-canvas"></canvas>
-    </div>
+    <HeroField tone="quiet" />
 
     <a class="nf-brand" href="/" aria-label="Studely home">
       <Wordmark class="nf-logo" />
@@ -70,47 +69,6 @@ const { meta, status, method, code, heading, lead, exits } = notFound;
   </section>
 </Layout>
 
-<script>
-  import { initDotField, dotFieldAllowed, type DotFieldConfig } from '@ui/visual/dot-field';
-
-  // The hero field, degraded: a coarser grid and dimmer dots so the surface reads as
-  // something that has fallen apart rather than something being shown off.
-  const CFG: DotFieldConfig = {
-    pixelSize: 7, gooeyness: 0.5, contrast: 1.0, bias: 0.0, invert: 0,
-    amplitude: 1.1, timeSpeed: 0.16,
-    bg: [0.031, 0.031, 0.027], fg: [0.34, 0.33, 0.30],
-    cloud: [0.16, 0.155, 0.14], cloudStrength: 0.9,
-    waveFrequency: 2.2, waveAmplitude: 0.06, waveTimeSpeed: 0.22,
-    revealDuration: 1.8, maxDpr: 1.25,
-  };
-
-  let destroy: (() => void) | null = null;
-
-  function showRequestedPath() {
-    const el = document.querySelector<HTMLElement>('[data-nf-path]');
-    if (!el) return;
-    // textContent, never innerHTML — the path is attacker-controlled input.
-    let path = location.pathname + location.search;
-    try { path = decodeURIComponent(path); } catch { /* malformed escape: show it raw */ }
-    el.textContent = path.length > 120 ? path.slice(0, 119) + '…' : path;
-    el.closest<HTMLElement>('.nf-path')?.removeAttribute('hidden');
-  }
-
-  function boot() {
-    showRequestedPath();
-    const canvas = document.getElementById('nf-canvas') as HTMLCanvasElement | null;
-    if (!canvas || destroy || !dotFieldAllowed()) return;
-    const start = () =>
-      initDotField(canvas, CFG)
-        .then((d) => { destroy = d; })
-        .catch((e) => console.warn('404 field skipped', e));
-    if ('requestIdleCallback' in window) (window as any).requestIdleCallback(start, { timeout: 1400 });
-    else setTimeout(start, 500);
-  }
-
-  document.addEventListener('astro:page-load', boot);
-  document.addEventListener('astro:before-swap', () => { if (destroy) { destroy(); destroy = null; } });
-</script>
 
 <style>
   .nf {
@@ -119,17 +77,6 @@ const { meta, status, method, code, heading, lead, exits } = notFound;
     display: grid; align-items: center;
     background: #080807; color: var(--ink);
   }
-  .nf-field { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: #080807; }
-  .nf-field::before {
-    content: ''; position: absolute; inset: -10%;
-    background: radial-gradient(60% 60% at 50% 42%, rgba(28, 26, 23, 0.8), transparent 70%), #080807;
-    filter: blur(4px);
-  }
-  #nf-canvas {
-    position: absolute; inset: 0; width: 100%; height: 100%;
-    opacity: 0; transition: opacity 1.2s ease;
-  }
-  #nf-canvas.is-live { opacity: 1; }
   /* scrim: the copy has to stay readable whatever the field is doing underneath */
   .nf::after {
     content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;

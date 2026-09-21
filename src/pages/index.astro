@@ -5,7 +5,7 @@ import CategoryExplorer from '@ui/components/CategoryExplorer.astro';
 import Pipeline from '@ui/components/Pipeline.astro';
 import OfferPreview from '@ui/components/OfferPreview.astro';
 import AdSlot from '@ui/components/AdSlot.astro';
-import Hero3D from '@ui/components/Hero3D.astro';
+import HeroField from '@ui/components/HeroField.astro';
 import { site } from '@core/config/site';
 import { sortOffers, isExpired } from '@domain/offers/offers';
 
@@ -33,7 +33,7 @@ const jsonLd = {
 <Layout jsonLd={jsonLd} hero>
   <!-- Hero — MONOLOG-style: centered mission over drifting smoke, giant wordmark -->
   <section class="hero hero-mono">
-    <Hero3D />
+    <HeroField tone="hero" />
     <div class="wrap hero-inner" data-hero>
       <svg class="hero-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true" data-reveal>
         <circle cx="24" cy="24" r="15" />
@@ -44,7 +44,7 @@ const jsonLd = {
       <h1 class="hero-title" data-split>Student benefits, scored against clear criteria.</h1>
       <p class="hero-sub" data-reveal>Free tools, credits and courses for students. See why each offer earned its Studely score.</p>
       <div class="hero-cta" data-reveal>
-        <a href="/offers" class="btn btn-primary" data-magnetic>Browse all offers ↗</a>
+        <a href="/offers" class="btn btn-primary">Browse all offers ↗</a>
         <a href="/methodology" class="btn btn-ghost">How we score</a>
       </div>
     </div>
@@ -56,7 +56,7 @@ const jsonLd = {
     <div class="wrap">
       <header class="sec-head" data-reveal>
         <h2 data-split>Browse by department</h2>
-        <a href="/categories" class="btn btn-ghost" data-magnetic>All categories ↗</a>
+        <a href="/categories" class="btn btn-ghost">All categories ↗</a>
       </header>
       <CategoryExplorer counts={counts} />
     </div>
@@ -69,7 +69,7 @@ const jsonLd = {
     <div class="wrap">
       <header class="sec-head" data-reveal>
         <h2 data-split>{featuredHeading}</h2>
-        <a href="/offers" class="btn btn-ghost" data-magnetic>See all {all.length} ↗</a>
+        <a href="/offers" class="btn btn-ghost">See all {all.length} ↗</a>
       </header>
       <div class="grid grid-offers" data-reveal-group>
         {featuredList.map((o) => <OfferPreview offer={o} />)}

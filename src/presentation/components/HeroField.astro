@@ -1,0 +1,53 @@
+---
+// The atmospheric backdrop, in CSS. Replaces the three.js dot-field (183 KB gz
+// for a fragment shader) with two layers: a drifting monochrome "smoke" of
+// radial gradients and a halftone dot screen on top, masked so the dots read
+// where the smoke is bright. Drift is a slow CSS animation, off under reduced
+// motion. Zero JavaScript; the same component serves the home hero, the
+// sign-in card and the 404 with a `tone`.
+interface Props {
+  /** hero: full drift + bright dots · quiet: dimmer, slower (login, 404) */
+  tone?: 'hero' | 'quiet';
+  class?: string;
+}
+const { tone = 'hero', class: cls } = Astro.props;
+---
+
+<div class:list={['hero-field', `tone-${tone}`, cls]} aria-hidden="true">
+  <div class="smoke"></div>
+  <div class="dots"></div>
+</div>
+
+<style>
+  .hero-field { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: #080807; }
+  /* smoke: three soft plumes, each on its own slow drift */
+  .smoke {
+    position: absolute; inset: -20%;
+    background:
+      radial-gradient(38% 34% at 30% 42%, rgba(120, 116, 104, 0.55), transparent 70%),
+      radial-gradient(44% 30% at 68% 58%, rgba(96, 92, 84, 0.5), transparent 70%),
+      radial-gradient(30% 40% at 52% 30%, rgba(76, 74, 68, 0.45), transparent 72%),
+      #080807;
+    filter: blur(28px);
+  }
+  /* dots: a halftone screen, masked by a bright band so it appears where the smoke is */
+  .dots {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(232, 232, 227, 0.55) 0.9px, transparent 1.4px);
+    background-size: 5px 5px;
+    -webkit-mask-image: radial-gradient(60% 50% at 50% 48%, #000 20%, transparent 78%);
+    mask-image: radial-gradient(60% 50% at 50% 48%, #000 20%, transparent 78%);
+    mix-blend-mode: screen; opacity: 0.55;
+  }
+  .tone-quiet .smoke { filter: blur(34px); opacity: 0.55; }
+  .tone-quiet .dots { opacity: 0.28; background-size: 6px 6px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .smoke { animation: field-drift 26s ease-in-out infinite alternate; }
+    .tone-quiet .smoke { animation-duration: 44s; }
+  }
+  @keyframes field-drift {
+    from { transform: translate3d(-3%, -2%, 0) scale(1.02) rotate(-1.5deg); }
+    to   { transform: translate3d(3%, 2%, 0) scale(1.06) rotate(1.5deg); }
+  }
+</style>

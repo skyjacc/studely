@@ -3,7 +3,7 @@ export const prerender = false;
 
 import AdminLayout from '@ui/layouts/AdminLayout.astro';
 import Wordmark from '@ui/components/Wordmark.astro';
-import AuthField from '@ui/components/AuthField.astro';
+import HeroField from '@ui/components/HeroField.astro';
 import { actions } from 'astro:actions';
 
 const url = Astro.url;
@@ -32,7 +32,7 @@ const actionError =
 ---
 
 <AdminLayout title="Sign in" chrome={false}>
-  <AuthField />
+  <HeroField tone="quiet" class="auth-field" />
 
   <div class="card">
     <div class="head">
