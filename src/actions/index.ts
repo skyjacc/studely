@@ -63,15 +63,19 @@ export const server = {
       input: OfferFields.extend({ slug: z.string(), attrs: z.array(z.string()).optional() }),
       handler: async (raw, ctx) => {
         const { supabase } = await requireStaff(ctx);
-        const existing = await getOfferForEdit(supabase, raw.slug);
+        // The registry-derived schema is an index signature to TypeScript, so the
+        // extended keys come back widened; zod has already enforced their shapes.
+        const slug = raw.slug as string;
+        const attrs = (raw.attrs ?? []) as string[];
+        const existing = await getOfferForEdit(supabase, slug);
         if (!existing) throw new ActionError({ code: 'NOT_FOUND', message: 'Offer not found.' });
         const { errors, value } = validateOfferInput(raw as OfferFormRaw, { requireSlug: false });
         if (!value) return { ok: false as const, errors };
-        const u = await updateOfferWithAttributes(supabase, raw.slug, value, raw.attrs ?? []);
+        const u = await updateOfferWithAttributes(supabase, slug, value, attrs);
         if (!u.ok) return { ok: false as const, errors: { _: u.error ?? 'Could not save' } };
         const deploy =
           existing.row.visibility === 'published'
-            ? await triggerDeploy('save ' + raw.slug)
+            ? await triggerDeploy('save ' + slug)
             : null;
         return { ok: true as const, score: u.score ?? null, deploy };
       },
