@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { updateOfferWithAttributes } from './admin-offers';
 import type { OfferInput } from './offer-input';
+import { EDITABLE_COLUMNS } from './offer-fields';
 
 const input: OfferInput = {
   title: 'Figma Education',
@@ -11,7 +12,8 @@ const input: OfferInput = {
   value: 'Pro plan free',
   body: '## Details',
   url: 'https://figma.com/education',
-  verification: 'School email',
+  affiliate_url: null,
+  proof_method: 'School email',
   eligibility: 'Verified students worldwide',
   offer_type: 'free',
   discount_percent: null,
@@ -49,6 +51,20 @@ describe('updateOfferWithAttributes', () => {
         { key: 'no_card_required', label: 'No payment method needed', points: 1 },
       ],
     });
+  });
+
+  // The registry is the write path: the patch carries every editable column
+  // and nothing else — no score, no visibility, no slug, no stray legacy key.
+  it('sends exactly the registry columns in offer_patch', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: 9, error: null });
+    const db = { rpc } as unknown as SupabaseClient;
+
+    await updateOfferWithAttributes(db, 'figma-education', input, ['no_card_required']);
+
+    const patch = rpc.mock.calls[0][1].offer_patch as Record<string, unknown>;
+    expect(Object.keys(patch).sort()).toEqual([...EDITABLE_COLUMNS].sort());
+    expect(patch.affiliate_url).toBeNull();
+    expect(patch.proof_method).toBe('School email');
   });
 
   it('returns the RPC error and does not report success', async () => {

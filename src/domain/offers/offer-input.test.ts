@@ -37,7 +37,7 @@ const base: OfferFormRaw = {
   summary: 'Full Pro plan free for students.',
   value: 'Pro plan free',
   url: 'https://figma.com/education',
-  verification: 'SheerID',
+  proof_method: 'SheerID',
   eligibility: 'Students at accredited institutions',
   offer_type: 'free',
   status: 'active',
@@ -57,7 +57,7 @@ describe('validateOfferInput', () => {
     expect(r.value).toBeNull();
     expect(r.errors.title).toBeDefined();
     expect(r.errors.url).toBeDefined();
-    expect(r.errors.verification).toBeDefined();
+    expect(r.errors.proof_method).toBeDefined();
   });
 
   // Integrity: eligibility is published as "Who can apply". It must never be
@@ -109,5 +109,44 @@ describe('validateOfferInput', () => {
     const r = validateOfferInput(base, { requireSlug: false });
     expect(r.errors.slug).toBeUndefined();
     expect(r.value?.slug).toBeUndefined();
+  });
+});
+
+describe('affiliate_url', () => {
+  it('is optional and empty becomes null', () => {
+    const r = validateOfferInput({ ...base, affiliate_url: '' }, { requireSlug: false });
+    expect(r.errors).toEqual({});
+    expect(r.value?.affiliate_url).toBeNull();
+  });
+
+  it('accepts an https partner link when the affiliate flag is ticked', () => {
+    const r = validateOfferInput({ ...base, affiliate_url: 'https://partner.example/x', affiliate: true }, { requireSlug: false });
+    expect(r.errors).toEqual({});
+    expect(r.value?.affiliate_url).toBe('https://partner.example/x');
+  });
+
+  it('rejects a non-http(s) partner link', () => {
+    const r = validateOfferInput({ ...base, affiliate_url: 'ftp://x', affiliate: true }, { requireSlug: false });
+    expect(r.errors.affiliate_url).toBeDefined();
+  });
+
+  // An undisclosed partner link is a legal problem, not a UX preference. The
+  // flag is never set for the operator; the save is refused until they set it.
+  it('refuses a partner link without the disclosure flag', () => {
+    const r = validateOfferInput({ ...base, affiliate_url: 'https://partner.example/x' }, { requireSlug: false });
+    expect(r.errors.affiliate_url).toBe('Affiliate URL is set. Enable "Affiliate link" before saving.');
+  });
+});
+
+describe('proof_method', () => {
+  it('is required', () => {
+    const r = validateOfferInput({ ...base, proof_method: '' }, { requireSlug: false });
+    expect(r.errors.proof_method).toBe('Required');
+  });
+
+  it('is carried through under its own name', () => {
+    const r = validateOfferInput(base, { requireSlug: false });
+    expect(r.value?.proof_method).toBe('SheerID');
+    expect(r.value).not.toHaveProperty('verification');
   });
 });

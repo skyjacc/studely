@@ -16,7 +16,7 @@ const baseRow: OfferRow = {
   affiliate: false,
   sponsored: false,
   featured: true,
-  verification: 'GitHub education',
+  proof_method: 'GitHub education',
   eligibility: 'Verified students worldwide',
   tags: ['dev', 'tools'],
   score: 9,
@@ -65,6 +65,13 @@ describe('mapOfferRow', () => {
   it('attaches the attributes passed to it', () => {
     const attrs: OfferAttr[] = [{ key: 'card_required', label: 'Card required', points: -2 }];
     expect(mapOfferRow(baseRow, attrs).attributes).toEqual(attrs);
+  });
+
+  it('exposes the proof method under its own name, apart from human verification', () => {
+    const v = mapOfferRow(baseRow);
+    expect(v.data.proofMethod).toBe('GitHub education');
+    expect(v.data).not.toHaveProperty('verification');
+    expect(v.verification).toEqual({ verified: false, at: null });
   });
 
   it('defaults verification to unverified — never guesses from status', () => {
