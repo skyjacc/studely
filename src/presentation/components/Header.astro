@@ -55,10 +55,13 @@ const showCta = !path.startsWith('/offers');
     </div>
 
     <div class="actions">
-      <form class="nav-search" role="search" action="/offers" method="get">
+      {/* Looks like a field, opens the palette. With JS off it is a plain link to
+          the directory, whose own search still works. */}
+      <a class="nav-search" href="/offers" data-palette-open aria-label="Search offers (⌘K)">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="search" name="q" placeholder="Search offers" aria-label="Search offers" autocomplete="off" />
-      </form>
+        <span class="ph">Search offers</span>
+        <kbd class="kbd" aria-hidden="true">⌘K</kbd>
+      </a>
 
       {showCta && (
         <span class="nav-mask">
@@ -173,10 +176,13 @@ const showCta = !path.startsWith('/offers');
     border: 1px solid var(--border-control); border-radius: var(--radius-pill);
     color: var(--text-muted); transition: border-color .2s var(--ease-out), color .2s var(--ease-out);
   }
-  .nav-search:focus-within { border-color: var(--ink); color: var(--ink); }
+  /* over the hero the bar is transparent and the field must still read as a
+     field: give it a faint surface until the header turns solid */
+  .site-header[data-state="hero"] .nav-search { background: rgba(8, 8, 7, 0.45); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .nav-search:hover, .nav-search:focus-visible { border-color: var(--ink); color: var(--ink); }
   .nav-search svg { flex: none; }
-  .nav-search input { width: 8.5rem; background: none; border: 0; outline: none; color: var(--ink); font: inherit; font-size: var(--step--1); }
-  .nav-search input::placeholder { color: var(--text-muted); }
+  .nav-search .ph { font-size: var(--step--1); min-width: 7.5rem; }
+  .kbd { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.04em; padding: 0.1em 0.4em; border: 1px solid var(--border); border-radius: 5px; color: var(--text-muted); }
 
   /* CTA — rounded rect, marquee text + arrow aside-box (kept) */
   .cta-btn {

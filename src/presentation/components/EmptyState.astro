@@ -1,0 +1,31 @@
+---
+// One empty state for the directory, the search palette and, later, the admin:
+// a title, why, and exactly one way out. The page script updates the text
+// through data-empty-title / data-empty-why so the copy comes from
+// emptyMessage() in the domain, not from the markup.
+interface Props {
+  id?: string;
+  title: string;
+  why: string;
+  /** The single action: a reset button (data-empty-reset) or a link. */
+  action?: { label: string; href?: string };
+  hidden?: boolean;
+}
+const { id, title, why, action, hidden = false } = Astro.props;
+---
+
+<div class="empty" id={id} hidden={hidden} role="status" aria-live="polite">
+  <p class="ttl" data-empty-title>{title}</p>
+  <p class="why muted" data-empty-why>{why}</p>
+  {action && (action.href
+    ? <a class="btn btn-ghost btn-sm" href={action.href}>{action.label}</a>
+    : <button class="btn btn-ghost btn-sm" type="button" data-empty-reset>{action.label}</button>)}
+</div>
+
+<style>
+  .empty { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2xs); padding: var(--space-l) 0; }
+  .empty[hidden] { display: none; }
+  .ttl { font-family: var(--font-display); font-size: var(--step-1); letter-spacing: -0.02em; line-height: 1.15; }
+  .why { font-size: var(--step--1); max-width: 44ch; }
+  .btn { margin-top: var(--space-2xs); }
+</style>

@@ -1,0 +1,44 @@
+---
+// A presentation over a radiogroup (the COSS rule: same look, the primitive's
+// own semantics). Native radios carry the state and keyboard model — arrow keys
+// move between options with a single tab stop, no JS needed for that. The page
+// script listens for `change` on the group and reads the checked value.
+interface Option { value: string; label: string; icon?: 'grid' | 'rows' }
+interface Props {
+  name: string;
+  label: string;
+  options: Option[];
+  value: string;
+  class?: string;
+}
+const { name, label, options, value, class: cls } = Astro.props;
+const ICON = {
+  grid: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
+  rows: '<path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+};
+---
+
+<fieldset class:list={['seg', cls]} data-segmented={name}>
+  <legend class="sr-only">{label}</legend>
+  {options.map((o) => (
+    <label class="opt">
+      <input type="radio" name={name} value={o.value} checked={o.value === value} />
+      {o.icon && <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" set:html={ICON[o.icon]} />}
+      <span>{o.label}</span>
+    </label>
+  ))}
+</fieldset>
+
+<style>
+  .seg { display: inline-flex; margin: 0; padding: 0; border: 1px solid var(--border-control); border-radius: var(--radius-pill); overflow: hidden; background: var(--surface); }
+  .opt {
+    position: relative; display: inline-flex; align-items: center; gap: 0.4em; min-height: 36px;
+    padding: 0 0.85em; font-size: var(--step--1); font-weight: 500; color: var(--text-muted); cursor: pointer;
+    transition: background .2s var(--ease-out), color .2s var(--ease-out);
+  }
+  .opt input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+  .opt:has(input:checked) { background: var(--ink); color: var(--bg); }
+  .opt:has(input:focus-visible) { outline: 2px solid var(--ink); outline-offset: -2px; }
+  .opt svg { flex: none; }
+  @media (prefers-reduced-motion: reduce) { .opt { transition: none; } }
+</style>

@@ -5,6 +5,9 @@ import OfferPreview from '@ui/components/OfferPreview.astro';
 import Score from '@ui/components/Score.astro';
 import TrustRow from '@ui/components/TrustRow.astro';
 import OfferCTA from '@ui/components/OfferCTA.astro';
+import SegmentedControl from '@ui/components/SegmentedControl.astro';
+import EmptyState from '@ui/components/EmptyState.astro';
+import Sheet from '@ui/components/Sheet.astro';
 import Logo from '@ui/components/Logo.astro';
 import Icon from '@ui/components/Icon.astro';
 import { categories, getCategory } from '@domain/offers/categories';
@@ -65,12 +68,11 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
       <p class="lead" style="max-width:52ch">{all.length} student perks, scored against clear criteria. Filter it down.</p>
     </div>
 
-    <div class="dir-wrap">
-      <div class="dir">
-        <!-- Faceted sidebar -->
+    <div class="wrap dir">
+        <!-- Faceted sidebar. On desktop it is this aside; below 900px the same
+             node is moved into the filter Sheet (one primitive, one DOM). -->
         <aside class="rail" id="filter-rail" aria-label="Filters">
           <div class="rail-inner">
-            <button class="rail-close" type="button" aria-label="Close filters">Done</button>
             <div class="fgroup">
               <label class="flabel" for="sort" id="sort-label">Sort by</label>
               <div class="sel" data-select>
@@ -138,26 +140,17 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
             <button id="reset" class="btn btn-ghost btn-sm" type="button">Reset filters</button>
           </div>
         </aside>
-        <div class="rail-backdrop" hidden></div>
 
         <!-- Results -->
         <div class="results">
           <div class="toolbar">
-            <button id="filter-toggle" class="filter-toggle" type="button" aria-expanded="false" aria-controls="filter-rail">
+            <button id="filter-toggle" class="filter-toggle" type="button" data-sheet-open="filters" aria-controls="sheet-filters" aria-expanded="false">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
               Filter &amp; sort<span class="ft-count" hidden></span>
             </button>
             <p id="count" class="count" aria-live="polite">{all.length} offers</p>
-            <div class="views" role="group" aria-label="View">
-              <button id="view-cards" class="vbtn is-active" type="button" aria-pressed="true" aria-label="Card view">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
-                Cards
-              </button>
-              <button id="view-table" class="vbtn" type="button" aria-pressed="false" aria-label="Table view">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-                Table
-              </button>
-            </div>
+            <SegmentedControl name="view" label="View" value="cards" class="views"
+              options={[{ value: 'cards', label: 'Cards', icon: 'grid' }, { value: 'table', label: 'Table', icon: 'rows' }]} />
           </div>
 
           <div id="active-filters" class="afilters" hidden aria-label="Active filters"></div>
@@ -199,142 +192,116 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
             </table>
           </div>
 
-          <p id="empty" class="empty muted" hidden>No offers match. Loosen the filters.</p>
+          <EmptyState id="empty" hidden title="No offers match" why="Loosen a filter, or reset them." action={{ label: 'Reset filters' }} />
         </div>
-      </div>
     </div>
   </section>
+
+  <Sheet id="filters" title="Filter & sort" side="bottom">
+    <div id="rail-host"></div>
+  </Sheet>
 </Layout>
 
-<script is:inline>
+<script>
+  import {
+    emptyState, parseState, serializeState, hasDirectoryKeys, matches, compare, emptyMessage, FACET_KEYS,
+  } from '@domain/offers/directory-state';
+  import type { DirectoryState, ItemFacets, FacetKey, SortKey } from '@domain/offers/directory-state';
+
   function setupOffersDir() {
     const cards = document.getElementById('cards');
     if (!cards || cards.dataset.bound) return; // only on /offers, once per page instance
     cards.dataset.bound = '1';
-    const tbody = document.querySelector('#table tbody');
-    const countEl = document.getElementById('count');
-    const emptyEl = document.getElementById('empty');
-    const q = document.getElementById('q');
-    const sortEl = document.getElementById('sort');
-    const state = { q: '', sort: 'score', view: 'cards', cat: new Set(), type: new Set(), verify: new Set(), card: new Set() };
-    const FSETS = ['cat', 'type', 'verify', 'card'];
+    const tbody = document.querySelector<HTMLElement>('#table tbody')!;
+    const countEl = document.getElementById('count')!;
+    const emptyEl = document.getElementById('empty')!;
+    const q = document.getElementById('q') as HTMLInputElement;
+    const sortEl = document.getElementById('sort') as HTMLSelectElement;
     const STORE_KEY = 'studely.offers.v1';
+    let state: DirectoryState = emptyState();
 
-    const facetSet = (facet) => {
-      const s = new Set();
-      document.querySelectorAll(`input[data-facet="${facet}"]:checked`).forEach((el) => s.add(el.value));
-      return s;
+    const facetSet = (facet: FacetKey) => {
+      const out = new Set<string>();
+      document.querySelectorAll<HTMLInputElement>(`input[data-facet="${facet}"]:checked`).forEach((el) => out.add(el.value));
+      return out;
     };
+    const facetsOf = (el: HTMLElement): ItemFacets => ({
+      text: el.dataset.text || '', cat: el.dataset.cat || '', type: el.dataset.type || '', verify: el.dataset.verify || '', card: el.dataset.card || '',
+      score: +(el.dataset.score || 0), checked: +(el.dataset.checked || 0), expires: +(el.dataset.expires || 999999), name: el.dataset.name || '',
+    });
 
-    // Restore state from the URL (shareable / reload), else from localStorage (return
-    // visit). URL wins so a shared link always shows exactly what was shared.
+    // URL wins; localStorage only fills in when the URL carries no directory key.
     const hydrate = () => {
       const url = new URLSearchParams(location.search);
       let src = url;
-      if (!['q', 'sort', 'view', ...FSETS].some((k) => url.has(k))) {
-        try { const s = localStorage.getItem(STORE_KEY); if (s) src = new URLSearchParams(s); } catch (e) {}
+      if (!hasDirectoryKeys(url)) {
+        try { const stored = localStorage.getItem(STORE_KEY); if (stored) src = new URLSearchParams(stored); } catch (e) {}
       }
-      state.q = (src.get('q') || '').trim().toLowerCase();
+      state = parseState(src);
       q.value = src.get('q') || '';
-      const sort = src.get('sort');
-      if (['score', 'checked', 'expiring', 'az'].includes(sort)) { state.sort = sort; sortEl.value = sort; }
-      if (src.get('view') === 'table') state.view = 'table';
-      FSETS.forEach((f) => {
-        const vals = (src.get(f) || '').split(',').filter(Boolean);
-        document.querySelectorAll(`input[data-facet="${f}"]`).forEach((inp) => { if (vals.includes(inp.value)) inp.checked = true; });
-        state[f] = facetSet(f);
-      });
+      sortEl.value = state.sort;
+      for (const f of FACET_KEYS) {
+        document.querySelectorAll<HTMLInputElement>(`input[data-facet="${f}"]`).forEach((inp) => { inp.checked = state[f].has(inp.value); });
+      }
+      const viewInput = document.querySelector<HTMLInputElement>(`input[name="view"][value="${state.view}"]`);
+      if (viewInput) viewInput.checked = true;
     };
     hydrate();
 
-    const show = (el) => {
-      if (state.q && !(el.dataset.text || '').includes(state.q)) return false;
-      if (state.cat.size && !state.cat.has(el.dataset.cat)) return false;
-      if (state.type.size && !state.type.has(el.dataset.type)) return false;
-      if (state.verify.size && !state.verify.has(el.dataset.verify)) return false;
-      if (state.card.size && !state.card.has(el.dataset.card)) return false;
-      return true;
-    };
-
-    const cmp = (a, b) => {
-      if (state.sort === 'checked') return +b.dataset.checked - +a.dataset.checked;
-      if (state.sort === 'expiring') return +a.dataset.expires - +b.dataset.expires; // soonest first
-      if (state.sort === 'az') return (a.dataset.name || '').localeCompare(b.dataset.name || '');
-      return +b.dataset.score - +a.dataset.score; // score default
-    };
-
-    const sortIn = (container) => {
+    const show = (el: HTMLElement) => matches(facetsOf(el), state);
+    const cmp = (a: HTMLElement, b: HTMLElement) => compare(facetsOf(a), facetsOf(b), state.sort);
+    const sortIn = (container: HTMLElement | null) => {
       if (!container) return;
-      [...container.children].sort(cmp).forEach((el) => container.appendChild(el));
+      ([...container.children] as HTMLElement[]).sort(cmp).forEach((el) => container.appendChild(el));
     };
 
-    // Live facet counts. A group is counted against every OTHER active filter but NOT its
-    // own selection — otherwise picking one category would zero out the rest of that group
-    // and you could never OR a second one in.
-    const FACETS = ['cat', 'type', 'verify', 'card'];
-    const matchesExcept = (el, skip) => {
-      if (state.q && !(el.dataset.text || '').includes(state.q)) return false;
-      if (skip !== 'cat' && state.cat.size && !state.cat.has(el.dataset.cat)) return false;
-      if (skip !== 'type' && state.type.size && !state.type.has(el.dataset.type)) return false;
-      if (skip !== 'verify' && state.verify.size && !state.verify.has(el.dataset.verify)) return false;
-      if (skip !== 'card' && state.card.size && !state.card.has(el.dataset.card)) return false;
-      return true;
-    };
-
+    // Live facet counts: a group is counted against every OTHER active filter.
     const updateFacets = () => {
-      const items = [...cards.querySelectorAll('.item:not(.ad-item)')];
-      FACETS.forEach((facet) => {
-        const pool = items.filter((el) => matchesExcept(el, facet));
-        const inputs = [...document.querySelectorAll(`input[data-facet="${facet}"]`)];
+      const items = [...cards.querySelectorAll<HTMLElement>('.item:not(.ad-item)')];
+      for (const facet of FACET_KEYS) {
+        const pool = items.filter((el) => matches(facetsOf(el), state, facet));
+        const inputs = [...document.querySelectorAll<HTMLInputElement>(`input[data-facet="${facet}"]`)];
         let anyVisible = false;
         inputs.forEach((input) => {
           const n = pool.filter((el) => el.dataset[facet] === input.value).length;
-          const label = input.closest('.check');
+          const label = input.closest<HTMLElement>('.check')!;
           const cn = label.querySelector('.cn');
-          if (cn) cn.textContent = n;
-          // never hide a checked option — you'd have no way to switch it back off
-          const hide = n === 0 && !input.checked;
+          if (cn) cn.textContent = String(n);
+          const hide = n === 0 && !input.checked; // never hide a checked option
           label.hidden = hide;
           if (!hide) anyVisible = true;
         });
-        const group = inputs[0] && inputs[0].closest('.fgroup');
-        if (group) group.hidden = !anyVisible; // drop the whole group if nothing is left
-      });
+        const group = inputs[0]?.closest<HTMLElement>('.fgroup');
+        if (group) group.hidden = !anyVisible;
+      }
     };
 
-    // --- URL + localStorage persistence, removable active-filter chips, filter count ---
     const persist = () => {
-      const p = new URLSearchParams();
-      if (state.q) p.set('q', q.value.trim());
-      if (state.sort !== 'score') p.set('sort', state.sort);
-      if (state.view !== 'cards') p.set('view', state.view);
-      FSETS.forEach((f) => { if (state[f].size) p.set(f, [...state[f]].join(',')); });
-      const qs = p.toString();
-      // Preserve the existing history.state — Astro's ClientRouter stores its nav
-      // metadata there. Passing null wiped it, and Astro's popstate handler ignores
-      // null-state entries, so Back after leaving /offers did nothing.
+      const qs = serializeState(state, q.value);
+      // Preserve history.state — Astro's ClientRouter keeps its nav metadata there.
       history.replaceState(history.state, '', qs ? '?' + qs : location.pathname);
       try { localStorage.setItem(STORE_KEY, qs); } catch (e) {}
     };
 
-    const FACET_LABEL = {};
-    document.querySelectorAll('input[data-facet]').forEach((inp) => {
-      const f = inp.dataset.facet;
+    const FACET_LABEL: Record<string, Record<string, string>> = {};
+    document.querySelectorAll<HTMLInputElement>('input[data-facet]').forEach((inp) => {
+      const f = inp.dataset.facet!;
       const txt = inp.closest('.check')?.querySelector('.ctxt')?.textContent?.trim();
       (FACET_LABEL[f] = FACET_LABEL[f] || {})[inp.value] = txt || inp.value;
     });
 
     const updateFilterCount = () => {
-      const n = (state.q ? 1 : 0) + FSETS.reduce((s, f) => s + state[f].size, 0);
-      const ft = document.querySelector('.ft-count');
+      const n = (state.q ? 1 : 0) + FACET_KEYS.reduce((sum, f) => sum + state[f].size, 0);
+      const ft = document.querySelector<HTMLElement>('.ft-count');
       if (ft) { ft.textContent = String(n); ft.hidden = n === 0; }
     };
 
-    const removeChip = (kind, val) => {
+    const removeChip = (kind: string, val: string) => {
       if (kind === 'q') { state.q = ''; q.value = ''; }
       else {
-        state[kind].delete(val);
-        document.querySelectorAll(`input[data-facet="${kind}"]`).forEach((i) => { if (i.value === val) i.checked = false; });
+        const f = kind as FacetKey;
+        state[f].delete(val);
+        document.querySelectorAll<HTMLInputElement>(`input[data-facet="${f}"]`).forEach((i) => { if (i.value === val) i.checked = false; });
       }
       apply();
     };
@@ -342,9 +309,9 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
     const renderChips = () => {
       const box = document.getElementById('active-filters');
       if (!box) return;
-      const chips = [];
+      const chips: [string, string, string][] = [];
       if (state.q) chips.push(['q', '', '"' + q.value.trim() + '"']);
-      FSETS.forEach((f) => state[f].forEach((v) => chips.push([f, v, (FACET_LABEL[f] || {})[v] || v])));
+      for (const f of FACET_KEYS) state[f].forEach((v) => chips.push([f, v, (FACET_LABEL[f] || {})[v] || v]));
       box.innerHTML = '';
       if (!chips.length) { box.hidden = true; return; }
       box.hidden = false;
@@ -365,8 +332,8 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
 
     const resetAll = () => {
       state.q = ''; q.value = '';
-      document.querySelectorAll('input[data-facet]').forEach((el) => (el.checked = false));
-      FSETS.forEach((f) => state[f].clear());
+      document.querySelectorAll<HTMLInputElement>('input[data-facet]').forEach((el) => (el.checked = false));
+      for (const f of FACET_KEYS) state[f].clear();
       state.sort = 'score'; sortEl.value = 'score';
       sortEl.dispatchEvent(new Event('change', { bubbles: true })); // syncs the custom listbox + applies
     };
@@ -375,14 +342,11 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
     // show only in the pristine default browse, and never trail a filtered subset.
     const AD_INTERVAL = 6;
     const apply = () => {
-      // table view: rows filter + sort, never any ads
-      document.querySelectorAll('#table .item').forEach((el) => { el.hidden = !show(el); });
+      document.querySelectorAll<HTMLElement>('#table .item').forEach((el) => { el.hidden = !show(el); });
       sortIn(tbody);
 
-      // cards view: filter + sort the offers, then interleave the ad cells — but only
-      // when nothing is filtered/searched and the default score sort is active
-      const adCells = [...cards.querySelectorAll('.ad-item')];
-      const offerCells = [...cards.querySelectorAll('.item:not(.ad-item)')];
+      const adCells = [...cards.querySelectorAll<HTMLElement>('.ad-item')];
+      const offerCells = [...cards.querySelectorAll<HTMLElement>('.item:not(.ad-item)')];
       const visible = offerCells.filter(show).sort(cmp);
       const pristine = !state.q && !state.cat.size && !state.type.size && !state.verify.size && state.sort === 'score';
       const frag = document.createDocumentFragment();
@@ -399,7 +363,13 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
       cards.appendChild(frag);
 
       countEl.textContent = `${visible.length} offer${visible.length === 1 ? '' : 's'}`;
-      emptyEl.hidden = visible.length !== 0;
+      const none = visible.length === 0;
+      emptyEl.hidden = !none;
+      if (none) {
+        const m = emptyMessage(state, q.value);
+        emptyEl.querySelector('[data-empty-title]')!.textContent = m.title;
+        emptyEl.querySelector('[data-empty-why]')!.textContent = m.why;
+      }
       updateFacets();
       persist();
       renderChips();
@@ -407,43 +377,42 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
     };
 
     q.addEventListener('input', () => { state.q = q.value.trim().toLowerCase(); apply(); });
-    sortEl.addEventListener('change', () => { state.sort = sortEl.value; apply(); });
-    document.querySelectorAll('input[data-facet]').forEach((el) =>
-      el.addEventListener('change', () => {
-        state.cat = facetSet('cat'); state.type = facetSet('type'); state.verify = facetSet('verify'); state.card = facetSet('card'); apply();
-      }),
+    sortEl.addEventListener('change', () => { state.sort = sortEl.value as SortKey; apply(); });
+    document.querySelectorAll<HTMLInputElement>('input[data-facet]').forEach((el) =>
+      el.addEventListener('change', () => { for (const f of FACET_KEYS) state[f] = facetSet(f); apply(); }),
     );
-    document.getElementById('reset').addEventListener('click', resetAll);
+    document.getElementById('reset')!.addEventListener('click', resetAll);
+    emptyEl.querySelector('[data-empty-reset]')?.addEventListener('click', resetAll);
+    // The palette's Enter on this page filters in place instead of reloading.
+    document.addEventListener('studely:search', (e) => {
+      q.value = String((e as CustomEvent).detail || '');
+      state.q = q.value.trim().toLowerCase();
+      apply();
+    });
 
-    // view toggle
-    const vCards = document.getElementById('view-cards');
-    const vTable = document.getElementById('view-table');
-    const table = document.getElementById('table');
-    const setView = (isTable) => {
+    // view: a radiogroup (SegmentedControl); the native radios own the keyboard model
+    const table = document.getElementById('table')!;
+    const setView = (view: 'cards' | 'table') => {
+      const isTable = view === 'table';
       table.hidden = !isTable; cards.hidden = isTable;
-      vTable.classList.toggle('is-active', isTable);
-      vCards.classList.toggle('is-active', !isTable);
-      vTable.setAttribute('aria-pressed', String(isTable));
-      vCards.setAttribute('aria-pressed', String(!isTable));
-      state.view = isTable ? 'table' : 'cards';
+      state.view = view;
       persist();
     };
-    vCards.addEventListener('click', () => setView(false));
-    vTable.addEventListener('click', () => setView(true));
-    setView(state.view === 'table'); // reflect the hydrated / stored view
+    document.querySelectorAll<HTMLInputElement>('input[name="view"]').forEach((r) =>
+      r.addEventListener('change', () => { if (r.checked) setView(r.value as 'cards' | 'table'); }),
+    );
+    setView(state.view); // reflect the hydrated / stored view
 
-    // Category tags inside the directory (card chip, table row) are filters, not
-    // navigations. Intercept them so they refine in place and KEEP the current
-    // view — a plain nav to /offers?cat= carried no view param and reset table→
-    // cards. The href stays a real link, so no-JS and the same tags on other
-    // pages (categories/footer/home) still navigate normally.
-    const filterByCat = (e) => {
-      const a = e.target.closest('a[href^="/offers?cat="]');
+    // Category tags inside the directory are filters, not navigations: refine in
+    // place and keep the current view. The href stays real for no-JS and for the
+    // same tags on other pages.
+    const filterByCat = (e: Event) => {
+      const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="/offers?cat="]');
       if (!a) return;
       const cat = new URL(a.href, location.origin).searchParams.get('cat');
       if (!cat) return;
       e.preventDefault();
-      document.querySelectorAll('input[data-facet="cat"]').forEach((i) => { i.checked = i.value === cat; });
+      document.querySelectorAll<HTMLInputElement>('input[data-facet="cat"]').forEach((i) => { i.checked = i.value === cat; });
       state.cat = facetSet('cat');
       apply();
       document.querySelector('.results')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
@@ -451,61 +420,24 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
     cards.addEventListener('click', filterByCat);
     table.addEventListener('click', filterByCat);
 
-    // mobile filter bottom-sheet
-    const dir = document.querySelector('.dir');
-    const ftoggle = document.getElementById('filter-toggle');
-    const backdrop = document.querySelector('.rail-backdrop');
-    const railClose = document.querySelector('.rail-close');
-    const results = document.querySelector('.results');
-    const railInner = document.querySelector('.rail-inner');
-    // Only <=860px turns the rail into a modal bottom sheet (CSS); on desktop it is a
-    // static sidebar and the toggle is display:none, so focus management is a no-op there.
-    const isSheet = () => matchMedia('(max-width: 860px)').matches;
-    const setFilters = (open) => {
-      if (!dir) return;
-      dir.classList.toggle('filters-open', open);
-      if (ftoggle) ftoggle.setAttribute('aria-expanded', String(open));
-      if (backdrop) backdrop.hidden = !open;
-      document.body.style.overflow = open ? 'hidden' : '';
-      if (!isSheet()) return;
-      // Take the results out of the tab order + a11y tree behind the backdrop, move
-      // focus into the sheet on open, and hand it back to the toggle on close.
-      if (results) results.inert = open;
-      if (open) (railClose || railInner)?.focus?.();
-      else if (ftoggle) ftoggle.focus();
-    };
-    if (ftoggle) ftoggle.addEventListener('click', () => setFilters(!dir.classList.contains('filters-open')));
-    if (backdrop) backdrop.addEventListener('click', () => setFilters(false));
-    if (railClose) railClose.addEventListener('click', () => setFilters(false));
-    // One document handler, re-queried each event so it survives client-side nav.
-    // Escape closes; Tab is trapped inside the rail while the sheet is the modal.
-    if (!window.__offSheet) {
-      window.__offSheet = true;
-      document.addEventListener('keydown', (e) => {
-        const d = document.querySelector('.dir');
-        if (!d || !d.classList.contains('filters-open') || !matchMedia('(max-width: 860px)').matches) return;
-        if (e.key === 'Escape') {
-          d.classList.remove('filters-open');
-          document.body.style.overflow = '';
-          const b = document.querySelector('.rail-backdrop'); if (b) b.hidden = true;
-          const r = document.querySelector('.results'); if (r) r.inert = false;
-          const t = document.getElementById('filter-toggle');
-          if (t) { t.setAttribute('aria-expanded', 'false'); t.focus?.(); }
-          return;
-        }
-        if (e.key === 'Tab') {
-          const inner = document.querySelector('.rail-inner');
-          if (!inner) return;
-          const f = [...inner.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])')]
-            .filter((el) => el.offsetParent !== null);
-          if (!f.length) return;
-          const first = f[0], last = f[f.length - 1];
-          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-          else if (!e.shiftKey && (document.activeElement === last || !inner.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
-        }
-      }, true);
-    }
+    // Mobile filters: the ONE rail node moves into the filter Sheet below 900px and
+    // back to the sidebar above it. Same inputs, same listeners, one DOM.
+    const rail = document.getElementById('filter-rail')!;
+    const dir = document.querySelector<HTMLElement>('.dir')!;
+    const host = document.getElementById('rail-host')!;
+    const narrow = matchMedia('(max-width: 900px)');
+    const placeRail = () => { (narrow.matches ? host : dir).insertBefore(rail, narrow.matches ? null : dir.firstChild); };
+    narrow.addEventListener('change', placeRail);
+    placeRail();
 
+    apply();
+  }
+  document.addEventListener('astro:page-load', setupOffersDir);
+  setupOffersDir();
+</script>
+
+<script is:inline>
+  function setupOffersSelects() {
     // Build a styled listbox on top of each native <select>. The native element stays
     // the source of truth (and the no-JS fallback) — we mirror it and fire `change`,
     // so the filtering logic above needs no changes.
@@ -603,18 +535,19 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
       sel.addEventListener('change', sync);
       sync();
     });
-
-    apply();
   }
-  document.addEventListener('astro:page-load', setupOffersDir);
+  document.addEventListener('astro:page-load', setupOffersSelects);
+  setupOffersSelects();
 </script>
 
 <style>
   /* full-page-width directory (breaks out of the centered .wrap) */
-  .dir-wrap { width: 100%; max-width: 1800px; margin-inline: auto; margin-top: 1.75rem; padding-inline: clamp(1rem, 0.4rem + 2vw, 2.5rem); }
-  .dir { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 1.75rem; align-items: start; }
+  /* one left edge: the title above, the rail and the grid all start on .wrap */
+  .dir { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: var(--space-m-l); align-items: start; margin-top: var(--space-m); }
   /* denser results grid → more columns across the wide area */
-  .results .grid-offers { grid-template-columns: repeat(auto-fill, minmax(min(100%, 258px), 1fr)); grid-auto-rows: 1fr; }
+  /* 2 columns inside the 1240 container, 3 from ~1400px — a card needs ~290px for
+     provider · score · a two-word footer without truncation */
+  .results .grid-offers { grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); grid-auto-rows: 1fr; }
   /* every card fills its (equal-height) row so the footer lines up across the grid.
      min-width:0 lets the flex items shrink to the grid track (else content min-width overflows). */
   /* card grid items are flex — but the SAME .item class is on the table's <tr>, so
@@ -703,10 +636,6 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
     font-size: 0.72em; font-weight: 700; line-height: 1;
   }
   .ft-count[hidden] { display: none; }
-  .views { display: inline-flex; gap: 0; border: 1px solid var(--border-control); border-radius: var(--radius-pill); overflow: hidden; }
-  .vbtn { display: inline-flex; align-items: center; gap: 0.4em; font: inherit; font-size: var(--step--1); font-weight: 500; cursor: pointer; padding: 0.4em 0.85em; background: var(--surface); color: var(--text-muted); border: 0; }
-  .vbtn svg { flex: none; }
-  .vbtn.is-active { background: var(--ink); color: var(--bg); }
 
   /* mobile filter-sheet controls (shown only <=860) */
   .filter-toggle {
@@ -714,14 +643,8 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
     cursor: pointer; padding: 0.45em 0.9em; border-radius: var(--radius-pill);
     border: 1px solid var(--border-control); background: var(--surface); color: var(--ink);
   }
-  .rail-close {
-    margin-left: auto; align-items: center; font: inherit; font-weight: 600; cursor: pointer;
-    padding: 0.4em 1.1em; border-radius: var(--radius-pill); border: 0; background: var(--ink); color: var(--bg);
-  }
-  .filter-toggle, .rail-close { display: none; }
-  .rail-backdrop { position: fixed; inset: 0; z-index: 69; background: rgba(0, 0, 0, 0.55); }
+  .filter-toggle { display: none; }
 
-  .empty { margin-top: 2rem; font-size: var(--step-1); }
   /* must out-specify `#cards .item { display: flex }` (id+class) — a bare
      `.item[hidden]` loses to it, leaving filtered-out cards visible. */
   #cards .item[hidden], #table .item[hidden] { display: none; }
@@ -764,26 +687,17 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
   .tcat:hover { color: var(--accent-ink); }
   .tval { font-weight: 600; }
 
-  @media (max-width: 860px) {
+  @media (max-width: 900px) {
     .dir { grid-template-columns: 1fr; }
-    /* 7 columns are not a readable phone pattern, and a min-width table here pushed
-       the whole document wider than the viewport (390px → 658px). Below 860px:
-       cards only — no table, no view toggle. The table stays a desktop affordance. */
-    .views { display: none; }
+    /* 7 columns are not a readable phone pattern; below 900px the table becomes
+       the card list (one dataset, one presentation that fits) and the view
+       control is hidden */
+    :global(.seg.views) { display: none; }
     #table { display: none !important; }
     #cards { display: grid !important; }
-    .filter-toggle, .rail-close { display: inline-flex; }
-    /* filters become a bottom sheet; results render first (rail is out of flow) */
-    .rail {
-      position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
-      max-height: 82vh; overflow-y: auto;
-      background: var(--surface); border-top: 1px solid var(--border);
-      border-radius: 18px 18px 0 0; padding: 1.1rem 1.25rem 1.6rem;
-      transform: translateY(101%); transition: transform 0.38s var(--ease-out);
-      box-shadow: 0 -20px 60px -20px rgba(0, 0, 0, 0.7);
-    }
-    .dir.filters-open .rail { transform: translateY(0); }
-    .rail-inner { position: static; gap: 1.1rem; }
+    .filter-toggle { display: inline-flex; }
+    /* the rail node lives inside the filter Sheet here (moved by the script) */
+    .rail-inner { position: static; gap: var(--space-s); }
     .fgroup { flex-flow: row wrap; align-items: center; }
     .fgroup .flabel { width: 100%; }
     .check { border: 1px solid var(--border-soft); border-radius: var(--radius-pill); padding: 0.3rem 0.6rem; }
