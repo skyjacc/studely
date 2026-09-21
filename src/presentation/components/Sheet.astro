@@ -1,0 +1,99 @@
+---
+// A side sheet on the native <dialog>. showModal() puts it in the top layer,
+// makes the rest of the document inert and handles Escape; focus lands on the
+// first focusable child and returns to the trigger on close. No tabindex on the
+// dialog itself. One primitive for the mobile nav now and the mobile filter
+// rail next (Reference Board §2).
+//
+// Usage:
+//   <button data-sheet-open="nav" aria-controls="sheet-nav" aria-expanded="false">…</button>
+//   <Sheet id="nav" title="Menu" side="right"> …content… </Sheet>
+interface Props {
+  id: string;
+  title: string;
+  side?: 'right' | 'bottom';
+}
+const { id, title, side = 'right' } = Astro.props;
+const dialogId = `sheet-${id}`;
+const titleId = `${dialogId}-title`;
+---
+
+<dialog class={`sheet side-${side}`} id={dialogId} aria-labelledby={titleId} data-sheet={id}>
+  <div class="panel">
+    <header class="head">
+      <h2 class="ttl" id={titleId}>{title}</h2>
+      <button type="button" class="close" data-sheet-close aria-label={`Close ${title.toLowerCase()}`}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </header>
+    <div class="body"><slot /></div>
+  </div>
+</dialog>
+
+<script>
+  // Open / close wiring. The dialog element owns modality, Escape and the
+  // focus trap; this only connects triggers, mirrors aria-expanded, closes on a
+  // backdrop click, and lets the header know a sheet is open.
+  function bind() {
+    for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-sheet-open]')) {
+      if (btn.dataset.bound) continue;
+      btn.dataset.bound = '1';
+      const dlg = document.getElementById(`sheet-${btn.dataset.sheetOpen}`) as HTMLDialogElement | null;
+      if (!dlg) continue;
+      btn.addEventListener('click', () => {
+        dlg.showModal();
+        btn.setAttribute('aria-expanded', 'true');
+        document.documentElement.dataset.sheetOpen = '1';
+      });
+      dlg.addEventListener('close', () => {
+        btn.setAttribute('aria-expanded', 'false');
+        delete document.documentElement.dataset.sheetOpen;
+        // the browser restores focus to whatever was active before showModal();
+        // make it the trigger explicitly so a pointer-opened sheet behaves like a
+        // keyboard-opened one
+        if (document.contains(btn)) btn.focus({ preventScroll: true });
+      });
+      dlg.querySelector('[data-sheet-close]')?.addEventListener('click', () => dlg.close());
+      // a click on the backdrop lands on the dialog element itself, not the panel
+      dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+      // a navigation link inside closes the sheet before the page changes
+      dlg.querySelectorAll('a[href]').forEach((a) => a.addEventListener('click', () => dlg.close()));
+    }
+  }
+  document.addEventListener('astro:page-load', bind);
+  bind();
+</script>
+
+<style>
+  .sheet {
+    position: fixed; inset: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none;
+    margin: 0; padding: 0; border: 0; background: transparent; color: var(--ink);
+  }
+  .sheet::backdrop { background: rgba(8, 8, 7, 0.6); backdrop-filter: blur(2px); }
+  .panel {
+    position: absolute; display: flex; flex-direction: column; gap: var(--space-s);
+    background: var(--bg-alt); border: 1px solid var(--border); padding: var(--space-s-m);
+    overflow: auto; overscroll-behavior: contain;
+  }
+  .side-right .panel { top: 0; right: 0; height: 100%; width: min(86vw, 22rem); border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
+  .side-bottom .panel { left: 0; right: 0; bottom: 0; max-height: 88dvh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+
+  .head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); }
+  .ttl { font-size: var(--step-1); letter-spacing: -0.02em; margin: 0; }
+  .close {
+    display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--radius);
+    background: transparent; border: 1px solid var(--border-control); color: var(--ink); cursor: pointer;
+  }
+  .close:hover { background: var(--surface-2); }
+  .body { min-height: 0; }
+
+  /* entrance: slide in, off under reduced motion */
+  @media (prefers-reduced-motion: no-preference) {
+    .side-right[open] .panel { animation: sheet-right .32s var(--ease-intro) both; }
+    .side-bottom[open] .panel { animation: sheet-up .32s var(--ease-intro) both; }
+    .sheet[open]::backdrop { animation: sheet-fade .25s ease-out both; }
+  }
+  @keyframes sheet-right { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes sheet-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes sheet-fade { from { opacity: 0; } to { opacity: 1; } }
+</style>
