@@ -49,6 +49,32 @@
   --step-2: clamp(1.5rem, 1.25rem + 1.1vw, 2.1rem);
   --step-3: clamp(2rem, 1.5rem + 2.4vw, 3.2rem);
   --step-4: clamp(2.6rem, 1.7rem + 4.2vw, 5.2rem);
+  /* meta — dates, counts, labels; floor keeps it >= 12px rendered */
+  --step--2: clamp(0.75rem, 0.72rem + 0.15vw, 0.8rem);
+
+  /* space — one scale, paired with the type scale (Utopia method: 320→1240px).
+     Card, rail and section rhythm read from these; hand-typed rems are legacy. */
+  --space-3xs: clamp(0.25rem, 0.23rem + 0.11vw, 0.3125rem);
+  --space-2xs: clamp(0.5rem, 0.46rem + 0.22vw, 0.625rem);
+  --space-xs: clamp(0.75rem, 0.68rem + 0.33vw, 0.9375rem);
+  --space-s: clamp(1rem, 0.91rem + 0.43vw, 1.25rem);
+  --space-m: clamp(1.5rem, 1.37rem + 0.65vw, 1.875rem);
+  --space-l: clamp(2rem, 1.83rem + 0.87vw, 2.5rem);
+  --space-xl: clamp(3rem, 2.74rem + 1.3vw, 3.75rem);
+  --space-2xl: clamp(4rem, 3.65rem + 1.74vw, 5rem);
+  --space-3xl: clamp(6rem, 5.48rem + 2.61vw, 7.5rem);
+  /* one-up pairs — grow a step between the breakpoints */
+  --space-2xs-xs: clamp(0.5rem, 0.35rem + 0.76vw, 0.9375rem);
+  --space-xs-s: clamp(0.75rem, 0.58rem + 0.87vw, 1.25rem);
+  --space-s-m: clamp(1rem, 0.7rem + 1.52vw, 1.875rem);
+  --space-m-l: clamp(1.5rem, 1.15rem + 1.74vw, 2.5rem);
+  --space-l-xl: clamp(2rem, 1.39rem + 3.04vw, 3.75rem);
+  --space-xl-2xl: clamp(3rem, 2.3rem + 3.48vw, 5rem);
+
+  /* problem states — the only hues on the site (decision 5). Positive trust
+     states stay mono. Values are the ones the admin already ships. */
+  --state-warn: #e0a44a;      --state-warn-ink: #e6bd78;   /* stale · blocked */
+  --state-bad: #e0655c;       --state-bad-ink: #e88f88;    /* dead · expired */
 
   --radius: 10px;
   --radius-lg: 16px;

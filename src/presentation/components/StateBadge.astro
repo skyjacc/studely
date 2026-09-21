@@ -1,0 +1,41 @@
+---
+// A trust or commercial state as text + optional date. Positive states are
+// mono; only problem states carry a hue (decision 5), and even then the label
+// carries the meaning — the colour never does on its own.
+import { formatTrustDate } from '@domain/verification/trust';
+
+interface Props {
+  state: 'verified' | 'checked' | 'stale' | 'dead' | 'expired' | 'blocked' | 'sponsored' | 'partner';
+  date?: Date | null;
+}
+const { state, date = null } = Astro.props;
+
+const COPY: Record<Props['state'], string> = {
+  verified: 'Verified',
+  checked: 'Last checked',
+  stale: 'Not checked since',
+  dead: 'Link failed',
+  expired: 'Ended',
+  blocked: 'Provider blocks automated checks',
+  sponsored: 'Sponsored',
+  partner: 'Partner link',
+};
+const tone = state === 'stale' || state === 'blocked' ? 'warn' : state === 'dead' || state === 'expired' ? 'bad' : 'mono';
+---
+
+<span class={`state state-${state} tone-${tone}`}>
+  <span class="lbl">{COPY[state]}</span>
+  {date && <span class="sep" aria-hidden="true">·</span>}
+  {date && <time datetime={date.toISOString()}>{formatTrustDate(date)}</time>}
+</span>
+
+<style>
+  .state { display: inline-flex; align-items: baseline; gap: 0.4em; font-size: var(--step--2); line-height: 1.3; white-space: nowrap; color: var(--ink); }
+  .lbl { font-weight: 500; }
+  .sep, time { color: var(--text-muted); }
+  time { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .tone-warn .lbl { color: var(--state-warn-ink); }
+  .tone-bad .lbl { color: var(--state-bad-ink); }
+  /* sponsored keeps its existing inverted treatment: it is the one loud label */
+  .state-sponsored { padding: 0.1em 0.5em; border-radius: var(--radius-pill); background: var(--spon-bg); color: var(--spon-ink); }
+</style>

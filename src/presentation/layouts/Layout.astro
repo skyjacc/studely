@@ -1,6 +1,8 @@
 ---
 import '@fontsource-variable/schibsted-grotesk';
 import '@fontsource-variable/inter';
+import schibstedWoff2 from '@fontsource-variable/schibsted-grotesk/files/schibsted-grotesk-latin-wght-normal.woff2?url';
+import interWoff2 from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
 import '../../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
 import Header from '../components/Header.astro';
@@ -23,6 +25,8 @@ interface Props {
    * for its own navigation — without it the page is a dead end.
    */
   chrome?: boolean;
+  /** The page opens with a hero the header may overlay transparently (home only). */
+  hero?: boolean;
 }
 
 const {
@@ -32,6 +36,7 @@ const {
   jsonLd,
   noindex = false,
   chrome = true,
+  hero = false,
 } = Astro.props;
 
 const fullTitle = title ? `${title} · ${site.name}` : `${site.name} · ${site.tagline}`;
@@ -64,6 +69,10 @@ const ogImage = new URL(image, Astro.site ?? Astro.url.origin).href;
     <meta name="twitter:image" content={ogImage} />
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {/* The two variable families every page renders with. Preloading them removes
+        the fallback-font flash that font-display: swap otherwise shows. */}
+    <link rel="preload" href={schibstedWoff2} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={interWoff2} as="font" type="font/woff2" crossorigin />
     <meta name="theme-color" content="#0b0a09" />
 
     <!-- Seamless client-side page transitions (Barba-equivalent) -->
@@ -118,7 +127,7 @@ const ogImage = new URL(image, Astro.site ?? Astro.url.origin).href;
   </head>
   <body id="top" class:list={[{ 'no-chrome': !chrome }]}>
     {chrome && <a href="#main" class="sr-only skip-link">Skip to content</a>}
-    {chrome && <Header />}
+    {chrome && <Header hero={hero} />}
     <main id="main">
       <slot />
     </main>

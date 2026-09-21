@@ -3,7 +3,7 @@ import { getAllOffers } from '@domain/offers/offers-source';
 import Layout from '@ui/layouts/Layout.astro';
 import CategoryExplorer from '@ui/components/CategoryExplorer.astro';
 import Pipeline from '@ui/components/Pipeline.astro';
-import OfferCard from '@ui/components/OfferCard.astro';
+import OfferPreview from '@ui/components/OfferPreview.astro';
 import AdSlot from '@ui/components/AdSlot.astro';
 import Hero3D from '@ui/components/Hero3D.astro';
 import { site } from '@core/config/site';
@@ -30,7 +30,7 @@ const jsonLd = {
 };
 ---
 
-<Layout jsonLd={jsonLd}>
+<Layout jsonLd={jsonLd} hero>
   <!-- Hero — MONOLOG-style: centered mission over drifting smoke, giant wordmark -->
   <section class="hero hero-mono">
     <Hero3D />
@@ -72,7 +72,7 @@ const jsonLd = {
         <a href="/offers" class="btn btn-ghost" data-magnetic>See all {all.length} ↗</a>
       </header>
       <div class="grid grid-offers" data-reveal-group>
-        {featuredList.map((o) => <OfferCard offer={o} />)}
+        {featuredList.map((o) => <OfferPreview offer={o} />)}
       </div>
     </div>
   </section>
@@ -94,7 +94,9 @@ const jsonLd = {
 <style>
   .hero-mono {
     position: relative; isolation: isolate; overflow: hidden;
-    min-height: 100svh; display: grid; align-items: center;
+    /* decision 1: the brand opening stays, but the first offer must not sit
+       two screens down — 58svh, floor 520px so the wordmark still clears */
+    min-height: max(58svh, 520px); display: grid; align-items: center;
     background: #080807; color: var(--ink);
     border-bottom: 1px solid var(--border);
   }

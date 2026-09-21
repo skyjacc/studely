@@ -1,0 +1,44 @@
+---
+// The one outbound action. Always /go/<slug> (click log + affiliate precedence
+// live there), rel from the contract, analytics data attributes for the click
+// event. The partner note sits inside the same block when the link is one.
+import { offerCta } from '@domain/affiliate/cta';
+import type { OfferView } from '@domain/offers/offer-mapping';
+
+interface Props {
+  offer: OfferView;
+  placement?: 'card' | 'detail';
+}
+const { offer, placement = 'card' } = Astro.props;
+const d = offer.data;
+const cta = offerCta(
+  { slug: offer.slug, provider: d.provider, affiliate: d.affiliate, sponsored: d.sponsored, offerType: d.offerType, category: d.category },
+  placement,
+);
+---
+
+{placement === 'detail' ? (
+  <div class="cta-block">
+    <a class="btn btn-primary go" href={cta.href} target="_blank" rel={cta.rel} {...cta.data}>{cta.label}</a>
+    {d.affiliate
+      ? <p class="note muted">Partner link. Studely may earn a commission; it never changes the score.</p>
+      : <p class="note muted">Continues to the official {d.provider} page.</p>}
+  </div>
+) : (
+  <a class="go go-card" href={cta.href} target="_blank" rel={cta.rel} {...cta.data} aria-label={`${cta.label.replace(' ↗', '')}: ${d.title}`}>{cta.label}</a>
+)}
+
+<style>
+  .cta-block { display: flex; flex-direction: column; gap: var(--space-2xs); }
+  .go { display: inline-flex; align-items: center; min-height: 44px; }
+  .note { font-size: var(--step--1); line-height: 1.45; margin: 0; }
+
+  /* card: a quiet text link that becomes the ink link on hover — a real target,
+     not a stretched overlay */
+  .go-card {
+    font-size: var(--step--1); font-weight: 500; color: var(--ink); white-space: nowrap;
+    padding: 0.35em 0; border-bottom: 1px solid var(--border-strong);
+    transition: border-color .2s var(--ease-out), color .2s var(--ease-out);
+  }
+  .go-card:hover { border-color: var(--ink); color: var(--accent-ink); }
+</style>
