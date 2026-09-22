@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { entryRowModel } from './entry-row';
+import { entryRowModel, problemWords } from './entry-row';
 import type { OfferView } from '@domain/offers/offer-mapping';
 
 // The entry row is the register's only offer representation (Visual Direction
@@ -110,6 +110,13 @@ describe('entryRowModel — the trust slot', () => {
     expect(trust({ lastCheckResult: 'warn', lastCheckNote: 'blocked' }).tone).toBe('warn');
     expect(trust({ expires: '2026-09-01' }).tone).toBe('bad');
     expect(trust({}).tone).toBeNull();
+  });
+});
+
+describe('problemWords', () => {
+  it('never leaves a bracket hanging when the state has no date to put in it', () => {
+    expect(problemWords('blocked', false)).toEqual({ lead: 'Provider blocks automated checks', trail: '', tone: 'warn' });
+    expect(problemWords('blocked', true)).toEqual({ lead: 'Provider blocks automated checks (', trail: ')', tone: 'warn' });
   });
 });
 

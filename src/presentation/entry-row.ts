@@ -54,8 +54,13 @@ export interface EntryRowModel {
   sponsored: boolean;
 }
 
-/** Words for a problem state. The checker's own prose never reaches a page. */
-const PROBLEM: Record<TrustState, { lead: string; trail: string; tone: 'warn' | 'bad' }> = {
+/**
+ * Words for a problem state — the one vocabulary. The row reads it here and
+ * StateBadge (the record) reads the same map, so the register and the record
+ * cannot describe the same checker state differently. The checker's own prose
+ * never reaches a page.
+ */
+const PROBLEM_COPY: Record<TrustState, { lead: string; trail: string; tone: 'warn' | 'bad' }> = {
   expired: { lead: 'Ended', trail: '', tone: 'bad' },
   dead: { lead: 'Link failed (', trail: ')', tone: 'bad' },
   stale: { lead: 'Not checked since ', trail: '', tone: 'warn' },
@@ -65,6 +70,16 @@ const PROBLEM: Record<TrustState, { lead: string; trail: string; tone: 'warn' | 
   unreachable: { lead: 'Could not reach the page (', trail: ')', tone: 'warn' },
   unconfirmed: { lead: 'Last check could not confirm the page (', trail: ')', tone: 'warn' },
 };
+
+/**
+ * The words for a problem state, told whether a date will follow them. Most of
+ * them wrap the date in brackets, so without one the bracket has to go with it
+ * — every caller asks here rather than trimming the string itself.
+ */
+export function problemWords(state: TrustState, hasDate: boolean): { lead: string; trail: string; tone: 'warn' | 'bad' } {
+  const { lead, trail, tone } = PROBLEM_COPY[state];
+  return hasDate ? { lead, trail, tone } : { lead: lead.replace(/\s*\($/, ''), trail: '', tone };
+}
 
 function slot(kind: EntryTrust['kind'], lead: string, trail: string, date: Date | null, tone: EntryTrust['tone']): EntryTrust {
   // One composition: the line the table prints and the parts the row prints
@@ -77,10 +92,10 @@ function trustSlot(offer: OfferView, now: Date): EntryTrust {
   const t = deriveTrust(offer, now);
   const problem = t.states[0];
   if (problem) {
-    const p = PROBLEM[problem];
     // "Ended" carries no date: the expiry is the offer's own field, not a check.
     const date = problem === 'expired' ? null : t.lastChecked;
-    return slot('problem', p.lead, date ? p.trail : '', date, p.tone);
+    const p = problemWords(problem, Boolean(date));
+    return slot('problem', p.lead, p.trail, date, p.tone);
   }
   if (t.verified) return slot('verified', 'Verified · ', '', t.verified, null);
   if (t.lastChecked) return slot('checked', 'Link checked ', '', t.lastChecked, null);

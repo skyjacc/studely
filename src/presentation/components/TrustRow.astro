@@ -17,7 +17,9 @@ const { offer, variant = 'compact' } = Astro.props;
 const t = deriveTrust(offer);
 const problem = t.states[0] ?? null;
 // One dated line on the card: the problem wins, else Verified, else nothing.
-const headline = problem ? { state: problem, date: problem === 'stale' ? t.lastChecked : null }
+// Every problem except an expiry is something the checker observed on a date,
+// and its wording expects that date. Only "Ended" comes from the offer itself.
+const headline = problem ? { state: problem, date: problem === 'expired' ? null : t.lastChecked }
   : t.verified ? { state: 'verified' as const, date: t.verified }
   : null;
 ---
@@ -35,7 +37,7 @@ const headline = problem ? { state: problem, date: problem === 'stale' ? t.lastC
 
 {variant === 'full' && (
   <dl class="trust trust-full">
-    {problem && <div class="r"><dt>Status</dt><dd><StateBadge state={problem} date={problem === 'stale' ? t.lastChecked : null} /></dd></div>}
+    {problem && <div class="r"><dt>Status</dt><dd><StateBadge state={problem} date={problem === 'expired' ? null : t.lastChecked} /></dd></div>}
     {t.verified && <div class="r"><dt>Verified</dt><dd><StateBadge state="verified" date={t.verified} /></dd></div>}
     {t.lastChecked && !problem && <div class="r"><dt>Last checked</dt><dd><time datetime={t.lastChecked.toISOString()}>{t.lastChecked.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })}</time></dd></div>}
     <div class:list={['r', { stack: t.proof.length > 20 }]}><dt>Proof</dt><dd>{t.proof}</dd></div>
