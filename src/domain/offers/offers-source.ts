@@ -7,7 +7,7 @@ import { createSupabaseBuild } from '@core/supabase';
 import { mapOfferRow, type OfferView, type OfferRow, type AttrRow } from './offer-mapping';
 
 const OFFER_COLUMNS =
-  'id,slug,title,provider,category,summary,value,body,offer_type,discount_percent,url,affiliate,sponsored,featured,proof_method,eligibility,tags,score,status,expires_at,last_checked';
+  'id,slug,title,provider,category,summary,value,body,offer_type,discount_percent,url,affiliate,sponsored,featured,proof_method,eligibility,tags,score,status,expires_at,last_checked,last_check_result,last_check_note';
 
 async function loadOffers(): Promise<OfferView[]> {
   const db = createSupabaseBuild();

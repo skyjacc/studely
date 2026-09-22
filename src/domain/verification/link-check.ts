@@ -1,5 +1,7 @@
 export type OfferHealthStatus = 'active' | 'expiring' | 'expired' | 'unverified';
 export type LinkCheckResult = 'pass' | 'warn' | 'fail';
+/** Why a check could not confirm the page. A closed code, never the raw error. */
+export type CheckNote = 'blocked' | 'unreachable';
 export type ReportStatus = 'ok' | 'BLOCKED' | 'UNREACHABLE' | 'DEAD' | 'EXPIRED';
 
 export interface CheckedOffer {
@@ -22,6 +24,8 @@ export interface LinkObservation {
 export interface VerificationWrite {
   offer_id: string;
   result: LinkCheckResult;
+  /** Set only for a warn: what stopped the check. Reaches the register via offers. */
+  note: CheckNote | null;
   /** True means the destination is reachable or only bot-blocked. */
   ok: boolean;
   status_code: number | null;
@@ -87,6 +91,7 @@ export function classifyOfferCheck(
     write: {
       offer_id: offer.id,
       result,
+      note: result === 'warn' ? (unreachable ? 'unreachable' : 'blocked') : null,
       ok,
       status_code: receivedHttp ? observation.status : null,
       error: observation.error ?? null,

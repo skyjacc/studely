@@ -4,6 +4,9 @@
 
 export type OfferType = 'free' | 'discount' | 'credit' | 'trial';
 export type OfferStatus = 'active' | 'expiring' | 'expired' | 'unverified';
+/** The LATEST automated check, projected onto offers (0013). Never a human check. */
+export type CheckResult = 'pass' | 'warn' | 'fail';
+export type CheckNote = 'blocked' | 'unreachable';
 
 export interface OfferAttr {
   key: string;
@@ -31,6 +34,10 @@ export interface OfferData {
   /** ISO date string (YYYY-MM-DD), or the literal "ongoing". */
   expires: string;
   lastChecked: Date;
+  /** Result of that check. Null when the offer has never been checked. */
+  lastCheckResult: CheckResult | null;
+  /** Why a warn could not confirm the page; null unless the result is a warn. */
+  lastCheckNote: CheckNote | null;
   status: OfferStatus;
   tags: string[];
 }
@@ -79,6 +86,8 @@ export interface OfferRow {
   status: OfferStatus;
   expires_at: string | null;
   last_checked: string;
+  last_check_result?: CheckResult | null;
+  last_check_note?: CheckNote | null;
 }
 
 /** One row of `select offer_id,key,label,points from offer_attributes`. */
@@ -117,6 +126,8 @@ export function mapOfferRow(
       eligibility: row.eligibility,
       expires: row.expires_at ?? 'ongoing',
       lastChecked: new Date(row.last_checked),
+      lastCheckResult: row.last_check_result ?? null,
+      lastCheckNote: row.last_check_note ?? null,
       status: row.status,
       tags: row.tags ?? [],
     },
