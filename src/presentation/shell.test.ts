@@ -19,7 +19,7 @@ const walk = (dir: string, out: string[] = []): string[] => {
 };
 
 // ---- helpers: read a token from :root and measure WCAG contrast --------------
-const css = read('src/styles/global.css');
+const css = read('src/styles/paper.css');
 const rootBlock = css.slice(css.indexOf(':root {'), css.indexOf('}', css.indexOf(':root {')));
 const token = (name: string): string => {
   const m = rootBlock.match(new RegExp(`${name}:\\s*([^;]+);`));
@@ -59,10 +59,13 @@ describe('paper tokens', () => {
   });
 
   it('never draws a hairline as a light value over a dark ground', () => {
-    // 232,232,227 is the old beige ink; any alpha of it is invisible on paper
+    // 232,232,227 is the admin's beige ink; any alpha of it is invisible on paper.
+    // The admin surface keeps it — that is its own palette (surfaces.test.ts).
+    const isAdmin = (f: string) => /^src\/(pages\/admin\/|presentation\/components\/admin\/|presentation\/layouts\/AdminLayout\.astro|styles\/admin\.css)/.test(f);
     const offenders = walk(join(ROOT, 'src'))
-      .filter((p) => /rgba\(\s*232\s*,\s*232\s*,\s*227/.test(read(p.replace(ROOT + '/', ''))))
-      .map((p) => p.replace(ROOT + '/', ''));
+      .map((p) => p.replace(ROOT + '/', ''))
+      .filter((f) => !isAdmin(f))
+      .filter((f) => /rgba\(\s*232\s*,\s*232\s*,\s*227/.test(read(f)));
     expect(offenders).toEqual([]);
   });
 

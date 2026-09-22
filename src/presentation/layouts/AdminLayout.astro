@@ -40,7 +40,7 @@ const active = (item: (typeof nav)[number]) =>
     <!-- an operator tool must never be indexed -->
     <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <meta name="theme-color" content="#f4f2ec" />
+    <meta name="theme-color" content="#0b0a09" />
   </head>
   <body class="admin">
     {chrome ? (
@@ -98,8 +98,8 @@ const active = (item: (typeof nav)[number]) =>
     font-size: var(--step--1); font-weight: 500; color: var(--text-muted);
     transition: background 0.18s var(--ease-out), color 0.18s var(--ease-out);
   }
-  .side-link:hover { background: rgba(var(--ink-rgb), 0.06); color: var(--ink); }
-  .side-link.is-active { background: rgba(var(--ink-rgb), 0.11); color: var(--ink); }
+  .side-link:hover { background: rgba(232, 232, 227, 0.06); color: var(--ink); }
+  .side-link.is-active { background: rgba(232, 232, 227, 0.11); color: var(--ink); }
 
   .side-foot { margin-top: auto; display: grid; gap: 0.3rem; }
   .who {
@@ -112,7 +112,7 @@ const active = (item: (typeof nav)[number]) =>
     padding: 0.42rem 0.6rem; border: 0; border-radius: 7px; cursor: pointer;
     background: none; color: var(--text-muted);
   }
-  .signout:hover { background: rgba(var(--ink-rgb), 0.06); color: var(--ink); }
+  .signout:hover { background: rgba(232, 232, 227, 0.06); color: var(--ink); }
 
   .main { padding: 1.5rem clamp(1rem, 0.5rem + 1.5vw, 2rem) 4rem; min-width: 0; }
   .head { padding-bottom: 1.1rem; margin-bottom: 1.4rem; border-bottom: 1px solid var(--border); }
