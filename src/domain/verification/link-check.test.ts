@@ -18,6 +18,7 @@ describe('classifyOfferCheck', () => {
     expect(result.write).toEqual({
       offer_id: offer.id,
       result: 'pass',
+      note: null,
       ok: true,
       status_code: 200,
       error: null,
@@ -25,6 +26,22 @@ describe('classifyOfferCheck', () => {
       checked_at: checkedAt.toISOString(),
       offer_status: 'active',
     });
+  });
+
+  // The register has to say WHY a check could not confirm the page, and the
+  // classifier is the only place that knows. It writes a closed note code
+  // alongside the result; nothing downstream re-derives it from status_code.
+  it.each([401, 403, 405, 406, 429])('notes HTTP %s as blocked', (status) => {
+    expect(classifyOfferCheck(offer, { status, finalUrl: offer.url! }, checkedAt).write.note).toBe('blocked');
+  });
+
+  it('notes a missing HTTP response as unreachable', () => {
+    expect(classifyOfferCheck(offer, { status: 0, error: 'timeout' }, checkedAt).write.note).toBe('unreachable');
+  });
+
+  it('leaves the note empty when the check confirmed or failed outright', () => {
+    expect(classifyOfferCheck(offer, { status: 200, finalUrl: offer.url! }, checkedAt).write.note).toBeNull();
+    expect(classifyOfferCheck({ ...offer, status: 'active' }, { status: 500 }, checkedAt).write.note).toBeNull();
   });
 
   it.each([401, 403, 405, 406, 429])('treats HTTP %s as a warning, not a dead link', (status) => {

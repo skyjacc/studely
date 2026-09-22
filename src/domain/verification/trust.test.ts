@@ -11,7 +11,8 @@ function offer(over: Partial<OfferView['data']> = {}, verification: OfferView['v
       title: 'X', provider: 'P', category: 'design', summary: 's', value: 'v', offerType: 'free',
       score: 8, url: 'https://x', affiliate: false, sponsored: false, featured: false,
       proofMethod: 'SheerID', eligibility: 'Students', expires: 'ongoing',
-      lastChecked: new Date('2026-09-21T10:00:00Z'), status: 'active', tags: [],
+      lastChecked: new Date('2026-09-21T10:00:00Z'), lastCheckResult: 'pass', lastCheckNote: null,
+      status: 'active', tags: [],
       ...over,
     },
   };
@@ -63,6 +64,35 @@ describe('deriveTrust — problem states (only from real data)', () => {
   it('does not invent stale from a missing date', () => {
     const t = deriveTrust(offer({ lastChecked: new Date(Number.NaN) }), NOW);
     expect(t.states).toEqual([]);
+  });
+
+  // A warn is the checker saying "I could not confirm this", and the register
+  // must not print it as a successful stamp. The state comes from the enum; the
+  // wording is the presentation layer's job.
+  it('turns a blocked warn into its own state', () => {
+    expect(deriveTrust(offer({ lastCheckResult: 'warn', lastCheckNote: 'blocked' }), NOW).states).toEqual(['blocked']);
+  });
+
+  it('turns an unreachable warn into its own state', () => {
+    expect(deriveTrust(offer({ lastCheckResult: 'warn', lastCheckNote: 'unreachable' }), NOW).states).toEqual(['unreachable']);
+  });
+
+  it('falls back to an unconfirmed warn rather than showing a warn as a clean check', () => {
+    expect(deriveTrust(offer({ lastCheckResult: 'warn', lastCheckNote: null }), NOW).states).toEqual(['unconfirmed']);
+  });
+
+  it('keeps staleness alongside a warn — the warn is read first, the age is not lost', () => {
+    const t = deriveTrust(offer({ lastCheckResult: 'warn', lastCheckNote: 'blocked', lastChecked: new Date('2026-08-20T00:00:00Z') }), NOW);
+    expect(t.states).toEqual(['blocked', 'stale']);
+  });
+
+  it('lets the offer-level problems outrank a warn', () => {
+    expect(deriveTrust(offer({ expires: '2026-09-01', lastCheckResult: 'warn', lastCheckNote: 'blocked' }), NOW).states).toEqual(['expired']);
+    expect(deriveTrust(offer({ status: 'unverified', lastCheckResult: 'warn', lastCheckNote: 'blocked' }), NOW).states).toEqual(['dead']);
+  });
+
+  it('adds no state for a passing check', () => {
+    expect(deriveTrust(offer({ lastCheckResult: 'pass' }), NOW).states).toEqual([]);
   });
 
   it('marks sponsored as a commercial state, separately', () => {
