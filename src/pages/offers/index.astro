@@ -1,18 +1,18 @@
 ---
+// The register (Visual Direction v3 §1, §3). Every offer is an entry row: the
+// same model on desktop, in the table and on mobile, so no view can quietly
+// disagree with another. The page composes and filters; what a row means is
+// decided in the domain and read through entryRowModel.
 import { getAllOffers } from '@domain/offers/offers-source';
 import Layout from '@ui/layouts/Layout.astro';
-import OfferPreview from '@ui/components/OfferPreview.astro';
-import Score from '@ui/components/Score.astro';
-import TrustRow from '@ui/components/TrustRow.astro';
-import OfferCTA from '@ui/components/OfferCTA.astro';
+import EntryRow from '@ui/components/EntryRow.astro';
 import SegmentedControl from '@ui/components/SegmentedControl.astro';
 import EmptyState from '@ui/components/EmptyState.astro';
 import Sheet from '@ui/components/Sheet.astro';
-import Logo from '@ui/components/Logo.astro';
-import Icon from '@ui/components/Icon.astro';
-import { categories, getCategory } from '@domain/offers/categories';
-import { isExpired, daysUntil, verifyGroup, offerTypeLabel } from '@domain/offers/offers';
 import AdSlot from '@ui/components/AdSlot.astro';
+import { entryRowModel } from '@ui/entry-row';
+import { categories } from '@domain/offers/categories';
+import { isExpired, daysUntil, verifyGroup, offerTypeLabel } from '@domain/offers/offers';
 import { adAfterIndexes } from '@domain/ads/ads';
 import { site } from '@core/config/site';
 
@@ -21,9 +21,11 @@ const all = (await getAllOffers()).filter((o) => !isExpired(o));
 const sorted = [...all].sort(
   (a, b) => b.data.score - a.data.score || b.data.lastChecked.getTime() - a.data.lastChecked.getTime(),
 );
-// In-feed ad positions for the default (score) order; the client script keeps them
-// interleaved while the grid is in its pristine state and hides them once filtered.
-// Only when a real in-feed ad unit is configured — otherwise the grid stays clean.
+const entries = sorted.map((o, i) => ({ offer: o, row: entryRowModel(o, i) }));
+
+// In-feed interruptions for the default order; the script keeps them in place
+// while the register is pristine and hides them the moment it is narrowed.
+// Only when a real in-feed unit is configured — otherwise the register is clean.
 const adAt = new Set(site.adsense.slots.inFeed ? adAfterIndexes(sorted.length) : []);
 
 const catFacets = categories
@@ -38,16 +40,23 @@ const verifyFacets = [...new Set(all.map((o) => verifyGroup(o.data.proofMethod))
   .sort((a, b) => b.n - a.n);
 
 // "No card required" is asserted, never inferred. Counting the ABSENCE of
-// card_required silently vouched for every offer nobody had scored on that axis —
-// which put Spotify Premium Student, a paid subscription, in a facet promising no
-// payment method. An offer qualifies only if it carries no_card_required.
+// card_required silently vouched for every offer nobody had scored on that axis.
 const noCardCount = all.filter((o) => o.attributes.some((a) => a.key === 'no_card_required')).length;
+
+// The status line states the newest check the register holds — not a claim that
+// every entry was checked that day.
+const lastCheck = all.reduce<Date | null>((newest, o) => {
+  const d = o.data.lastChecked;
+  return Number.isFinite(d.getTime()) && (!newest || d > newest) ? d : newest;
+}, null);
+const lastCheckLabel = lastCheck?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
 const daysLeft = (o: (typeof sorted)[number]) => {
   const d = daysUntil(o.data.expires);
   return d === null ? 999999 : d; // ongoing sorts last
 };
-const dataAttrs = (o: (typeof sorted)[number]) => ({
+const facetsOf = (o: (typeof sorted)[number]) => ({
+  'data-entry': '',
   'data-cat': o.data.category,
   'data-type': o.data.offerType,
   'data-verify': verifyGroup(o.data.proofMethod),
@@ -56,169 +65,175 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
   'data-expires': String(daysLeft(o)),
   'data-card': o.attributes.some((a) => a.key === 'no_card_required') ? 'no' : 'yes',
   'data-name': o.data.title.toLowerCase(),
-  'data-text': `${o.data.title} ${o.data.provider} ${o.data.summary} ${o.data.tags.join(' ')} ${getCategory(o.data.category)?.name ?? ''}`.toLowerCase(),
+  'data-text': `${o.data.title} ${o.data.provider} ${o.data.summary} ${o.data.tags.join(' ')}`.toLowerCase(),
 });
 ---
 
-<Layout title="All student offers" description="Browse free tools, credits, courses and student discounts. Filter by category, type and eligibility, sorted by the Studely score.">
-  <section class="section">
+<Layout title="The register — every student offer" description="Every student offer Studely holds, scored against clear criteria, with the date each link was last checked. Search, filter by category and sort in place.">
+  <section class="register">
     <div class="wrap">
-      <p class="eyebrow">The directory</p>
-      <h1>All offers</h1>
-      <p class="lead" style="max-width:52ch">{all.length} student perks, scored against clear criteria. Filter it down.</p>
-    </div>
+      <header class="head">
+        <h1>The register</h1>
+        <p class="status">{all.length} offers{lastCheckLabel && <> · last checked {lastCheckLabel}</>}</p>
+      </header>
 
-    <div class="wrap dir">
-        <!-- Faceted sidebar. On desktop it is this aside; below 900px the same
-             node is moved into the filter Sheet (one primitive, one DOM). -->
-        <aside class="rail" id="filter-rail" aria-label="Filters">
-          <div class="rail-inner">
-            <div class="fgroup">
-              <label class="flabel" for="sort" id="sort-label">Sort by</label>
-              <div class="sel" data-select>
-                <select id="sort" class="select">
-                  <option value="score">Score: high → low</option>
-                  <option value="checked">Recently checked</option>
-                  <option value="expiring">Ending soon</option>
-                  <option value="az">Name: A → Z</option>
-                </select>
-              </div>
+      <!-- narrowing: search · sort · view -->
+      <div class="controls">
+        <form class="searchbox" role="search" action="/offers" method="get">
+          <label class="sr-only" for="q">Search the register</label>
+          <input id="q" name="q" class="qfield" type="search" placeholder="Search the register…" autocomplete="off" />
+          <button type="submit" class="sr-only">Search</button>
+        </form>
+        <div class="sortview">
+          <label class="ctl-label" for="sort">Sort</label>
+          <select id="sort" class="select">
+            <option value="score">Score: high → low</option>
+            <option value="checked">Recently checked</option>
+            <option value="expiring">Ending soon</option>
+            <option value="az">Name: A → Z</option>
+          </select>
+          <SegmentedControl name="view" label="View" value="cards" class="views"
+            options={[{ value: 'cards', label: 'Index', icon: 'rows' }, { value: 'table', label: 'Table', icon: 'grid' }]} />
+        </div>
+      </div>
+
+      <!-- categories: chips, live counts, filtering in place. Real links without JS. -->
+      <nav class="chips" aria-label="Categories">
+        <a class="chip is-all" href="/offers" data-chip="all">All <span class="cn">{all.length}</span></a>
+        {catFacets.map((c) => (
+          <a class="chip" href={`/offers?cat=${c.slug}`} data-chip="cat" data-value={c.slug}>{c.name} <span class="cn">{c.n}</span></a>
+        ))}
+      </nav>
+
+      <div class="morebar">
+        <details class="more" id="more">
+          <summary>More filters<span class="ft-count" hidden></span></summary>
+          <div id="more-host">
+          <!-- The one facet node. It sits in the disclosure on desktop and moves
+               into the Sheet below 900px: same inputs, same listeners, one DOM. -->
+          <div id="facets" class="facets">
+            <div class="fgroup sheet-only">
+              <label class="flabel" for="sort-sheet">Sort</label>
+              <select id="sort-sheet" class="select"></select>
             </div>
-
-            <div class="fgroup">
-              <label class="flabel" for="q">Search</label>
-              <input id="q" class="input" type="search" placeholder="Figma, cloud, .edu…" autocomplete="off" />
-            </div>
-
-            <fieldset class="fgroup">
-              <legend class="flabel">Category</legend>
-              {catFacets.map((c) => (
-                <label class="check">
-                  <input type="checkbox" data-facet="cat" value={c.slug} />
-                  <span class="box" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2.4 6.3 4.7 8.6 9.6 3.7"/></svg></span>
-                  <span class="cico"><Icon category={c.slug} /></span>
-                  <span class="ctxt">{c.name}</span>
-                  <span class="cn">{c.n}</span>
-                </label>
-              ))}
-            </fieldset>
-
             <fieldset class="fgroup">
               <legend class="flabel">Type</legend>
               {typeFacets.map((t) => (
                 <label class="check">
                   <input type="checkbox" data-facet="type" value={t.t} />
-                  <span class="box" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2.4 6.3 4.7 8.6 9.6 3.7"/></svg></span>
                   <span class="ctxt">{t.label}</span>
                   <span class="cn">{t.n}</span>
                 </label>
               ))}
             </fieldset>
-
-            <fieldset class="fgroup">
-              <legend class="flabel">Requirements</legend>
-              <label class="check">
-                <input type="checkbox" data-facet="card" value="no" />
-                <span class="box" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2.4 6.3 4.7 8.6 9.6 3.7"/></svg></span>
-                <span class="ctxt">No card required</span>
-                <span class="cn">{noCardCount}</span>
-              </label>
-            </fieldset>
-
             <fieldset class="fgroup">
               <legend class="flabel">Proof</legend>
               {verifyFacets.map((v) => (
                 <label class="check">
                   <input type="checkbox" data-facet="verify" value={v.g} />
-                  <span class="box" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2.4 6.3 4.7 8.6 9.6 3.7"/></svg></span>
                   <span class="ctxt">{v.g}</span>
                   <span class="cn">{v.n}</span>
                 </label>
               ))}
             </fieldset>
-
-            <button id="reset" class="btn btn-ghost btn-sm" type="button">Reset filters</button>
+            <fieldset class="fgroup">
+              <legend class="flabel">Requirements</legend>
+              <label class="check">
+                <input type="checkbox" data-facet="card" value="no" />
+                <span class="ctxt">No card required</span>
+                <span class="cn">{noCardCount}</span>
+              </label>
+            </fieldset>
+            <button id="reset" class="reset" type="button">Reset filters</button>
           </div>
-        </aside>
-
-        <!-- Results -->
-        <div class="results">
-          <div class="toolbar">
-            <button id="filter-toggle" class="filter-toggle" type="button" data-sheet-open="filters" aria-controls="sheet-filters" aria-expanded="false">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-              Filter &amp; sort<span class="ft-count" hidden></span>
-            </button>
-            <p id="count" class="count" aria-live="polite">{all.length} offers</p>
-            <SegmentedControl name="view" label="View" value="cards" class="views"
-              options={[{ value: 'cards', label: 'Cards', icon: 'grid' }, { value: 'table', label: 'Table', icon: 'rows' }]} />
           </div>
+        </details>
+        <button class="filter-toggle" type="button" data-sheet-open="filters" aria-controls="sheet-filters" aria-expanded="false">
+          Filters &amp; sort<span class="ft-count" hidden></span>
+        </button>
+      </div>
 
-          <div id="active-filters" class="afilters" hidden aria-label="Active filters"></div>
 
-          <div id="cards" class="grid grid-offers">
-            {sorted.map((o, i) => (
-              <>
-                <div class="item" {...dataAttrs(o)}><OfferPreview offer={o} /></div>
-                {adAt.has(i) && <div class="item ad-item"><AdSlot format="in-feed" slot={site.adsense.slots.inFeed} /></div>}
-              </>
+      <p id="count" class="count" aria-live="polite">{all.length} of {all.length}</p>
+
+      <div id="rows" class="rows">
+        {entries.map(({ offer, row }, i) => (
+          <>
+            <EntryRow entry={row} facets={facetsOf(offer)} />
+            {adAt.has(i) && (
+              <div class="interruption" data-ad>
+                <p class="ad-label">ADVERTISEMENT</p>
+                <AdSlot format="in-feed" slot={site.adsense.slots.inFeed} />
+              </div>
+            )}
+          </>
+        ))}
+      </div>
+
+      <div id="table" class="tablewrap" hidden>
+        <table>
+          <thead>
+            <tr><th class="c-n">#</th><th>Provider</th><th>Offer</th><th class="c-score">Score</th><th>Value</th><th>Proof</th><th>Checked</th><th class="c-act"><span class="sr-only">Action</span></th></tr>
+          </thead>
+          <tbody>
+            {entries.map(({ offer, row }) => (
+              <tr {...facetsOf(offer)}>
+                <td class="c-n">{row.n}</td>
+                <td class="t-prov">{row.provider}</td>
+                <td class="t-title"><a href={row.href}>{row.title}</a></td>
+                <td class="c-score"><span aria-label={row.score.label}>{row.score.text}</span></td>
+                <td class="t-val">{row.value} · {row.typeWord}</td>
+                <td class="t-proof" title={row.proof}>{row.proof}</td>
+                <td class:list={['t-check', row.trust.tone && `tone-${row.trust.tone}`]}>
+                  {/* the column header already says CHECKED: a plain stamp needs
+                      only its date here. Anything else — a problem, a human
+                      verification — still says what it is, in full. */}
+                  {row.trust.kind === 'none' ? '—' : row.trust.kind === 'checked' ? row.trust.dateText : row.trust.text}
+                </td>
+                <td class="c-act"><a href={row.action.href} rel={row.action.rel} {...row.action.data}>{row.action.label}</a></td>
+              </tr>
             ))}
-          </div>
+          </tbody>
+        </table>
+      </div>
 
-          <div id="table" class="tablewrap" hidden>
-            <table>
-              <thead>
-                <tr><th>Score</th><th>Offer</th><th>Value</th><th>Trust</th><th></th></tr>
-              </thead>
-              <tbody>
-                {sorted.map((o) => {
-                  const cat = getCategory(o.data.category);
-                  return (
-                    <tr class="item" {...dataAttrs(o)}>
-                      <td><Score score={o.data.score} variant="row" /></td>
-                      <td class="tname">
-                        <span class="tlogo logo-tile"><Logo provider={o.data.provider} /></span>
-                        <span class="tname-txt">
-                          <a href={`/offers/${o.id}`} title={o.data.title}>{o.data.title}</a>
-                          <span class="tmeta"><a href={`/offers?cat=${o.data.category}`}>{cat?.name ?? o.data.category}</a> · {offerTypeLabel[o.data.offerType] ?? o.data.offerType}</span>
-                        </span>
-                      </td>
-                      <td class="tval" title={o.data.value}>{o.data.value}</td>
-                      <td class="muted tverify"><TrustRow offer={o} variant="table" /></td>
-                      <td class="tcta"><OfferCTA offer={o} placement="card" /></td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+      <EmptyState id="empty" hidden title="No offers match" why="Loosen a filter, or reset them."
+        action={{ label: 'Reset filters' }} recovery={{ label: `Browse all ${all.length} offers →`, href: '/offers' }} />
 
-          <EmptyState id="empty" hidden title="No offers match" why="Loosen a filter, or reset them." action={{ label: 'Reset filters' }} />
-        </div>
+      <p class="endline" id="endline">{all.length} of {all.length} · end of register</p>
     </div>
   </section>
 
-  <Sheet id="filters" title="Filter & sort" side="bottom">
-    <div id="rail-host"></div>
+  <Sheet id="filters" title="Filters & sort" side="bottom">
+    <div id="sheet-host"></div>
   </Sheet>
 </Layout>
 
 <script>
   import {
-    emptyState, parseState, serializeState, hasDirectoryKeys, matches, compare, emptyMessage, FACET_KEYS,
+    emptyState, parseState, serializeState, hasDirectoryKeys, isPristine, matches, compare, emptyMessage, FACET_KEYS,
   } from '@domain/offers/directory-state';
   import type { DirectoryState, ItemFacets, FacetKey, SortKey } from '@domain/offers/directory-state';
 
-  function setupOffersDir() {
-    const cards = document.getElementById('cards');
-    if (!cards || cards.dataset.bound) return; // only on /offers, once per page instance
-    cards.dataset.bound = '1';
+  function setupRegister() {
+    const rows = document.getElementById('rows');
+    if (!rows || rows.dataset.bound) return; // only on /offers, once per page instance
+    rows.dataset.bound = '1';
     const tbody = document.querySelector<HTMLElement>('#table tbody')!;
+    const table = document.getElementById('table')!;
     const countEl = document.getElementById('count')!;
+    const endEl = document.getElementById('endline')!;
     const emptyEl = document.getElementById('empty')!;
     const q = document.getElementById('q') as HTMLInputElement;
     const sortEl = document.getElementById('sort') as HTMLSelectElement;
+    const sheetSort = document.getElementById('sort-sheet') as HTMLSelectElement;
+    const total = rows.querySelectorAll('[data-entry]').length;
     const STORE_KEY = 'studely.offers.v1';
     let state: DirectoryState = emptyState();
+
+    // The Sheet carries a second sort control; mirror the options rather than
+    // maintaining two lists in the markup.
+    sheetSort.innerHTML = sortEl.innerHTML;
 
     const facetSet = (facet: FacetKey) => {
       const out = new Set<string>();
@@ -240,6 +255,7 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
       state = parseState(src);
       q.value = src.get('q') || '';
       sortEl.value = state.sort;
+      sheetSort.value = state.sort;
       for (const f of FACET_KEYS) {
         document.querySelectorAll<HTMLInputElement>(`input[data-facet="${f}"]`).forEach((inp) => { inp.checked = state[f].has(inp.value); });
       }
@@ -250,14 +266,10 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
 
     const show = (el: HTMLElement) => matches(facetsOf(el), state);
     const cmp = (a: HTMLElement, b: HTMLElement) => compare(facetsOf(a), facetsOf(b), state.sort);
-    const sortIn = (container: HTMLElement | null) => {
-      if (!container) return;
-      ([...container.children] as HTMLElement[]).sort(cmp).forEach((el) => container.appendChild(el));
-    };
 
     // Live facet counts: a group is counted against every OTHER active filter.
     const updateFacets = () => {
-      const items = [...cards.querySelectorAll<HTMLElement>('.item:not(.ad-item)')];
+      const items = [...rows.querySelectorAll<HTMLElement>('[data-entry]')];
       for (const facet of FACET_KEYS) {
         const pool = items.filter((el) => matches(facetsOf(el), state, facet));
         const inputs = [...document.querySelectorAll<HTMLInputElement>(`input[data-facet="${facet}"]`)];
@@ -274,6 +286,20 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
         const group = inputs[0]?.closest<HTMLElement>('.fgroup');
         if (group) group.hidden = !anyVisible;
       }
+      // category chips carry their own counts, against the other facets
+      const catPool = items.filter((el) => matches(facetsOf(el), state, 'cat'));
+      document.querySelectorAll<HTMLElement>('[data-chip="cat"]').forEach((chip) => {
+        const on = state.cat.has(chip.dataset.value!);
+        const n = catPool.filter((el) => el.dataset.cat === chip.dataset.value).length;
+        chip.querySelector('.cn')!.textContent = String(n);
+        chip.classList.toggle('is-on', on);
+        chip.setAttribute('aria-pressed', String(on));
+        chip.hidden = n === 0 && !on;
+      });
+      const allChip = document.querySelector<HTMLElement>('[data-chip="all"]')!;
+      allChip.classList.toggle('is-on', state.cat.size === 0);
+      allChip.setAttribute('aria-pressed', String(state.cat.size === 0));
+      allChip.querySelector('.cn')!.textContent = String(catPool.length);
     };
 
     const persist = () => {
@@ -283,106 +309,83 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
       try { localStorage.setItem(STORE_KEY, qs); } catch (e) {}
     };
 
-    const FACET_LABEL: Record<string, Record<string, string>> = {};
-    document.querySelectorAll<HTMLInputElement>('input[data-facet]').forEach((inp) => {
-      const f = inp.dataset.facet!;
-      const txt = inp.closest('.check')?.querySelector('.ctxt')?.textContent?.trim();
-      (FACET_LABEL[f] = FACET_LABEL[f] || {})[inp.value] = txt || inp.value;
-    });
-
     const updateFilterCount = () => {
-      const n = (state.q ? 1 : 0) + FACET_KEYS.reduce((sum, f) => sum + state[f].size, 0);
-      const ft = document.querySelector<HTMLElement>('.ft-count');
-      if (ft) { ft.textContent = String(n); ft.hidden = n === 0; }
-    };
-
-    const removeChip = (kind: string, val: string) => {
-      if (kind === 'q') { state.q = ''; q.value = ''; }
-      else {
-        const f = kind as FacetKey;
-        state[f].delete(val);
-        document.querySelectorAll<HTMLInputElement>(`input[data-facet="${f}"]`).forEach((i) => { if (i.value === val) i.checked = false; });
-      }
-      apply();
-    };
-
-    const renderChips = () => {
-      const box = document.getElementById('active-filters');
-      if (!box) return;
-      const chips: [string, string, string][] = [];
-      if (state.q) chips.push(['q', '', '"' + q.value.trim() + '"']);
-      for (const f of FACET_KEYS) state[f].forEach((v) => chips.push([f, v, (FACET_LABEL[f] || {})[v] || v]));
-      box.innerHTML = '';
-      if (!chips.length) { box.hidden = true; return; }
-      box.hidden = false;
-      chips.forEach(([kind, val, label]) => {
-        const el = document.createElement('span');
-        el.className = 'achip';
-        const t = document.createElement('span'); t.textContent = label;
-        const b = document.createElement('button'); b.type = 'button'; b.textContent = '×'; b.setAttribute('aria-label', 'Remove ' + label);
-        b.addEventListener('click', () => removeChip(kind, val));
-        el.append(t, b);
-        box.appendChild(el);
+      const n = FACET_KEYS.filter((f) => f !== 'cat').reduce((sum, f) => sum + state[f].size, 0);
+      document.querySelectorAll<HTMLElement>('.ft-count').forEach((el) => {
+        el.textContent = String(n);
+        el.hidden = n === 0;
       });
-      const clear = document.createElement('button');
-      clear.className = 'aclear'; clear.type = 'button'; clear.textContent = 'Clear all';
-      clear.addEventListener('click', resetAll);
-      box.appendChild(clear);
     };
 
     const resetAll = () => {
       state.q = ''; q.value = '';
       document.querySelectorAll<HTMLInputElement>('input[data-facet]').forEach((el) => (el.checked = false));
       for (const f of FACET_KEYS) state[f].clear();
-      state.sort = 'score'; sortEl.value = 'score';
-      sortEl.dispatchEvent(new Event('change', { bubbles: true })); // syncs the custom listbox + applies
+      state.sort = 'score'; sortEl.value = 'score'; sheetSort.value = 'score';
+      apply();
     };
 
-    // In-feed ad cadence — mirrors src/domain/ads/ads.ts. Ads live in the cards grid only,
-    // show only in the pristine default browse, and never trail a filtered subset.
-    const AD_INTERVAL = 6;
     const apply = () => {
-      document.querySelectorAll<HTMLElement>('#table .item').forEach((el) => { el.hidden = !show(el); });
-      sortIn(tbody);
+      document.querySelectorAll<HTMLElement>('#table tbody tr').forEach((el) => { el.hidden = !show(el); });
+      ([...tbody.children] as HTMLElement[]).sort(cmp).forEach((el) => tbody.appendChild(el));
 
-      const adCells = [...cards.querySelectorAll<HTMLElement>('.ad-item')];
-      const offerCells = [...cards.querySelectorAll<HTMLElement>('.item:not(.ad-item)')];
-      const visible = offerCells.filter(show).sort(cmp);
-      const pristine = !state.q && !state.cat.size && !state.type.size && !state.verify.size && state.sort === 'score';
+      const ads = [...rows.querySelectorAll<HTMLElement>('[data-ad]')];
+      const all = [...rows.querySelectorAll<HTMLElement>('[data-entry]')];
+      const visible = all.filter(show).sort(cmp);
+      // The interruption belongs to the untouched default browse only: an ad must
+      // never trail a filtered subset, or claim a position in an order it was not
+      // placed in. Its cadence mirrors src/domain/ads/ads.ts.
+      const pristine = isPristine(state);
+      const AD_INTERVAL = 6;
       const frag = document.createDocumentFragment();
       let adi = 0;
       visible.forEach((el, i) => {
         el.hidden = false;
         frag.appendChild(el);
-        if (pristine && adi < adCells.length && (i + 1) % AD_INTERVAL === 0 && i + 1 < visible.length) {
-          adCells[adi].hidden = false; frag.appendChild(adCells[adi]); adi++;
+        if (pristine && adi < ads.length && (i + 1) % AD_INTERVAL === 0 && i + 1 < visible.length) {
+          ads[adi].hidden = false; frag.appendChild(ads[adi]); adi++;
         }
       });
-      offerCells.forEach((el) => { if (!visible.includes(el)) { el.hidden = true; frag.appendChild(el); } });
-      adCells.slice(adi).forEach((a) => { a.hidden = true; frag.appendChild(a); });
-      cards.appendChild(frag);
+      all.forEach((el) => { if (!visible.includes(el)) { el.hidden = true; frag.appendChild(el); } });
+      ads.slice(adi).forEach((a) => { a.hidden = true; frag.appendChild(a); });
+      rows.appendChild(frag);
 
-      countEl.textContent = `${visible.length} offer${visible.length === 1 ? '' : 's'}`;
+      countEl.textContent = `${visible.length} of ${total}`;
+      endEl.textContent = `${visible.length} of ${total} · end of register`;
       const none = visible.length === 0;
       emptyEl.hidden = !none;
+      endEl.hidden = none;
       if (none) {
         const m = emptyMessage(state, q.value);
         emptyEl.querySelector('[data-empty-title]')!.textContent = m.title;
         emptyEl.querySelector('[data-empty-why]')!.textContent = m.why;
       }
+      // The recovery link is only a recovery while a category is narrowing the register.
+      const recovery = emptyEl.querySelector<HTMLElement>('[data-empty-recovery]');
+      if (recovery) recovery.hidden = !(none && state.cat.size > 0);
       updateFacets();
       persist();
-      renderChips();
       updateFilterCount();
     };
 
     q.addEventListener('input', () => { state.q = q.value.trim().toLowerCase(); apply(); });
-    sortEl.addEventListener('change', () => { state.sort = sortEl.value as SortKey; apply(); });
+    for (const sel of [sortEl, sheetSort]) {
+      sel.addEventListener('change', () => {
+        state.sort = sel.value as SortKey;
+        sortEl.value = state.sort; sheetSort.value = state.sort;
+        apply();
+      });
+    }
     document.querySelectorAll<HTMLInputElement>('input[data-facet]').forEach((el) =>
       el.addEventListener('change', () => { for (const f of FACET_KEYS) state[f] = facetSet(f); apply(); }),
     );
     document.getElementById('reset')!.addEventListener('click', resetAll);
     emptyEl.querySelector('[data-empty-reset]')?.addEventListener('click', resetAll);
+    emptyEl.querySelector('[data-empty-recovery]')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      state.cat.clear();
+      apply();
+    });
     // The palette's Enter on this page filters in place instead of reloading.
     document.addEventListener('studely:search', (e) => {
       q.value = String((e as CustomEvent).detail || '');
@@ -390,11 +393,24 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
       apply();
     });
 
+    // Category chips are filters, not navigations: they refine in place. The href
+    // stays real, so they work without JS and are shareable.
+    document.querySelector('.chips')!.addEventListener('click', (e) => {
+      const chip = (e.target as HTMLElement).closest<HTMLElement>('[data-chip]');
+      if (!chip) return;
+      e.preventDefault();
+      if (chip.dataset.chip === 'all') state.cat.clear();
+      else {
+        const v = chip.dataset.value!;
+        state.cat.has(v) ? state.cat.delete(v) : state.cat.add(v);
+      }
+      apply();
+    });
+
     // view: a radiogroup (SegmentedControl); the native radios own the keyboard model
-    const table = document.getElementById('table')!;
     const setView = (view: 'cards' | 'table') => {
       const isTable = view === 'table';
-      table.hidden = !isTable; cards.hidden = isTable;
+      table.hidden = !isTable; rows.hidden = isTable;
       state.view = view;
       persist();
     };
@@ -403,351 +419,125 @@ const dataAttrs = (o: (typeof sorted)[number]) => ({
     );
     setView(state.view); // reflect the hydrated / stored view
 
-    // Category tags inside the directory are filters, not navigations: refine in
-    // place and keep the current view. The href stays real for no-JS and for the
-    // same tags on other pages.
-    const filterByCat = (e: Event) => {
-      const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="/offers?cat="]');
-      if (!a) return;
-      const cat = new URL(a.href, location.origin).searchParams.get('cat');
-      if (!cat) return;
-      e.preventDefault();
-      document.querySelectorAll<HTMLInputElement>('input[data-facet="cat"]').forEach((i) => { i.checked = i.value === cat; });
-      state.cat = facetSet('cat');
-      apply();
-      document.querySelector('.results')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-    };
-    cards.addEventListener('click', filterByCat);
-    table.addEventListener('click', filterByCat);
-
-    // Mobile filters: the ONE rail node moves into the filter Sheet below 900px and
-    // back to the sidebar above it. Same inputs, same listeners, one DOM.
-    const rail = document.getElementById('filter-rail')!;
-    const dir = document.querySelector<HTMLElement>('.dir')!;
-    const host = document.getElementById('rail-host')!;
+    // The ONE facet node moves into the Sheet below 900px and back into the
+    // disclosure above it. Same inputs, same listeners, one DOM.
+    const facets = document.getElementById('facets')!;
+    const deskHost = document.getElementById('more-host')!;
+    const sheetHost = document.getElementById('sheet-host')!;
     const narrow = matchMedia('(max-width: 900px)');
-    const placeRail = () => { (narrow.matches ? host : dir).insertBefore(rail, narrow.matches ? null : dir.firstChild); };
-    narrow.addEventListener('change', placeRail);
-    placeRail();
+    const place = () => (narrow.matches ? sheetHost : deskHost).appendChild(facets);
+    narrow.addEventListener('change', place);
+    place();
 
     apply();
   }
-  document.addEventListener('astro:page-load', setupOffersDir);
-  setupOffersDir();
-</script>
-
-<script is:inline>
-  function setupOffersSelects() {
-    // Build a styled listbox on top of each native <select>. The native element stays
-    // the source of truth (and the no-JS fallback) — we mirror it and fire `change`,
-    // so the filtering logic above needs no changes.
-    document.querySelectorAll('[data-select]').forEach((wrap) => {
-      const sel = wrap.querySelector('select');
-      if (!sel || wrap.dataset.enh) return;
-      wrap.dataset.enh = '1';
-      sel.classList.add('sel-native');
-      sel.tabIndex = -1;
-
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'sel-btn';
-      btn.id = sel.id + '-btn';
-      btn.setAttribute('aria-haspopup', 'listbox');
-      btn.setAttribute('aria-expanded', 'false');
-      btn.setAttribute('aria-controls', sel.id + '-list');
-      const lbl = document.getElementById(sel.id + '-label');
-      if (lbl) btn.setAttribute('aria-labelledby', lbl.id + ' ' + btn.id);
-      btn.innerHTML =
-        '<span class="sel-val"></span><svg class="sel-chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5"/></svg>';
-
-      const list = document.createElement('ul');
-      list.className = 'sel-list';
-      list.id = sel.id + '-list';
-      list.setAttribute('role', 'listbox');
-      if (lbl) list.setAttribute('aria-labelledby', lbl.id);
-      list.hidden = true;
-      [...sel.options].forEach((o, i) => {
-        const li = document.createElement('li');
-        li.className = 'sel-opt';
-        li.setAttribute('role', 'option');
-        li.id = sel.id + '-opt-' + i;
-        li.textContent = o.textContent;
-        list.appendChild(li);
-      });
-      wrap.append(btn, list);
-
-      const valEl = btn.querySelector('.sel-val');
-      const items = [...list.children];
-      let open = false;
-      let active = sel.selectedIndex;
-
-      const sync = () => {
-        valEl.textContent = sel.options[sel.selectedIndex].textContent;
-        items.forEach((li, i) => {
-          const on = i === sel.selectedIndex;
-          li.setAttribute('aria-selected', String(on));
-          li.classList.toggle('is-sel', on);
-        });
-      };
-      const setActive = (i) => {
-        active = Math.max(0, Math.min(items.length - 1, i));
-        items.forEach((li, n) => li.classList.toggle('is-active', n === active));
-        btn.setAttribute('aria-activedescendant', items[active].id);
-        items[active].scrollIntoView({ block: 'nearest' });
-      };
-      const onDocClick = (e) => { if (!wrap.contains(e.target)) setOpen(false); };
-      function setOpen(v) {
-        open = v;
-        list.hidden = !v;
-        btn.setAttribute('aria-expanded', String(v));
-        wrap.classList.toggle('is-open', v);
-        if (v) { setActive(sel.selectedIndex); document.addEventListener('click', onDocClick, true); }
-        else { btn.removeAttribute('aria-activedescendant'); document.removeEventListener('click', onDocClick, true); }
-      }
-      const choose = (i) => {
-        sel.selectedIndex = i;
-        sel.dispatchEvent(new Event('change', { bubbles: true }));
-        sync();
-        setOpen(false);
-        btn.focus();
-      };
-
-      btn.addEventListener('click', () => setOpen(!open));
-      list.addEventListener('click', (e) => {
-        const li = e.target.closest('.sel-opt');
-        if (li) choose(items.indexOf(li));
-      });
-      list.addEventListener('mousemove', (e) => {
-        const li = e.target.closest('.sel-opt');
-        if (li) setActive(items.indexOf(li));
-      });
-      btn.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          if (!open) { setOpen(true); return; }
-          if (e.key === 'ArrowDown') setActive(active + 1);
-          else if (e.key === 'ArrowUp') setActive(active - 1);
-          else choose(active);
-        } else if (e.key === 'Escape' && open) { e.preventDefault(); setOpen(false); }
-        else if (e.key === 'Home' && open) { e.preventDefault(); setActive(0); }
-        else if (e.key === 'End' && open) { e.preventDefault(); setActive(items.length - 1); }
-      });
-      sel.addEventListener('change', sync);
-      sync();
-    });
-  }
-  document.addEventListener('astro:page-load', setupOffersSelects);
-  setupOffersSelects();
+  document.addEventListener('astro:page-load', setupRegister);
+  setupRegister();
 </script>
 
 <style>
-  /* full-page-width directory (breaks out of the centered .wrap) */
-  /* one left edge: the title above, the rail and the grid all start on .wrap */
-  .dir { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: var(--space-m-l); align-items: start; margin-top: var(--space-m); }
-  /* denser results grid → more columns across the wide area */
-  /* 2 columns inside the 1240 container, 3 from ~1400px — a card needs ~290px for
-     provider · score · a two-word footer without truncation */
-  .results .grid-offers { grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); grid-auto-rows: 1fr; }
-  /* every card fills its (equal-height) row so the footer lines up across the grid.
-     min-width:0 lets the flex items shrink to the grid track (else content min-width overflows). */
-  /* card grid items are flex — but the SAME .item class is on the table's <tr>, so
-     scope this to #cards or the table rows become flex containers and collapse. */
-  #cards .item { display: flex; min-width: 0; }
-  #cards .item > :global(.offer) { flex: 1; min-width: 0; }
-  /* in-feed ad cell fills its grid track like a card */
-  #cards .ad-item > :global(.ad-ph) { flex: 1; min-width: 0; }
-  .rail-inner { position: sticky; top: 84px; display: flex; flex-direction: column; gap: 1.25rem; }
-  .fgroup { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-  .flabel { font-family: var(--font-display); font-weight: 500; font-size: 0.95rem; letter-spacing: -0.01em; }
-  .select, .input {
-    width: 100%; font: inherit; font-weight: 500; color: var(--text);
-    padding: 0.55em 0.7em; border-radius: 10px; border: 1px solid var(--border-control); background: var(--surface);
-  }
-  /* facet rows — highlight wipes in from the left on hover (same mechanic as the navbar) */
-  .check {
-    position: relative; isolation: isolate;
-    display: flex; align-items: center; gap: 0.55rem; cursor: pointer;
-    font-size: var(--step--1); font-weight: 500; color: var(--text-muted);
-    padding: 0.32rem 0.5rem; border-radius: 8px;
-    transition: color 0.25s var(--ease-out);
-  }
-  .check::before {
-    content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
-    background: var(--surface-2); transform: scaleX(0); transform-origin: right center;
-    transition: transform 0.45s cubic-bezier(0.2, 1, 0.36, 1);
-  }
-  .check:hover::before { transform: scaleX(1); transform-origin: left center; }
-  .check:hover, .check:has(input:checked) { color: var(--ink); }
-  /* native input stays focusable but invisible; the .box is the visual control */
-  .check input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
-  .box {
-    flex: none; width: 17px; height: 17px; display: grid; place-items: center;
-    border: 1px solid var(--border-control); border-radius: 5px;
-    transition: background 0.25s var(--ease-out), border-color 0.25s var(--ease-out);
-  }
-  .box svg {
-    width: 11px; height: 11px; fill: none; stroke: var(--bg); stroke-width: 2;
-    stroke-linecap: round; stroke-linejoin: round;
-    stroke-dasharray: 13; stroke-dashoffset: 13;
-    transition: stroke-dashoffset 0.32s var(--ease-out);
-  }
-  .check input:checked + .box { background: var(--ink); border-color: var(--ink); }
-  .check input:checked + .box svg { stroke-dashoffset: 0; }
-  .check input:focus-visible + .box { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .register { padding-block: var(--space-l) var(--space-2xl); }
+  .head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-xs); }
+  h1 { font-size: var(--step-3); }
+  .status { font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
 
-  /* custom sort dropdown — the wrapper and native <select> live in the template, so they
-     scope normally. Its button/listbox are built by JS and are styled in the is:global
-     block below (JS-created nodes carry no astro scope id, so scoped rules can't match). */
-  .sel { position: relative; }
-  .sel .sel-native { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-  .cico { display: inline-grid; place-items: center; color: var(--text-muted); }
-  .cico :global(.cat-ico) { width: 16px; height: 16px; }
-  .ctxt { flex: 1; }
-  .cn { color: var(--text-muted); font-variant-numeric: tabular-nums; font-weight: 600; }
-  #reset { align-self: start; }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-s); margin-top: var(--space-m); padding-top: var(--space-s); border-top: 1px solid var(--rule-strong); }
+  .searchbox { flex: 1 1 22rem; min-width: 0; }
+  .qfield { width: 100%; font: inherit; color: var(--ink); background: var(--bg); padding: 0.6em 0.2em; border: 0; border-bottom: 1px solid var(--rule-control); }
+  .qfield::placeholder { color: var(--text-muted); }
+  .qfield:focus { border-bottom-color: var(--ink); }
+  .qfield:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .sortview { display: flex; align-items: center; gap: var(--space-2xs); }
+  .ctl-label { font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+  .select { font: inherit; font-size: var(--step--1); color: var(--ink); background: var(--bg); border: 1px solid var(--rule-control); border-radius: 2px; padding: 0.4em 0.5em; }
+  .select:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
 
-  .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
-  .count { font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: var(--space-3xs) var(--space-2xs); margin-top: var(--space-s); }
+  .chip {
+    display: inline-flex; align-items: baseline; gap: 0.4em; white-space: nowrap;
+    font-size: var(--step--1); color: var(--ink);
+    padding: 0.3em 0.7em; border: 1px solid var(--rule-control); border-radius: 2px;
+  }
+  .chip .cn { font-family: var(--font-mono); font-size: var(--step--2); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .chip:hover { border-color: var(--ink); }
+  .chip.is-on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .chip.is-on .cn { color: var(--bg); }
+  .chip[hidden] { display: none; }
 
-  /* active-filter chips (removable), shown above the grid when any filter is on */
-  .afilters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 1.1rem; }
-  .afilters[hidden] { display: none; }
-  /* :global — these chips are built in JS at runtime, so a scoped selector (which
-     carries this component's data-astro-cid) never matches them. Global makes the
-     styles actually apply. One chip reads "Developer Tools ×"; Clear all is a quiet link. */
-  :global(.achip) {
-    display: inline-flex; align-items: center; gap: 0.35em;
-    font-size: var(--step--1); font-weight: 500; color: var(--ink);
-    padding: 0.26em 0.35em 0.26em 0.7em; border-radius: var(--radius-pill);
-    border: 1px solid var(--border-control); background: var(--surface);
-  }
-  :global(.achip button) {
-    display: inline-grid; place-items: center; width: 1.25em; height: 1.25em; flex: none;
-    border: 0; border-radius: 50%; background: none; color: var(--text-muted);
-    font: inherit; line-height: 1; cursor: pointer;
-  }
-  :global(.achip button:hover) { background: var(--surface-2); color: var(--ink); }
-  :global(.aclear) { font: inherit; font-size: var(--step--1); font-weight: 500; color: var(--text-muted); background: none; border: 0; padding: 0.26em 0.4em; margin-left: 0.15em; cursor: pointer; }
-  :global(.aclear:hover) { color: var(--ink); text-decoration: underline; }
-  /* active-filter count on the mobile Filter button */
-  .ft-count {
-    display: inline-grid; place-items: center; min-width: 1.4em; height: 1.4em; padding: 0 0.35em;
-    border-radius: var(--radius-pill); background: var(--ink); color: var(--bg);
-    font-size: 0.72em; font-weight: 700; line-height: 1;
-  }
+  .morebar { display: flex; align-items: center; gap: var(--space-s); margin-top: var(--space-s); }
+  .more summary { display: inline-flex; align-items: center; gap: 0.5em; cursor: pointer; font-size: var(--step--1); color: var(--text-muted); list-style: none; }
+  .more summary::-webkit-details-marker { display: none; }
+  .more summary::before { content: '+'; font-family: var(--font-mono); }
+  .more[open] summary::before { content: '−'; }
+  .more summary:hover { color: var(--ink); }
+  .ft-count { font-family: var(--font-mono); font-size: var(--step--2); padding: 0 0.4em; background: var(--ink); color: var(--bg); }
   .ft-count[hidden] { display: none; }
+  .filter-toggle { display: none; align-items: center; gap: 0.5em; font: inherit; font-size: var(--step--1); color: var(--ink); background: none; border: 1px solid var(--rule-control); border-radius: 2px; padding: 0.5em 0.9em; cursor: pointer; }
 
-  /* mobile filter-sheet controls (shown only <=860) */
-  .filter-toggle {
-    align-items: center; gap: 0.4rem; font: inherit; font-size: var(--step--1); font-weight: 500;
-    cursor: pointer; padding: 0.45em 0.9em; border-radius: var(--radius-pill);
-    border: 1px solid var(--border-control); background: var(--surface); color: var(--ink);
-  }
-  .filter-toggle { display: none; }
+  .facets { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: var(--space-s) var(--space-m); padding: var(--space-s) 0; }
+  .fgroup { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+  .fgroup[hidden] { display: none; }
+  .sheet-only { display: none; }
+  .flabel { font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+  .check { display: flex; align-items: baseline; gap: 0.5em; cursor: pointer; font-size: var(--step--1); color: var(--text-muted); }
+  .check[hidden] { display: none; }
+  .check input { accent-color: var(--ink); }
+  .check:hover, .check:has(input:checked) { color: var(--ink); }
+  .check .ctxt { flex: 1; min-width: 0; }
+  .check .cn { font-family: var(--font-mono); font-size: var(--step--2); font-variant-numeric: tabular-nums; }
+  .reset { align-self: start; font: inherit; font-size: var(--step--1); color: var(--text-muted); background: none; border: 0; padding: 0; cursor: pointer; border-bottom: 1px solid var(--rule); }
+  .reset:hover { color: var(--ink); border-bottom-color: var(--ink); }
 
-  /* must out-specify `#cards .item { display: flex }` (id+class) — a bare
-     `.item[hidden]` loses to it, leaving filtered-out cards visible. */
-  #cards .item[hidden], #table .item[hidden] { display: none; }
-  /* .grid sets display:grid, which beats the UA [hidden] rule — so the Table view
-     could not actually hide the cards grid. Restore hidden = hidden. */
-  #cards[hidden] { display: none; }
-  /* facet rows/groups carry display:flex, which beats the UA [hidden] rule */
-  .check[hidden], .fgroup[hidden] { display: none; }
+  .count { font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-top: var(--space-m); }
+  .rows { margin-top: var(--space-2xs); border-bottom: 1px solid var(--rule); }
+  .rows[hidden] { display: none; }
 
-  /* table view */
-  /* overflow: clip (not hidden/auto) rounds the corners by clipping the square-
-     cornered collapsed table to the wrapper radius WITHOUT creating a scroll
-     container — so the sticky header still sticks to the viewport. The fixed-layout
-     table always fits at desktop; narrow screens get a scroll wrapper below. */
-  .tablewrap { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: clip; box-shadow: var(--shadow-soft); background: var(--surface); }
-  /* fixed layout so 7 columns share 100% and never overflow the results column */
+  /* the interruption: bounded by rules, given more room than a row, and carrying
+     none of an entry's slots — it must never read as the next offer */
+  .interruption { padding: var(--space-l) 0; border-top: 1px solid var(--rule); text-align: center; }
+  .interruption[hidden] { display: none; }
+  .ad-label { font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: var(--space-xs); }
+
+  .endline { font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-top: var(--space-s); }
+  .endline[hidden] { display: none; }
+
+  /* table: the same entries, aligned. One dataset, one derivation. */
+  .tablewrap { margin-top: var(--space-2xs); overflow-x: auto; }
+  .tablewrap[hidden] { display: none; }
   table { width: 100%; border-collapse: collapse; font-size: var(--step--1); table-layout: fixed; }
-  #table th:nth-child(1) { width: 8%; }   /* Score */
-  #table th:nth-child(2) { width: 40%; }  /* Offer (+ category · type) */
-  #table th:nth-child(3) { width: 22%; }  /* Value */
-  #table th:nth-child(4) { width: 20%; }  /* Eligibility */
-  #table th:nth-child(5) { width: 10%; }  /* Get */
-  thead th { text-align: left; font-family: var(--font-display); font-weight: 500; padding: 0.85rem 0.8rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  /* sticky header + row hover for scanning hundreds of rows */
-  #table thead th { position: sticky; top: var(--nav-h); z-index: 2; background: var(--surface); }
-  #table tbody tr { transition: background 0.14s var(--ease-out); }
-  #table tbody tr:hover { background: var(--surface-2); }
-  /* one line per cell + ellipsis → uniform, scannable rows that scale to hundreds
-     of offers regardless of how long a name / value / verification string is.
-     Full text is on the offer page and in each cell's title tooltip. */
-  tbody td { padding: 0.6rem 0.8rem; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tname { display: flex; align-items: center; gap: 0.6rem; min-width: 0; font-weight: 600; }
-  .tname-txt { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
-  .tname-txt > a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .tmeta { font-size: 0.82em; font-weight: 400; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tmeta a { color: inherit; }
-  .tmeta a:hover { color: var(--ink); }
-  .tname a:hover { color: var(--accent-ink); }
-  .tlogo { width: 34px; height: 34px; flex: none; color: var(--ink); }
-  .tcat:hover { color: var(--accent-ink); }
-  .tval { font-weight: 600; }
+  th { text-align: left; font-family: var(--font-mono); font-size: var(--step--2); font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); padding: var(--space-2xs) var(--space-2xs) var(--space-2xs) 0; border-bottom: 1px solid var(--rule-strong); }
+  td { padding: var(--space-xs) var(--space-2xs) var(--space-xs) 0; border-top: 1px solid var(--rule); vertical-align: baseline; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  tbody tr[hidden] { display: none; }
+  .c-n { width: 3rem; font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-muted); }
+  .c-score { width: 6rem; font-family: var(--font-display); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .c-act { width: 7rem; text-align: right; }
+  /* a warning is the one thing in the table allowed to take a second line:
+     truncating "Provider blocks automated checks" would hide the very fact the
+     column exists to report. */
+  .t-check { width: 14rem; white-space: normal; }
+  .t-prov { width: 9rem; font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+  .t-title a { color: var(--ink); }
+  .t-title a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .t-proof, .t-check { color: var(--text-muted); font-size: var(--step--2); }
+  .t-check { font-family: var(--font-mono); }
+  .t-check.tone-warn { color: var(--state-warn-ink); }
+  .t-check.tone-bad { color: var(--state-bad-ink); }
+  .c-act a { border-bottom: 1px solid var(--rule-strong); }
 
   @media (max-width: 900px) {
-    .dir { grid-template-columns: 1fr; }
-    /* 7 columns are not a readable phone pattern; below 900px the table becomes
-       the card list (one dataset, one presentation that fits) and the view
-       control is hidden */
+    /* a seven-column table is not a phone pattern: the rows ARE the compact table */
+    .tablewrap { display: none; }
     :global(.seg.views) { display: none; }
-    #table { display: none !important; }
-    #cards { display: grid !important; }
+    /* sort moves into the Sheet with the rest of the narrowing controls */
+    .sortview { display: none; }
+    .rows[hidden] { display: block; }
     .filter-toggle { display: inline-flex; }
-    /* the rail node lives inside the filter Sheet here (moved by the script) */
-    .rail-inner { position: static; gap: var(--space-s); }
-    .fgroup { flex-flow: row wrap; align-items: center; }
-    .fgroup .flabel { width: 100%; }
-    .check { border: 1px solid var(--border-soft); border-radius: var(--radius-pill); padding: 0.3rem 0.6rem; }
+    .more { display: none; }
+    .sheet-only { display: flex; }
+    /* search and chips stay put while the register scrolls under them */
+    .controls { position: sticky; top: var(--nav-h); z-index: 20; background: var(--bg); margin-top: var(--space-s); padding-bottom: var(--space-2xs); }
+    .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * clamp(1rem, 0.5rem + 2vw, 2.25rem)); padding-inline: clamp(1rem, 0.5rem + 2vw, 2.25rem); }
+    .chips::-webkit-scrollbar { display: none; }
+    .facets { grid-template-columns: 1fr; }
   }
-</style>
-
-<!-- The dropdown's button/listbox are created at runtime by the script above, so they
-     carry no astro scope id and scoped rules never match them. Global, but every
-     selector is namespaced under .sel / .sel-* which exist only here. -->
-<style is:global>
-  .sel .sel-btn {
-    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
-    font: inherit; font-weight: 500; font-size: var(--step--1); color: var(--ink);
-    text-align: left; cursor: pointer;
-    padding: 0.55em 0.7em; border-radius: 10px;
-    border: 1px solid var(--border-control); background: var(--surface);
-    transition: border-color 0.25s var(--ease-out);
-  }
-  .sel .sel-btn:hover, .sel.is-open .sel-btn { border-color: var(--ink); }
-  .sel .sel-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-  .sel .sel-val { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .sel .sel-chev {
-    width: 12px; height: 12px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6;
-    stroke-linecap: round; stroke-linejoin: round; transition: transform 0.35s var(--ease-out);
-  }
-  .sel.is-open .sel-chev { transform: rotate(180deg); }
-
-  .sel .sel-list {
-    position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; right: 0;
-    margin: 0; padding: 0.3rem; list-style: none; max-height: 260px; overflow-y: auto;
-    background: var(--surface-2); border: 1px solid var(--border-control); border-radius: 12px;
-    box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.8);
-    animation: sel-in 0.22s var(--ease-out) both;
-  }
-  @keyframes sel-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
-  @media (prefers-reduced-motion: reduce) { .sel .sel-list { animation: none; } }
-
-  .sel .sel-opt {
-    position: relative; isolation: isolate;
-    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
-    padding: 0.45em 0.6em; border-radius: 8px; cursor: pointer;
-    font-size: var(--step--1); font-weight: 500; color: var(--text-muted);
-    transition: color 0.2s var(--ease-out);
-  }
-  .sel .sel-opt::before {
-    content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
-    background: var(--surface-2); transform: scaleX(0); transform-origin: right center;
-    transition: transform 0.4s cubic-bezier(0.2, 1, 0.36, 1);
-  }
-  .sel .sel-opt:hover::before, .sel .sel-opt.is-active::before { transform: scaleX(1); transform-origin: left center; }
-  .sel .sel-opt:hover, .sel .sel-opt.is-active, .sel .sel-opt.is-sel { color: var(--ink); }
-  .sel .sel-opt.is-sel::after { content: '✓'; font-size: 0.85em; opacity: 0.9; }
 </style>

@@ -46,6 +46,15 @@ export function hasDirectoryKeys(params: URLSearchParams): boolean {
   return DIRECTORY_KEYS.some((k) => params.has(k));
 }
 
+/**
+ * Untouched default browse: no search, no facet, the default sort. The in-feed
+ * ad cadence is allowed only here — an ad must never trail a filtered subset.
+ * The view is not part of it: switching Index/Table narrows nothing.
+ */
+export function isPristine(s: DirectoryState): boolean {
+  return !s.q && s.sort === 'score' && FACET_KEYS.every((f) => s[f].size === 0);
+}
+
 export function parseState(params: URLSearchParams): DirectoryState {
   const s = emptyState();
   s.q = (params.get('q') ?? '').trim().toLowerCase();
