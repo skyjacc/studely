@@ -3,7 +3,6 @@ export const prerender = false;
 
 import AdminLayout from '@ui/layouts/AdminLayout.astro';
 import Wordmark from '@ui/components/Wordmark.astro';
-import HeroField from '@ui/components/HeroField.astro';
 import { actions } from 'astro:actions';
 
 const url = Astro.url;
@@ -32,11 +31,9 @@ const actionError =
 ---
 
 <AdminLayout title="Sign in" chrome={false}>
-  <HeroField tone="quiet" class="auth-field" />
-
   <div class="card">
     <div class="head">
-      <Wordmark class="mark" />
+      <Wordmark class="wordmark" />
       <span class="eyebrow">Admin</span>
     </div>
     <h1 class="sr-only">Sign in to Studely admin</h1>
@@ -71,7 +68,7 @@ const actionError =
           <input type="hidden" name="next" value={nextPath} />
           <label class="lbl" for="email">Email</label>
           <input id="email" name="email" type="email" required autocomplete="email" placeholder="you@example.com" class="input" />
-          <button class="btn btn-primary" type="submit">Email me a link</button>
+          <button class="btn pri" type="submit">Email me a link</button>
         </form>
       </>
     )}
@@ -106,7 +103,7 @@ const actionError =
   .card:hover { transform: none; box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.9); border-color: var(--border-strong); }
 
   .head { display: flex; align-items: baseline; gap: 10px; }
-  .card :global(.mark) { height: 20px; color: var(--ink); }
+  .card :global(.wordmark) { height: 20px; color: var(--ink); }
   .eyebrow {
     font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.2em;
     text-transform: uppercase; color: var(--text-muted);
@@ -131,7 +128,10 @@ const actionError =
     border: 1px solid var(--border-control); background: var(--bg);
   }
   .input:focus { outline: 2px solid var(--ink); outline-offset: 1px; border-color: var(--ink); }
-  .form button { margin-top: 0.4rem; justify-content: center; }
+  .form button { margin-top: 0.4rem; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; font: inherit; font-size: var(--step--1); font-weight: 500; padding: 9px 16px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink); cursor: pointer; }
+  .btn:hover { background: var(--surface-2); }
+  .btn.pri { background: var(--ink); color: var(--surface); border-color: var(--ink); }
   .btn[aria-busy='true'] { pointer-events: none; opacity: 0.75; }
   .btn[aria-busy='true']::after {
     content: ''; display: inline-block; width: 13px; height: 13px; margin-left: 9px;
