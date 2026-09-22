@@ -14,9 +14,15 @@ describe('offerCta', () => {
     expect(offerCta({ ...base, affiliate: true }).rel).toBe('sponsored nofollow noopener');
   });
 
-  it('labels cards generically and the detail page by destination', () => {
-    expect(offerCta(base).label).toBe('View offer ↗');
+  it('labels a register row generically and the record by destination', () => {
+    expect(offerCta(base, 'row').label).toBe('View offer ↗');
     expect(offerCta(base, 'detail').label).toBe('Continue to GitHub ↗');
+  });
+
+  // 'card' is the retired name for the same placement. It stays until the last
+  // card-model consumer is deleted, and it must not drift from 'row'.
+  it('keeps the retired card placement identical to a row', () => {
+    expect(offerCta(base, 'card')).toEqual(offerCta(base, 'row'));
   });
 
   it('carries the analytics attributes the click event reads', () => {
