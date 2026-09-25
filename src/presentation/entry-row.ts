@@ -11,6 +11,7 @@ import type { OfferView } from '@domain/offers/offer-mapping';
 import { formatScore, scoreWord, describeScore } from '@domain/offers/score';
 import { deriveTrust, formatTrustDate, type TrustState } from '@domain/verification/trust';
 import { offerCta, type OfferCta } from '@domain/affiliate/cta';
+import { recordHref } from '@domain/offers/routes';
 import { offerTypeLabel } from '@domain/offers/offers';
 
 /**
@@ -40,7 +41,10 @@ export interface EntryRowModel {
   n: string;
   provider: string;
   title: string;
-  /** The record. */
+  /**
+   * The record. A row always leads here — the title on desktop, the whole row
+   * on mobile. The outbound transport is `action` alone, never this.
+   */
   href: string;
   score: { text: string; word: string; label: string };
   value: string;
@@ -110,7 +114,7 @@ export function entryRowModel(offer: OfferView, index: number, now: Date = new D
     n: String(index + 1).padStart(2, '0'),
     provider: d.provider,
     title: d.title,
-    href: `/offers/${offer.slug}`,
+    href: recordHref(offer.slug),
     score: { text: formatScore(d.score), word: scoreWord(d.score), label: describeScore(d.score) },
     value: d.value,
     typeWord: offerTypeLabel[d.offerType] ?? d.offerType,
