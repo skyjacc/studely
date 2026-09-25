@@ -12,7 +12,7 @@ function offer(over: Partial<OfferView['data']> = {}, verification: OfferView['v
       score: 8, url: 'https://x', affiliate: false, sponsored: false, featured: false,
       proofMethod: 'SheerID', eligibility: 'Students', expires: 'ongoing',
       lastChecked: new Date('2026-09-21T10:00:00Z'), lastCheckResult: 'pass', lastCheckNote: null,
-      status: 'active', tags: [],
+      status: 'active', tags: [], updatedAt: null,
       ...over,
     },
   };
@@ -60,7 +60,7 @@ describe('deriveTrust — independent facts, in no order', () => {
   });
 
   it('has no ordered states list for a caller to lean on', () => {
-    expect((deriveTrust(offer(), NOW) as Record<string, unknown>).states).toBeUndefined();
+    expect((deriveTrust(offer(), NOW) as unknown as Record<string, unknown>).states).toBeUndefined();
   });
 
   it('reports the automated layer as a fact, whatever the human layer says', () => {

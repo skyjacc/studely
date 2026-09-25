@@ -21,7 +21,7 @@ function offer(over: Partial<OfferView['data']> = {}, verification: OfferView['v
       url: 'https://education.github.com/pack', affiliate: false, sponsored: false, featured: false,
       proofMethod: 'SheerID / school-issued email', eligibility: 'Students worldwide', expires: 'ongoing',
       lastChecked: new Date('2026-09-21T03:00:00Z'), lastCheckResult: 'pass', lastCheckNote: null,
-      status: 'active', tags: [],
+      status: 'active', tags: [], updatedAt: null,
       ...over,
     },
   };

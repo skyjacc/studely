@@ -14,7 +14,7 @@ const o = (over: Partial<OfferView['data']> & { slug?: string }): OfferView => (
     score: 5, url: 'https://x', affiliate: false, sponsored: false, featured: false,
     proofMethod: 'p', eligibility: 'e', expires: 'ongoing',
     lastChecked: new Date('2026-09-21T00:00:00Z'), lastCheckResult: 'pass', lastCheckNote: null,
-    status: 'active', tags: [], ...over,
+    status: 'active', tags: [], updatedAt: null, ...over,
   },
 });
 
