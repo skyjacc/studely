@@ -76,8 +76,11 @@ async function loadHistories(): Promise<Map<string, HistorySources>> {
 
   const ids = [...slugById.keys()];
   const [checks, verifications] = await Promise.all([
-    db.from('link_checks').select('offer_id,checked_at,result,note').in('offer_id', ids),
-    db.from('verifications').select('id,offer_id,checked_at,result,note,evidence_url').in('offer_id', ids),
+    // Ordered here as well as in recordHistory: an unordered read is a
+    // different list on every request, and the merge should not be the only
+    // thing standing between that and the page.
+    db.from('link_checks').select('offer_id,checked_at,result,note').in('offer_id', ids).order('checked_at', { ascending: false }),
+    db.from('verifications').select('id,offer_id,checked_at,result,note,evidence_url').in('offer_id', ids).order('checked_at', { ascending: false }),
   ]);
   if (checks.error) throw new Error(`Failed to load link_checks: ${checks.error.message}`);
   if (verifications.error) throw new Error(`Failed to load verifications: ${verifications.error.message}`);

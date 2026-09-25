@@ -24,10 +24,28 @@ describe('recordHistory', () => {
     ]);
   });
 
-  it('breaks a tie on the row id, so the order is stable between builds', () => {
-    const a = recordHistory({ checks: [check('2026-09-21T06:00:00Z', { id: 'b' }), check('2026-09-21T06:00:00Z', { id: 'a' })] });
-    const b = recordHistory({ checks: [check('2026-09-21T06:00:00Z', { id: 'a' }), check('2026-09-21T06:00:00Z', { id: 'b' })] });
-    expect(a.map((e) => e.id)).toEqual(b.map((e) => e.id));
+  // Newest first all the way down: the same instant is broken by the row id,
+  // descending, so the order does not depend on what the database happened to
+  // return or on the order the two sources were merged in.
+  it('breaks a tie on the row id, descending', () => {
+    const events = recordHistory({ checks: [check('2026-09-21T06:00:00Z', { id: 'a' }), check('2026-09-21T06:00:00Z', { id: 'b' })] });
+    expect(events.map((e) => e.id)).toEqual(['b', 'a']);
+  });
+
+  it('gives the same answer whichever order it is handed the rows', () => {
+    const rows = [check('2026-09-21T06:00:00Z', { id: 'a' }), check('2026-09-21T06:00:00Z', { id: 'b' }), check('2026-09-25T06:00:00Z', { id: 'c' })];
+    const forwards = recordHistory({ checks: rows }).map((e) => e.id);
+    const backwards = recordHistory({ checks: [...rows].reverse() }).map((e) => e.id);
+    expect(forwards).toEqual(backwards);
+    expect(forwards).toEqual(['c', 'b', 'a']);
+  });
+
+  it('orders a check against a verification written in the same second', () => {
+    const events = recordHistory({
+      checks: [check('2026-09-23T09:00:00Z', { id: 'zzz' })],
+      verifications: [verification('2026-09-23T09:00:00Z', { id: 'aaa' })],
+    });
+    expect(events.map((e) => e.kind)).toEqual(['check', 'verification']);
   });
 
   it('carries what each kind of row actually recorded', () => {

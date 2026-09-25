@@ -72,7 +72,14 @@ export function recordHistory(sources: HistorySources): HistoryEvent[] {
     if (ends) events.push({ kind: 'ends', id: 'ends', at: ends });
   }
 
-  // Newest first; the row id breaks a tie so two checks written in the same
-  // second do not swap places between builds.
-  return events.sort((a, b) => b.at.getTime() - a.at.getTime() || a.id.localeCompare(b.id));
+  // Newest first, all the way down: `checked_at` descending, then the row id
+  // descending. Without the second key two rows written in the same second
+  // would keep whatever order the database happened to return them in, and the
+  // page would reshuffle between builds for no reason a reader could see.
+  //
+  // For a verification that key is the row's own id. For a check it is its
+  // timestamp: link_checks.id is not public (0016), and two checks recorded at
+  // the same instant carry the same four published facts — they are the same
+  // event as far as this page can tell, so their relative order cannot matter.
+  return events.sort((a, b) => b.at.getTime() - a.at.getTime() || b.id.localeCompare(a.id));
 }
