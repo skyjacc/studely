@@ -5,6 +5,7 @@ import AdminLayout from '@ui/layouts/AdminLayout.astro';
 import { createSupabaseServer } from '@core/supabase';
 import { dashboardMetrics, type ClickRow, type MetricOffer } from '@domain/admin/metrics';
 import { recordHistory, type VerificationRow } from '@domain/verification/history';
+import Overview from '@ui/components/admin/Overview.astro';
 
 // The overview answers one question: what state is the catalogue in, and what
 // needs me? Every number comes from dashboardMetrics — this page reads rows,
@@ -72,7 +73,6 @@ const slugById = new Map(offers.map((o) => [o.id, o.slug]));
 const activity = recordHistory({ verifications }).slice(0, 8)
   .map((event) => ({ event, slug: slugById.get((verifications.find((v) => v.id === event.id)?.offer_id) ?? '') ?? '' }));
 
-const dateOf = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 ---
 
 <AdminLayout
@@ -81,124 +81,16 @@ const dateOf = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', mon
   handle={profile.handle}
   role={profile.role}
 >
-  {readFailed && (
+{readFailed && (
     <p class="fault">
       Could not read the catalogue: <code>{readFailed}</code>. The numbers below are not the state of anything.
     </p>
   )}
 
-  <section class="band">
-    <h2 class="hd">Catalogue</h2>
-    <div class="tiles">
-      <div class="tile"><span class="n">{metrics.catalogue.published}</span><span class="l">Published</span></div>
-      <div class="tile"><span class="n">{metrics.catalogue.drafts}</span><span class="l">Drafts</span></div>
-      <div class="tile"><span class="n">{metrics.catalogue.expired}</span><span class="l">Expired</span></div>
-      <div class="tile"><span class="n">{metrics.verification.verified}</span><span class="l">Verified</span></div>
-    </div>
-  </section>
-
-  <section class="band">
-    <h2 class="hd">Link health</h2>
-    <div class="tiles">
-      <div class="tile"><span class="n">{metrics.health.pass}</span><span class="l">Pass</span></div>
-      <div class:list={['tile', { 'is-hot': metrics.health.warn > 0 }]}><span class="n">{metrics.health.warn}</span><span class="l">Warn</span></div>
-      <div class:list={['tile', { 'is-hot': metrics.health.fail > 0 }]}><span class="n">{metrics.health.fail}</span><span class="l">Fail</span></div>
-      <div class="tile"><span class="n">{metrics.health.unchecked}</span><span class="l">Unchecked</span></div>
-    </div>
-    <p class="note">
-      <span>{metrics.health.warnings.blocked} blocked · {metrics.health.warnings.unreachable} unreachable · {metrics.health.warnings.unconfirmed} unconfirmed</span>
-      <span class="sep" aria-hidden="true">·</span>
-      <span>Stale {metrics.health.stale}</span>
-      <span class="sep" aria-hidden="true">·</span>
-      <span>Last check {metrics.health.lastCheck ? dateOf(metrics.health.lastCheck) : 'never'}</span>
-    </p>
-  </section>
-
-  <section class="band">
-    <h2 class="hd">Needs attention</h2>
-    {metrics.health.needsAttention.length === 0 ? (
-      <p class="empty">Nothing needs attention.</p>
-    ) : (
-      <ul class="attention">
-        {metrics.health.needsAttention.map((item) => (
-          <li>
-            <a class="who" href={`/admin/offers/${item.slug}`}>{item.provider}</a>
-            <span class="what">{item.text}</span>
-          </li>
-        ))}
-      </ul>
-    )}
-  </section>
-
-  <section class="band">
-    <h2 class="hd">Activity</h2>
-    {activity.length === 0 ? (
-      <p class="empty">Nothing recorded yet. Human verifications appear here as they are made.</p>
-    ) : (
-      <ul class="events">
-        {activity.map(({ event, slug }) => (
-          <li>
-            <time datetime={event.at.toISOString()}>{dateOf(event.at)}</time>
-            <span class="what">{slug || 'offer'} — human verification — {event.kind === 'verification' && event.result === 'pass' ? 'passed' : 'did not pass'}</span>
-          </li>
-        ))}
-      </ul>
-    )}
-  </section>
-
-  <section class="band">
-    <h2 class="hd">Outbound requests</h2>
-    <div class="tiles">
-      <div class="tile"><span class="n">{metrics.outbound.today}</span><span class="l">Today</span></div>
-      <div class="tile"><span class="n">{metrics.outbound.week}</span><span class="l">7 days</span></div>
-      <div class="tile"><span class="n">{metrics.outbound.requests}</span><span class="l">{metrics.outbound.days} days</span></div>
-    </div>
-    <p class="note">
-      Requests to <code>/go</code>, counted as they were logged. Nothing here distinguishes a reader
-      from a crawler, so this is a sign the exit works — not a measure of demand.
-    </p>
-  </section>
+  <Overview metrics={metrics} activity={activity} />
 </AdminLayout>
 
 <style>
-  .band { margin-top: 1.8rem; }
-  .band:first-of-type { margin-top: 0; }
-  .hd {
-    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--text-muted); font-weight: 500;
-    margin-bottom: 0.75rem;
-  }
-
-  .tiles { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); }
-  .tile {
-    display: flex; flex-direction: column; gap: 0.3rem;
-    padding: 1rem 1.1rem; border-radius: 12px;
-    border: 1px solid var(--border); background: var(--surface);
-  }
-  /* a number that wants a human should look different at a glance from one that does not */
-  .tile.is-hot { border-color: var(--border-strong); }
-  .tile .n {
-    font-family: var(--font-display); font-weight: 500; font-size: 1.9rem;
-    line-height: 1; letter-spacing: -0.03em; color: var(--ink);
-    font-variant-numeric: tabular-nums;
-  }
-  .tile .l { font-size: var(--step--1); color: var(--text-muted); }
-
-  .note { margin-top: 0.7rem; font-size: var(--step--1); color: var(--text-muted); line-height: 1.5; max-width: 70ch; }
-  .note .sep { margin: 0 0.5em; }
-  .empty { font-size: var(--step--1); color: var(--text-muted); }
-
-  .attention, .events { list-style: none; margin: 0; padding: 0; }
-  .attention li, .events li {
-    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.9rem;
-    padding: 0.55rem 0; border-top: 1px solid var(--border); font-size: var(--step--1);
-  }
-  .attention li:first-child, .events li:first-child { border-top: 0; }
-  .who { min-width: 9rem; color: var(--ink); font-weight: 500; }
-  .who:hover { text-decoration: underline; }
-  .what { color: var(--text-muted); }
-  .events time { min-width: 9rem; font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-muted); }
-
   .fault {
     padding: 0.8rem 1rem; margin-bottom: 1.4rem; border-radius: 10px;
     border: 1px solid var(--state-bad-ink); background: var(--surface-2);
