@@ -10,11 +10,6 @@ export function daysUntil(expires: string): number | null {
   return Math.ceil((t - Date.now()) / 86_400_000);
 }
 
-export function isExpiringSoon(offer: Offer, withinDays = 30): boolean {
-  const d = daysUntil(offer.data.expires);
-  return d !== null && d >= 0 && d <= withinDays;
-}
-
 export function isExpired(offer: Offer): boolean {
   const d = daysUntil(offer.data.expires);
   return d !== null && d < 0;
@@ -26,16 +21,6 @@ export const offerTypeLabel: Record<string, string> = {
   credit: 'Credit',
   trial: 'Free trial',
 };
-
-/** Featured + sponsored first, then most recently verified. */
-export function sortOffers(offers: Offer[]): Offer[] {
-  return [...offers].sort((a, b) => {
-    const rank = (o: Offer) => (o.data.sponsored ? 2 : 0) + (o.data.featured ? 1 : 0);
-    const r = rank(b) - rank(a);
-    if (r !== 0) return r;
-    return b.data.lastChecked.getTime() - a.data.lastChecked.getTime();
-  });
-}
 
 export function formatDate(d: Date): string {
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
@@ -52,7 +37,3 @@ export function verifyGroup(v: string): string {
   return 'Other';
 }
 
-/** Colour tier for the score badge. */
-export function scoreTier(score: number): 'high' | 'mid' | 'low' {
-  return score >= 9 ? 'high' : score >= 7 ? 'mid' : 'low';
-}

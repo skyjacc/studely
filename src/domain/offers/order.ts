@@ -7,7 +7,8 @@
 // evidence is rather than by insertion order.
 //
 // `featured` and `sponsored` are deliberately absent: paying for a placement
-// cannot buy a rank (see sortOffers in ./offers for the retired behaviour).
+// cannot buy a rank. The retired sortOffers put both first; that is the whole
+// reason this comparator exists rather than being reused.
 
 import type { OfferView } from './offer-mapping';
 

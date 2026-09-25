@@ -4,7 +4,7 @@
 // what a state is, how it reads and writes, and what matches it.
 
 export type SortKey = 'score' | 'checked' | 'expiring' | 'az';
-export type ViewKey = 'cards' | 'table';
+export type ViewKey = 'index' | 'table';
 export type FacetKey = 'cat' | 'type' | 'verify' | 'card';
 
 export const SORT_KEYS: readonly SortKey[] = ['score', 'checked', 'expiring', 'az'];
@@ -39,7 +39,7 @@ export interface ItemFacets {
 }
 
 export function emptyState(): DirectoryState {
-  return { q: '', sort: 'score', view: 'cards', cat: new Set(), type: new Set(), verify: new Set(), card: new Set() };
+  return { q: '', sort: 'score', view: 'index', cat: new Set(), type: new Set(), verify: new Set(), card: new Set() };
 }
 
 export function hasDirectoryKeys(params: URLSearchParams): boolean {
@@ -72,7 +72,7 @@ export function serializeState(s: DirectoryState, rawQuery = s.q): string {
   const p = new URLSearchParams();
   if (s.q) p.set('q', rawQuery.trim());
   if (s.sort !== 'score') p.set('sort', s.sort);
-  if (s.view !== 'cards') p.set('view', s.view);
+  if (s.view !== 'index') p.set('view', s.view);
   for (const f of FACET_KEYS) if (s[f].size) p.set(f, [...s[f]].join(','));
   return p.toString();
 }

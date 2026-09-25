@@ -66,12 +66,12 @@ const { title, description, updated, draft = true } = frontmatter;
 
   .legal-draft {
     margin-bottom: 2rem; padding: 0.7rem 1rem; border-radius: var(--radius);
-    border: 1px solid var(--border-strong); background: var(--surface);
+    border: 1px solid var(--rule-strong); background: var(--bg);
     font-size: var(--step--1); color: var(--text-muted);
   }
   .legal-draft strong { color: var(--ink); }
 
-  .legal-head { margin-bottom: 2.25rem; padding-bottom: 1.4rem; border-bottom: 1px solid var(--border); }
+  .legal-head { margin-bottom: 2.25rem; padding-bottom: 1.4rem; border-bottom: 1px solid var(--rule); }
   .legal-eyebrow {
     font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em;
     text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.8rem;
@@ -85,9 +85,9 @@ const { title, description, updated, draft = true } = frontmatter;
     font-size: var(--step--1); display: block; overflow-x: auto;
   }
   .legal :global(.prose th), .legal :global(.prose td) {
-    border: 1px solid var(--border); padding: 0.55rem 0.7rem; text-align: left; vertical-align: top;
+    border: 1px solid var(--rule); padding: 0.55rem 0.7rem; text-align: left; vertical-align: top;
   }
-  .legal :global(.prose th) { color: var(--ink); font-weight: 600; background: var(--surface); white-space: nowrap; }
+  .legal :global(.prose th) { color: var(--ink); font-weight: 600; background: var(--bg); white-space: nowrap; }
   /* anchor targets (Section links) should clear the sticky header */
   .legal :global(.prose h2) { scroll-margin-top: calc(var(--nav-h) + 1rem); }
 </style>

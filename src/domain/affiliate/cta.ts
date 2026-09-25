@@ -21,13 +21,8 @@ export interface OfferCta {
   data: Record<string, string>;
 }
 
-/**
- * Where the link sits. `row` is the register's entry row — the only offer
- * representation on the public site. `card` is its retired name, kept while the
- * last card-model consumers (home, related) are still standing; it resolves
- * identically and disappears with them.
- */
-export type CtaPlacement = 'row' | 'card' | 'detail';
+/** Where the link sits: the register's entry row, or the record. */
+export type CtaPlacement = 'row' | 'detail';
 
 export function offerCta(o: CtaOffer, placement: CtaPlacement = 'row'): OfferCta {
   return {

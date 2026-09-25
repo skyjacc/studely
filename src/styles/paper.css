@@ -11,12 +11,14 @@
   /* paper + ink — the only two colours; everything else is an alpha of ink */
   --bg: #f4f2ec;          /* paper */
   --bg-alt: #efede6;      /* a second sheet: sheets, palette, ad interruption */
-  --surface: #f4f2ec;     /* legacy name — same as paper (no cards) */
-  --surface-2: #e9e6de;   /* hover / active fill, ≈ 5% ink over paper */
+  --surface-2: #e9e6de;   /* the one fill: hover and active, ≈ 5% ink over paper */
   --ink: #141311;
   --text: #141311;
   --text-muted: #66625a;  /* 5.4:1 on paper */
   --ink-rgb: 20, 19, 17;
+  /* paper as channels: a scrim is paper over the page, never ink over it. The
+     404 learned that the hard way when the token flipped under it. */
+  --bg-rgb: 244, 242, 236;
   /* rules — the structure. Alphas of ink over paper; --rule-control-alpha is
      the WCAG 1.4.11 boundary for interactive controls (≥3:1), read by the tests. */
   --rule-control-alpha: 0.5;
@@ -24,11 +26,6 @@
   --rule: rgba(var(--ink-rgb), 0.14);
   --rule-strong: rgba(var(--ink-rgb), 0.4);
   --rule-control: rgba(var(--ink-rgb), var(--rule-control-alpha));
-  /* legacy names kept so migrated components keep working until each is rebuilt */
-  --border-soft: var(--rule-soft);
-  --border: var(--rule);
-  --border-strong: var(--rule-strong);
-  --border-control: var(--rule-control);
   --accent: #141311;
   --accent-ink: #000000;
   --accent-contrast: #f4f2ec;
@@ -59,13 +56,6 @@ html { scroll-padding-top: calc(var(--nav-h) + 1rem); }
 .muted { color: var(--text-muted); }
 .lead { font-size: var(--step-1); color: var(--text-muted); line-height: 1.5; }
 
-/* thin underline marker */
-.mark { position: relative; white-space: nowrap; }
-.mark::after {
-  content: ''; position: absolute; left: 0; right: 0; bottom: -0.02em; height: 0.06em;
-  background: var(--ink);
-}
-
 /* reveals — CSS transitions, started by Motion.astro's IntersectionObserver.
    Hidden ONLY under html.js-motion (content is visible without JS); `.is-in`
    reveals; `--i` staggers on-load zones and grid children. */
@@ -91,7 +81,6 @@ html.js-motion [data-split].is-in .split-word { transform: none; }
   html.js-motion [data-split] .split-word { opacity: 1; transform: none; filter: none; transition: none; }
 }
 
-
 /* the 404's backdrop settles on load; the home's giant wordmark it used to
    accompany is gone with the hero (Package 3) */
 @media (prefers-reduced-motion: no-preference) {
@@ -99,17 +88,12 @@ html.js-motion [data-split].is-in .split-word { transform: none; }
 }
 @keyframes hero-zoom { from { transform: scale(1.18); } to { transform: scale(1); } }
 
-/* grid */
-.grid { display: grid; gap: var(--gap); }
-.grid-cats { grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); }
-.grid-offers { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); grid-auto-rows: 1fr; }
-
 /* buttons — outline, monolog "Start a project" style */
 .btn {
   display: inline-flex; align-items: center; gap: 0.5em;
   font-family: var(--font-sans); font-weight: 500; font-size: var(--step-0);
   padding: 0.72em 1.3em; border-radius: var(--radius-pill);
-  border: 1px solid var(--border-control); cursor: pointer;
+  border: 1px solid var(--rule-control); cursor: pointer;
   transition: background .3s var(--ease-out), color .3s var(--ease-out), border-color .3s var(--ease-out), transform .2s var(--ease-out);
 }
 .btn-primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
@@ -118,44 +102,13 @@ html.js-motion [data-split].is-in .split-word { transform: none; }
 .btn-ghost:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .btn-sm { padding: 0.5em 0.95em; font-size: var(--step--1); }
 
-/* badges — mono, uppercase, hairline */
-.badge {
-  display: inline-flex; align-items: center; gap: 0.35em;
-  font-family: var(--font-mono); font-weight: 500; font-size: 0.68rem;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  padding: 0.32em 0.6em; border-radius: 6px; white-space: nowrap; border: 1px solid var(--border);
-}
-.badge-sponsored { background: var(--spon-bg); color: var(--spon-ink); border-color: var(--ink); }
-.badge-expiring { background: transparent; color: var(--state-warn-ink); border-color: var(--state-warn-ink); }
-.badge-outline { background: transparent; color: var(--text-muted); }
-
-/* score tiers (mono): white chip = high, subtle = mid, ghost = low */
-.score-high { background: var(--ink); color: var(--bg); }
-.score-mid { background: var(--surface-2); color: var(--ink); }
-.score-low { background: transparent; color: var(--text-muted); }
-
-/* card — hairline + soft ambient shadow */
-.card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); box-shadow: none;
-  transition: transform .35s var(--ease-out), box-shadow .35s var(--ease-out), border-color .35s var(--ease-out);
-}
-.card:hover { border-color: var(--rule-strong); }
-
-/* brand logo tile + category icon */
-.logo-tile {
-  display: inline-grid; place-items: center; border-radius: 10px;
-  border: 1px solid var(--border); background: var(--surface-2);
-}
-.logo-tile svg { width: 56%; height: 56%; }
 .mono { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.03em; }
-.cat-ico { width: 1.4em; height: 1.4em; stroke: currentColor; fill: none; flex: none; }
 
 /* chips */
 .chip {
   display: inline-flex; align-items: center; gap: 0.35rem;
   padding: 0.3em 0.7em; border-radius: var(--radius-pill);
-  background: transparent; border: 1px solid var(--border-control); font-weight: 500; font-size: var(--step--1);
+  background: transparent; border: 1px solid var(--rule-control); font-weight: 500; font-size: var(--step--1);
   white-space: nowrap;
 }
 
@@ -166,9 +119,9 @@ html.js-motion [data-split].is-in .split-word { transform: none; }
 .prose h3 { font-size: var(--step-1); margin-top: 1.5rem; }
 .prose ul, .prose ol { padding-left: 1.3rem; }
 .prose li + li { margin-top: 0.35rem; }
-.prose a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--border-strong); }
-.prose code { font-family: var(--font-mono); font-size: 0.9em; background: var(--surface-2); padding: 0.1em 0.35em; border-radius: 5px; border: 1px solid var(--border); }
-.prose blockquote { border-left: 2px solid var(--border-strong); padding-left: 1rem; color: var(--text-muted); }
+.prose a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--rule-strong); }
+.prose code { font-family: var(--font-mono); font-size: 0.9em; background: var(--surface-2); padding: 0.1em 0.35em; border-radius: 5px; border: 1px solid var(--rule); }
+.prose blockquote { border-left: 2px solid var(--rule-strong); padding-left: 1rem; color: var(--text-muted); }
 .prose strong { font-weight: 600; color: var(--ink); }
 
 /* masked split-text reveal (words rise from behind a mask) */

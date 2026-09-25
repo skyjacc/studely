@@ -72,7 +72,7 @@ const titleId = `${dialogId}-title`;
   .sheet::backdrop { background: rgba(var(--ink-rgb), 0.6); backdrop-filter: blur(2px); }
   .panel {
     position: absolute; display: flex; flex-direction: column; gap: var(--space-s);
-    background: var(--bg-alt); border: 1px solid var(--border); padding: var(--space-s-m);
+    background: var(--bg-alt); border: 1px solid var(--rule); padding: var(--space-s-m);
     overflow: auto; overscroll-behavior: contain;
   }
   .side-right .panel { top: 0; right: 0; height: 100%; width: min(86vw, 22rem); border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
@@ -82,7 +82,7 @@ const titleId = `${dialogId}-title`;
   .ttl { font-size: var(--step-1); letter-spacing: -0.02em; margin: 0; }
   .close {
     display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--radius);
-    background: transparent; border: 1px solid var(--border-control); color: var(--ink); cursor: pointer;
+    background: transparent; border: 1px solid var(--rule-control); color: var(--ink); cursor: pointer;
   }
   .close:hover { background: var(--surface-2); }
   .body { min-height: 0; }

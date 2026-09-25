@@ -84,8 +84,8 @@ const facetsOf = (o: (typeof sorted)[number]) => ({
             <option value="expiring">Ending soon</option>
             <option value="az">Name: A → Z</option>
           </select>
-          <SegmentedControl name="view" label="View" value="cards" class="views"
-            options={[{ value: 'cards', label: 'Index', icon: 'rows' }, { value: 'table', label: 'Table', icon: 'grid' }]} />
+          <SegmentedControl name="view" label="View" value="index" class="views"
+            options={[{ value: 'index', label: 'Index', icon: 'rows' }, { value: 'table', label: 'Table', icon: 'grid' }]} />
         </div>
       </div>
 
@@ -395,14 +395,14 @@ const facetsOf = (o: (typeof sorted)[number]) => ({
     });
 
     // view: a radiogroup (SegmentedControl); the native radios own the keyboard model
-    const setView = (view: 'cards' | 'table') => {
+    const setView = (view: 'index' | 'table') => {
       const isTable = view === 'table';
       table.hidden = !isTable; rows.hidden = isTable;
       state.view = view;
       persist();
     };
     document.querySelectorAll<HTMLInputElement>('input[name="view"]').forEach((r) =>
-      r.addEventListener('change', () => { if (r.checked) setView(r.value as 'cards' | 'table'); }),
+      r.addEventListener('change', () => { if (r.checked) setView(r.value as 'index' | 'table'); }),
     );
     setView(state.view); // reflect the hydrated / stored view
 
