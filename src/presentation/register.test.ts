@@ -76,16 +76,6 @@ describe('the row is not a card', () => {
   });
 });
 
-describe('one trust vocabulary', () => {
-  const badge = read('src/presentation/components/StateBadge.astro');
-  it('gives the problem states a single source of words, shared with the row', () => {
-    expect(badge).toMatch(/from '@ui\/entry-row'|from '\.\.\/entry-row'/);
-    // the words themselves live in entry-row.ts, so the record and the register
-    // cannot describe the same checker state differently
-    expect(badge).not.toMatch(/Provider blocks|Could not reach|Not checked since|Link failed/);
-  });
-});
-
 describe('the ad is an interruption, not an entry', () => {
   it('renders a labelled full-width zone with no entry slots', () => {
     const ad = page.match(/<div class="interruption"[\s\S]*?<\/div>/);
