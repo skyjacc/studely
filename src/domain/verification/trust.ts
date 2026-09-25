@@ -9,15 +9,21 @@
 import type { OfferView } from '@domain/offers/offer-mapping';
 
 /**
- * Problem states — the only coloured things on the site (decision 5).
- *
- * The three offer-level ones (expired · dead · stale) and the three checker
- * warnings (blocked · unreachable · unconfirmed) share a list because a row has
- * one trust slot, but they are read in order: the first is what the row says.
- * `unconfirmed` is the honest fallback for a warn whose note is missing — a
- * warn must never be printed as a clean "Link checked".
+ * Something wrong with the OFFER: its date has passed, the checker demoted it,
+ * or nobody has checked it in too long. Independent of each other and of the
+ * checker's warning below — more than one can be true at once.
  */
-export type TrustState = 'stale' | 'dead' | 'expired' | 'blocked' | 'unreachable' | 'unconfirmed';
+export type OfferProblem = 'stale' | 'dead' | 'expired';
+
+/**
+ * The checker could not confirm the page, and why. `unconfirmed` is the honest
+ * fallback for a warn whose note is missing: a warn must never be reported as a
+ * clean check.
+ */
+export type CheckWarning = 'blocked' | 'unreachable' | 'unconfirmed';
+
+/** Everything the presentation layer may colour. The union is a vocabulary, not an order. */
+export type TrustState = OfferProblem | CheckWarning;
 
 export interface TrustFacts {
   /** When the latest human verification passed; null when none has. */
@@ -28,7 +34,14 @@ export interface TrustFacts {
   whoQualifies: string;
   /** Commercial state — separate from trust, shown where policy requires it. */
   sponsored: boolean;
-  states: TrustState[];
+  /**
+   * What is wrong with the offer, in no particular order. Which one a row leads
+   * with is a presentation decision (see problemWords / entryRowModel); the
+   * record shows the layers separately and never collapses them.
+   */
+  problems: OfferProblem[];
+  /** Why the latest check could not confirm the page, or null when it did. */
+  warning: CheckWarning | null;
 }
 
 /**
@@ -49,20 +62,17 @@ export function deriveTrust(offer: OfferView, now: Date = new Date()): TrustFact
   const verified = offer.verification.verified && offer.verification.at ? validDate(new Date(offer.verification.at)) : null;
   const lastChecked = validDate(d.lastChecked);
 
-  const states: TrustState[] = [];
-  const stale = Boolean(lastChecked && now.getTime() - lastChecked.getTime() > STALE_AFTER_DAYS * DAY);
+  const problems: OfferProblem[] = [];
   // Expired: a calendar date that has passed (compare as dates, not instants).
-  if (ISO_DATE.test(d.expires) && d.expires < now.toISOString().slice(0, 10)) states.push('expired');
+  if (ISO_DATE.test(d.expires) && d.expires < now.toISOString().slice(0, 10)) problems.push('expired');
   // Dead: the checker demoted the offer after a real failure (link-check.ts).
-  else if (d.status === 'unverified') states.push('dead');
-  else {
-    // A warn outranks staleness: it says what happened on the latest check and
-    // carries that check's date, where "not checked since" would be untrue.
-    // Staleness is still recorded behind it, so the age is not lost.
-    if (d.lastCheckResult === 'warn') states.push(d.lastCheckNote ?? 'unconfirmed');
-    // Stale: a real check date, older than the threshold. Never from a missing date.
-    if (stale) states.push('stale');
-  }
+  if (d.status === 'unverified') problems.push('dead');
+  // Stale: a real check date, older than the threshold. Never from a missing date.
+  if (lastChecked && now.getTime() - lastChecked.getTime() > STALE_AFTER_DAYS * DAY) problems.push('stale');
+
+  // The automated layer's own verdict, reported whatever else is true.
+  const warning: CheckWarning | null =
+    d.lastCheckResult === 'warn' ? (d.lastCheckNote ?? 'unconfirmed') : null;
 
   return {
     verified,
@@ -70,7 +80,8 @@ export function deriveTrust(offer: OfferView, now: Date = new Date()): TrustFact
     proof: d.proofMethod,
     whoQualifies: d.eligibility,
     sponsored: d.sponsored,
-    states,
+    problems,
+    warning,
   };
 }
 

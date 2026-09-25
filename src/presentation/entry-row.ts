@@ -9,7 +9,7 @@
 
 import type { OfferView } from '@domain/offers/offer-mapping';
 import { formatScore, scoreWord, describeScore } from '@domain/offers/score';
-import { deriveTrust, formatTrustDate, type TrustState } from '@domain/verification/trust';
+import { deriveTrust, formatTrustDate, type TrustFacts, type TrustState } from '@domain/verification/trust';
 import { offerCta, type OfferCta } from '@domain/affiliate/cta';
 import { recordHref } from '@domain/offers/routes';
 import { offerTypeLabel } from '@domain/offers/offers';
@@ -85,6 +85,21 @@ export function problemWords(state: TrustState, hasDate: boolean): { lead: strin
   return hasDate ? { lead, trail, tone } : { lead: lead.replace(/\s*\($/, ''), trail: '', tone };
 }
 
+/**
+ * Which one true thing a row leads with. The domain reports them all — an offer
+ * can be expired AND unreachable AND overdue a check — but a row has one trust
+ * line, so the choice belongs here. An offer that is over outranks a check that
+ * could not confirm it, which outranks a check that is simply old.
+ *
+ * This is presentation only. The record shows the layers separately.
+ */
+const HEADLINE: readonly TrustState[] = ['expired', 'dead', 'blocked', 'unreachable', 'unconfirmed', 'stale'];
+
+export function headlineState(facts: TrustFacts): TrustState | null {
+  const present = new Set<TrustState>([...facts.problems, ...(facts.warning ? [facts.warning] : [])]);
+  return HEADLINE.find((s) => present.has(s)) ?? null;
+}
+
 function slot(kind: EntryTrust['kind'], lead: string, trail: string, date: Date | null, tone: EntryTrust['tone']): EntryTrust {
   // One composition: the line the table prints and the parts the row prints
   // cannot say different things.
@@ -94,7 +109,7 @@ function slot(kind: EntryTrust['kind'], lead: string, trail: string, date: Date 
 
 function trustSlot(offer: OfferView, now: Date): EntryTrust {
   const t = deriveTrust(offer, now);
-  const problem = t.states[0];
+  const problem = headlineState(t);
   if (problem) {
     // "Ended" carries no date: the expiry is the offer's own field, not a check.
     const date = problem === 'expired' ? null : t.lastChecked;

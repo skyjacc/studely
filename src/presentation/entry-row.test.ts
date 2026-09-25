@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { entryRowModel, problemWords } from './entry-row';
+import { entryRowModel, problemWords, headlineState } from './entry-row';
+import { deriveTrust } from '@domain/verification/trust';
 import { recordHref } from '@domain/offers/routes';
 import type { OfferView } from '@domain/offers/offer-mapping';
 
@@ -130,6 +131,25 @@ describe('entryRowModel — the trust slot', () => {
     expect(trust({ lastCheckResult: 'warn', lastCheckNote: 'blocked' }).tone).toBe('warn');
     expect(trust({ expires: '2026-09-01' }).tone).toBe('bad');
     expect(trust({}).tone).toBeNull();
+  });
+});
+
+describe('headlineState — the row leads with one thing', () => {
+  // The domain reports every true fact. A row has one trust line, so the choice
+  // of which to lead with is made here, and only here: an offer that is over
+  // outranks a checker that could not confirm it, which outranks an old check.
+  const facts = (over: Partial<OfferView['data']>, v?: OfferView['verification']) =>
+    deriveTrust(offer(over, v), NOW);
+
+  it('reads expired > dead > warning > stale', () => {
+    expect(headlineState(facts({ expires: '2026-09-01', status: 'unverified', lastCheckResult: 'warn', lastCheckNote: 'blocked' }))).toBe('expired');
+    expect(headlineState(facts({ status: 'unverified', lastCheckResult: 'warn', lastCheckNote: 'blocked' }))).toBe('dead');
+    expect(headlineState(facts({ lastCheckResult: 'warn', lastCheckNote: 'blocked', lastChecked: new Date('2026-08-20T00:00:00Z') }))).toBe('blocked');
+    expect(headlineState(facts({ lastChecked: new Date('2026-08-20T00:00:00Z') }))).toBe('stale');
+  });
+
+  it('has nothing to lead with when nothing is wrong', () => {
+    expect(headlineState(facts({}))).toBeNull();
   });
 });
 

@@ -7,6 +7,7 @@
 //   table   — one cell: the state or Verified date, else the proof method
 import type { OfferView } from '@domain/offers/offer-mapping';
 import { deriveTrust } from '@domain/verification/trust';
+import { headlineState } from '@ui/entry-row';
 import StateBadge from './StateBadge.astro';
 
 interface Props {
@@ -15,7 +16,7 @@ interface Props {
 }
 const { offer, variant = 'compact' } = Astro.props;
 const t = deriveTrust(offer);
-const problem = t.states[0] ?? null;
+const problem = headlineState(t);
 // One dated line on the card: the problem wins, else Verified, else nothing.
 // Every problem except an expiry is something the checker observed on a date,
 // and its wording expects that date. Only "Ended" comes from the offer itself.
