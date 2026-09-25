@@ -219,6 +219,37 @@ offers, profiles, submissions, verifications ·
 offers readable: 14 · checks readable: 56 | FAIL: none
 ```
 
+## The catalog invariant (0017 · 0018)
+
+The behavioural test above proves the doors are shut; this proves there is no
+door left anywhere in the schema. 0017 swept `pg_tables` and missed
+`offer_ratings`, which is a view — a view cannot be truncated, but one stale row
+makes the invariant unassertable, so 0018 sweeps every relation kind.
+
+```sql
+select table_name, grantee, privilege_type
+  from information_schema.table_privileges
+ where table_schema = 'public'
+   and grantee in ('anon', 'authenticated')
+   and privilege_type in ('TRUNCATE', 'TRIGGER', 'REFERENCES');
+-- expected: zero rows
+```
+
+And, inside the rolled-back block, that a freshly created table inherits none of
+them (`create table public.privilege_probe (id int)` → the same query returns
+zero for it), which is what the `alter default privileges` line buys.
+
+2026-09-25, after 0018:
+
+```text
+PASS: catalog clean across every relation · anon: truncate refused everywhere ·
+offers readable: 14 · checks readable: 70 · a new table inherits none of them |
+FAIL: none
+```
+
+`authenticated` was checked the same way: truncate refused on every table, and
+the diagnostic columns of `link_checks` blocked.
+
 ## Still open
 
 `anon` keeps table-level INSERT/UPDATE/DELETE on most public tables. RLS *does*
