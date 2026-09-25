@@ -21,7 +21,10 @@ export interface OfferCta {
   data: Record<string, string>;
 }
 
-export function offerCta(o: CtaOffer, placement: 'card' | 'detail' = 'card'): OfferCta {
+/** Where the link sits: the register's entry row, or the record. */
+export type CtaPlacement = 'row' | 'detail';
+
+export function offerCta(o: CtaOffer, placement: CtaPlacement = 'row'): OfferCta {
   return {
     href: `/go/${o.slug}`,
     rel: o.affiliate ? 'sponsored nofollow noopener' : 'nofollow noopener',

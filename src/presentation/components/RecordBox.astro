@@ -1,0 +1,141 @@
+---
+// The RECORD box (Visual Direction v3 §4, questions 3–6). One column of rows,
+// each a label and what the data says — who qualifies, how you prove it, what a
+// human found, what the checker found, where the offer lives, and the action.
+//
+// The human row and the check row are both always present. Neither is allowed
+// to stand in for the other: a passing verification does not hide a warning,
+// and a warning does not erase a verification. Anything wrong with the offer
+// itself gets its own STATUS row rather than being folded into the check.
+import type { RecordModel } from '@ui/record';
+
+interface Props {
+  box: RecordModel['box'];
+  action: RecordModel['action'];
+}
+const { box, action } = Astro.props;
+---
+
+<aside class="record" aria-labelledby="record-h">
+  <h2 class="record-h" id="record-h">Record</h2>
+
+  <dl class="rows" data-q="who qualifies">
+    <div class="row">
+      <dt>Who qualifies</dt>
+      <dd>{box.whoQualifies}</dd>
+    </div>
+  </dl>
+
+  <dl class="rows" data-q="why trust it">
+    <div class="row">
+      <dt>Proof</dt>
+      <dd>{box.proof}</dd>
+    </div>
+
+    <div class="row">
+      <dt>Human verification</dt>
+      <dd>
+        {box.human.kind === 'verified' ? (
+          <>
+            <span class="stamp">Verified<span class="sep" aria-hidden="true"> · </span><time datetime={box.human.at.toISOString()}>{box.human.dateText}</time></span>
+            {box.human.note && <p class="note">{box.human.note}</p>}
+            {box.human.evidenceHref && <p class="note"><a href={box.human.evidenceHref} rel="noopener">Evidence ↗</a></p>}
+          </>
+        ) : (
+          <p class="sentence">{box.human.sentence}</p>
+        )}
+      </dd>
+    </div>
+
+    <div class="row">
+      <dt>Link checked</dt>
+      <dd>
+        {box.check.at
+          ? <time class="mono-date" datetime={box.check.at.toISOString()}>{box.check.dateText}</time>
+          : <span class="sentence">No automated check has run yet.</span>}
+        {box.check.warning && (
+          <p class:list={['warning', `tone-${box.check.warning.tone}`]}>
+            <span aria-hidden="true">⚠</span> {box.check.warning.lead}{box.check.warning.dateText}{box.check.warning.trail}
+          </p>
+        )}
+      </dd>
+    </div>
+
+    {box.status.length > 0 && (
+      <div class="row">
+        <dt>Status</dt>
+        <dd>
+          {box.status.map((s) => (
+            <p class:list={['warning', `tone-${s.tone}`]}><span aria-hidden="true">⚠</span> {s.text}</p>
+          ))}
+        </dd>
+      </div>
+    )}
+
+    <div class="row">
+      <dt>Source</dt>
+      <dd><a class="source" href={box.source.href} target="_blank" rel="nofollow noopener">{box.source.label}</a></dd>
+    </div>
+  </dl>
+
+  <div class="act" data-q="what do I do">
+    <a class="go" href={action.cta.href} rel={action.cta.rel} {...action.cta.data}>{action.cta.label}</a>
+    <p class="dest" data-q="where does it go">
+      {action.destinationHost && <span class="host">goes to {action.destinationHost}</span>}
+      <span class="money">{action.money}</span>
+    </p>
+  </div>
+</aside>
+
+<style>
+  .record { border: 1px solid var(--rule-strong); padding: var(--space-s); }
+  .record-h { font-family: var(--font-mono); font-size: var(--step--2); font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
+
+  .rows { margin: var(--space-2xs) 0 0; }
+  .row { padding: var(--space-xs) 0; border-top: 1px solid var(--rule); }
+  .row:first-child { border-top: 0; padding-top: var(--space-2xs); }
+  dt { font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+  dd { margin: 0.35em 0 0; font-size: var(--step--1); color: var(--ink); overflow-wrap: anywhere; }
+
+  .stamp { font-weight: 500; }
+  .stamp time, .mono-date { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .sep { color: var(--text-muted); }
+  /* the honest sentence reads as prose, not as a disabled badge */
+  .sentence { color: var(--text-muted); line-height: 1.45; }
+  .note { margin-top: 0.3em; color: var(--text-muted); }
+  .note a { border-bottom: 1px solid var(--rule); }
+
+  .warning { margin-top: 0.3em; line-height: 1.4; }
+  .tone-warn { color: var(--state-warn-ink); }
+  .tone-bad { color: var(--state-bad-ink); }
+
+  .source { border-bottom: 1px solid var(--rule-strong); }
+  .source:hover { border-bottom-color: var(--ink); }
+
+  .act { margin-top: var(--space-s); padding-top: var(--space-s); border-top: 1px solid var(--rule-strong); }
+  .go {
+    display: block; text-align: center; padding: 0.85em 1rem;
+    background: var(--ink); color: var(--bg); font-weight: 500;
+  }
+  .go:hover { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+  .dest { margin-top: var(--space-2xs); font-size: var(--step--2); color: var(--text-muted); line-height: 1.45; }
+  .host { display: block; font-family: var(--font-mono); }
+
+  @media (max-width: 900px) {
+    /* The action follows the reader through the whole record — the decision is
+       made in the account, not in the box. It is a bar at the foot of the
+       viewport, and the page reserves exactly its height at the end of the
+       document (see the record page) so it covers neither the account's last
+       line nor the footer. --record-bar is that height, shared by both. */
+    .act {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+      margin: 0; padding: var(--space-2xs) clamp(1rem, 0.5rem + 2vw, 2.25rem) calc(var(--space-2xs) + env(safe-area-inset-bottom, 0px));
+      background: var(--bg); border-top: 1px solid var(--rule-strong);
+    }
+    .go { padding: 0.7em 1rem; }
+    /* the destination and the money line stay legible under the button: the
+       disclosure has to be readable, so neither is truncated */
+    .dest { margin-top: 0.4em; }
+    .host { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  }
+</style>

@@ -28,7 +28,7 @@ const index = {
     <div class="empty" id="palette-empty" hidden>
       <p class="ttl" data-empty-title>Nothing yet</p>
       <p class="why muted" data-empty-why>Try a provider, a tool, or a category.</p>
-      <a class="btn btn-ghost btn-sm" href="/categories">Browse categories</a>
+      <a class="btn btn-ghost btn-sm" href="/offers">Open the register</a>
     </div>
   </div>
 </dialog>
@@ -131,16 +131,16 @@ const index = {
     position: fixed; inset: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none;
     margin: 0; padding: 0; border: 0; background: transparent; color: var(--ink);
   }
-  .palette::backdrop { background: rgba(8, 8, 7, 0.65); backdrop-filter: blur(3px); }
+  .palette::backdrop { background: rgba(var(--ink-rgb), 0.65); backdrop-filter: blur(3px); }
   .panel {
     position: absolute; left: 50%; top: min(12vh, 96px); transform: translateX(-50%);
     width: min(92vw, 40rem); max-height: 76dvh; display: flex; flex-direction: column;
-    background: var(--bg-alt); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden;
+    background: var(--bg-alt); border: 1px solid var(--rule-strong); border-radius: var(--radius-lg); overflow: hidden;
   }
-  .field { display: flex; align-items: center; gap: var(--space-2xs); padding: var(--space-xs) var(--space-s); border-bottom: 1px solid var(--border); color: var(--text-muted); }
+  .field { display: flex; align-items: center; gap: var(--space-2xs); padding: var(--space-xs) var(--space-s); border-bottom: 1px solid var(--rule); color: var(--text-muted); }
   .field input { flex: 1; min-width: 0; min-height: 44px; background: none; border: 0; outline: none; color: var(--ink); font: inherit; font-size: var(--step-0); }
   .field input::placeholder { color: var(--text-muted); }
-  .close { flex: none; font: inherit; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; padding: 0.3em 0.55em; border: 1px solid var(--border-control); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; }
+  .close { flex: none; font: inherit; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; padding: 0.3em 0.55em; border: 1px solid var(--rule-control); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; }
   .close:hover { color: var(--ink); border-color: var(--ink); }
   .results { overflow: auto; padding: var(--space-2xs) var(--space-2xs) var(--space-xs); }
   .results[hidden] { display: none; }

@@ -1,0 +1,30 @@
+/* ============================================================
+   Studely — admin surface. The operator tool has its own palette: the dark
+   mono scheme it was built on. Entered only through AdminLayout.astro. It
+   shares base.css (reset, scales, a11y) with the public site and nothing
+   else — public tokens live in paper.css and are never read here, so a
+   change to the register cannot restyle the admin (surfaces.test.ts).
+   Values below are the pre-register admin palette, carried over verbatim.
+   ============================================================ */
+@import './base.css';
+
+:root {
+  color-scheme: dark;
+
+  --bg: #080807;
+  --bg-alt: #0e0d0c;
+  --surface: #121110;
+  --surface-2: #1a1815;
+  --ink: #e8e8e3;
+  --text: #e8e8e3;
+  --text-muted: #8f897e;
+  --ink-rgb: 232, 232, 227;
+  --border: rgba(232, 232, 227, 0.13);        /* hairline */
+  --border-soft: rgba(232, 232, 227, 0.08);
+  --border-strong: rgba(232, 232, 227, 0.26);
+  --border-control: rgba(232, 232, 227, 0.42);  /* interactive controls — WCAG 1.4.11 non-text >=3:1 */
+
+  /* problem states — dark-tuned */
+  --state-warn: #e0a44a;   --state-warn-ink: #e6bd78;   /* stale · blocked */
+  --state-bad: #e0655c;    --state-bad-ink: #e88f88;    /* dead · expired */
+}

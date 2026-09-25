@@ -36,6 +36,20 @@ describe('mapOfferRow', () => {
     expect(v.body).toBe('## What you get\n\n- Stuff');
   });
 
+  // offers carries the LATEST automated check as a projection (last_checked +
+  // last_check_result + last_check_note). link_checks itself stays internal.
+  it('maps the latest automated check projection', () => {
+    const v = mapOfferRow({ ...baseRow, last_check_result: 'warn', last_check_note: 'blocked' });
+    expect(v.data.lastCheckResult).toBe('warn');
+    expect(v.data.lastCheckNote).toBe('blocked');
+  });
+
+  it('maps a never-checked offer to a null projection rather than inventing a pass', () => {
+    const v = mapOfferRow({ ...baseRow, last_check_result: null, last_check_note: null });
+    expect(v.data.lastCheckResult).toBeNull();
+    expect(v.data.lastCheckNote).toBeNull();
+  });
+
   it('turns a null expires_at into the literal "ongoing"', () => {
     expect(mapOfferRow(baseRow).data.expires).toBe('ongoing');
   });

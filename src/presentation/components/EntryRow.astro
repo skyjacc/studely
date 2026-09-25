@@ -1,0 +1,121 @@
+---
+// One entry in the register (Visual Direction v3 §3). Everything it prints
+// comes from the model: this file decides placement, never meaning.
+//
+//   01  GITHUB                                                    10 / 10
+//       GitHub Student Developer Pack                           Excellent
+//       $200k+ in tools · Free
+//       Proof  SheerID / school-issued email  ·  Link checked   ( View offer → )
+//
+// Rules, not a card: a hairline above each row, no radius, no shadow, no fill.
+// Below 900px the record link covers the whole row and the action is dropped,
+// so there is exactly one target — and it is a real <a>, so the keyboard and
+// the screen reader get it for free.
+import type { EntryRowModel } from '@ui/entry-row';
+
+interface Props {
+  entry: EntryRowModel;
+  /**
+   * Spread onto the row by the register for its client-side filter and sort
+   * (data-cat, data-score…). A page that only lists rows passes nothing; the
+   * row still marks itself as an entry.
+   */
+  facets?: Record<string, string>;
+}
+const { entry: e, facets = {} } = Astro.props;
+---
+
+<article class="entry" data-entry {...facets}>
+  <span class="n" aria-hidden="true">{e.n}</span>
+
+  <div class="id">
+    <p class="provider">{e.provider}</p>
+    <h3 class="title"><a href={e.href}>{e.title}</a></h3>
+    <p class="value">
+      {e.value}<span class="sep" aria-hidden="true"> · </span><span class="type">{e.typeWord}</span>
+      {e.sponsored && <span class="spon">Sponsored</span>}
+    </p>
+  </div>
+
+  <p class="score" aria-label={e.score.label}>
+    <span class="num" aria-hidden="true">{e.score.text}</span>
+    <span class="word" aria-hidden="true">{e.score.word}</span>
+  </p>
+
+  <p class="trust">
+    <span class="proof"><span class="k">Proof</span> {e.proof}</span>
+    {e.trust.kind !== 'none' && (
+      <>
+        <span class="sep" aria-hidden="true">·</span>
+        <span class:list={['stamp', e.trust.tone && `tone-${e.trust.tone}`]}>
+          {e.trust.tone && <span class="warn" aria-hidden="true">⚠</span>}
+          {e.trust.date
+            ? <Fragment>{e.trust.lead}<time datetime={e.trust.date.toISOString()}>{e.trust.dateText}</time>{e.trust.trail}</Fragment>
+            : e.trust.text}
+        </span>
+      </>
+    )}
+  </p>
+
+  <p class="action"><a href={e.action.href} rel={e.action.rel} {...e.action.data}>{e.action.label}</a></p>
+</article>
+
+<style>
+  .entry {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+    grid-template-areas: 'n id score' '. trust action';
+    align-items: baseline;
+    column-gap: var(--space-s);
+    row-gap: var(--space-3xs);
+    padding: var(--space-xs) 0;
+    border-top: 1px solid var(--rule);
+    position: relative;
+  }
+  .entry:hover { background: rgba(var(--ink-rgb), 0.03); }
+  .entry:hover .title a { text-decoration: underline; text-underline-offset: 3px; }
+
+  .n { grid-area: n; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--step--2); color: var(--text-muted); }
+
+  .id { grid-area: id; min-width: 0; }
+  .provider { font-family: var(--font-mono); font-size: var(--step--2); line-height: 1.2; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
+  .title { font-size: var(--step-1); font-weight: 500; letter-spacing: -0.02em; line-height: 1.15; margin-top: 0.05em; }
+  .title a { color: var(--ink); }
+  .value { margin-top: 0.15em; font-size: var(--step--1); line-height: 1.3; color: var(--text-muted); }
+  .value .type { color: var(--ink); }
+  .spon { margin-left: 0.6em; font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.1em; text-transform: uppercase; padding: 0.1em 0.5em; background: var(--spon-bg); color: var(--spon-ink); }
+
+  .score { grid-area: score; text-align: right; white-space: nowrap; }
+  .num { display: block; font-family: var(--font-display); font-weight: 600; font-size: var(--step-0); line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .word { display: block; font-size: var(--step--1); line-height: 1.3; color: var(--text-muted); }
+
+  .trust { grid-area: trust; margin-top: 0.15em; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5em; min-width: 0; font-size: var(--step--2); color: var(--text-muted); }
+  .proof { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .proof .k { font-family: var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; margin-right: 0.5em; }
+  .stamp { white-space: nowrap; }
+  .stamp .warn { margin-right: 0.35em; }
+  .stamp time { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .tone-warn { color: var(--state-warn-ink); }
+  .tone-bad { color: var(--state-bad-ink); }
+
+  .action { grid-area: action; text-align: right; white-space: nowrap; font-size: var(--step--1); }
+  .action a { border-bottom: 1px solid var(--rule-strong); padding-bottom: 0.1em; }
+  .action a:hover { border-bottom-color: var(--ink); }
+
+  @media (max-width: 900px) {
+    .entry { grid-template-columns: 2.25rem minmax(0, 1fr) auto; grid-template-areas: 'n id score' '. trust trust'; padding: var(--space-xs) 0; }
+    .title { font-size: var(--step-0); }
+    /* the whole row is the record link: one target, and a real anchor */
+    .title a::after { content: ''; position: absolute; inset: 0; }
+    .action { display: none; }
+    /* the check is what the student scans for on a phone; the proof follows it
+       and truncates, so the row keeps one trust line. The mono PROOF key costs
+       more width than it earns here — the phrase reads as the proof without it. */
+    .trust { flex-wrap: nowrap; }
+    .stamp { order: -1; flex: none; }
+    .trust > .sep { display: none; }
+    .proof { min-width: 0; }
+    .proof .k { display: none; }
+    .proof::before { content: '· '; }
+  }
+</style>

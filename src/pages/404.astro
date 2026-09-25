@@ -75,12 +75,15 @@ const { meta, status, method, code, heading, lead, exits } = notFound;
     position: relative; isolation: isolate; overflow: hidden;
     min-height: 100svh;
     display: grid; align-items: center;
-    background: #080807; color: var(--ink);
+    background: var(--bg-alt); color: var(--ink);
   }
   /* scrim: the copy has to stay readable whatever the field is doing underneath */
   .nf::after {
     content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-    background: radial-gradient(62% 58% at 50% 48%, rgba(8, 8, 7, 0.9), rgba(8, 8, 7, 0.5) 58%, transparent 84%);
+    /* A scrim lifts the text off the field, so it is made of the page, not of
+       the ink. Written as ink while the theme was dark — where --ink-rgb was
+       the light beige — this became a black cloud the moment paper landed. */
+    background: radial-gradient(62% 58% at 50% 48%, rgba(var(--bg-rgb), 0.92), rgba(var(--bg-rgb), 0.6) 58%, transparent 84%);
   }
 
   /* With the header gone this is the only route home and the only thing naming the
@@ -121,7 +124,7 @@ const { meta, status, method, code, heading, lead, exits } = notFound;
     margin: 0; font-family: var(--font-display); font-weight: 500;
     font-size: clamp(4.5rem, min(38vw, 34vh), 20rem);
     line-height: 0.8; letter-spacing: -0.055em;
-    color: #f6f3ee;
+    color: var(--ink);
   }
 
   .nf-title {
@@ -140,8 +143,8 @@ const { meta, status, method, code, heading, lead, exits } = notFound;
     display: inline-flex; align-items: baseline;
     justify-content: center; max-width: 100%;
     margin-top: 1.5rem; padding: 0.55rem 0.85rem;
-    border: 1px solid var(--border); border-radius: var(--radius);
-    background: rgba(232, 232, 227, 0.03);
+    border: 1px solid var(--rule); border-radius: var(--radius);
+    background: rgba(var(--ink-rgb), 0.03);
   }
   .nf-path[hidden] { display: none; }
   .nf-path-line {

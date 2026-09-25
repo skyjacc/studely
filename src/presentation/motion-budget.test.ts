@@ -41,7 +41,7 @@ describe('motion budget', () => {
   });
 
   it('hides reveal targets only under html.js-motion, and never under reduced motion', () => {
-    const css = read(join(ROOT, 'src/styles/global.css'));
+    const css = read(join(ROOT, 'src/styles/paper.css'));
     // every rule that sets opacity: 0 on a reveal target must be scoped to html.js-motion
     const hidden = [...css.matchAll(/^([^\n{]*\[data-(?:reveal|enter|reveal-group)\][^\n{]*)\{[^}]*opacity:\s*0/gm)].map((m) => m[1].trim());
     expect(hidden.length).toBeGreaterThan(0);

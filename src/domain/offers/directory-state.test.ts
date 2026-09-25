@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  emptyState, parseState, serializeState, hasDirectoryKeys, matches, compare, emptyMessage, type DirectoryState, type ItemFacets,
+  emptyState, parseState, serializeState, hasDirectoryKeys, isPristine, matches, compare, emptyMessage, type DirectoryState, type ItemFacets,
 } from './directory-state';
 
 const item = (over: Partial<ItemFacets> = {}): ItemFacets => ({
@@ -22,7 +22,7 @@ describe('parseState / serializeState (URL is the source of truth)', () => {
   it('ignores unknown sort and view values', () => {
     const s = parseState(new URLSearchParams('sort=bogus&view=grid'));
     expect(s.sort).toBe('score');
-    expect(s.view).toBe('cards');
+    expect(s.view).toBe('index');
   });
 
   it('serialises only what differs from the defaults, in a stable order', () => {
@@ -34,6 +34,17 @@ describe('parseState / serializeState (URL is the source of truth)', () => {
   it('round-trips', () => {
     const qs = 'q=azure&view=table&cat=cloud&type=credit';
     expect(serializeState(parseState(new URLSearchParams(qs)))).toBe(qs);
+  });
+
+  // The ad interruption appears only in the untouched default browse. The page
+  // script used to decide that inline; the register asks the domain instead.
+  it('reports a pristine state: the default sort, nothing searched, nothing filtered', () => {
+    expect(isPristine(emptyState())).toBe(true);
+    expect(isPristine({ ...emptyState(), view: 'table' })).toBe(true); // a view is not a filter
+    expect(isPristine({ ...emptyState(), q: 'figma' })).toBe(false);
+    expect(isPristine({ ...emptyState(), sort: 'az' })).toBe(false);
+    expect(isPristine({ ...emptyState(), cat: new Set(['cloud']) })).toBe(false);
+    expect(isPristine({ ...emptyState(), card: new Set(['no']) })).toBe(false);
   });
 
   it('reports whether a query string carries any directory key (URL beats localStorage only then)', () => {

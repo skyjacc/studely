@@ -18,8 +18,7 @@ export const notFound = {
     'This page is not an offer in the Studely directory: it moved, expired, or was never here.',
   /** Ways out — real destinations only, in priority order. */
   exits: [
-    { label: 'All offers', href: '/offers' },
-    { label: 'All categories', href: '/categories' },
+    { label: 'The register', href: '/offers' },
     { label: 'Back home', href: '/' },
   ],
 } as const;

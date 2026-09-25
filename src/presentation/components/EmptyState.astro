@@ -9,9 +9,14 @@ interface Props {
   why: string;
   /** The single action: a reset button (data-empty-reset) or a link. */
   action?: { label: string; href?: string };
+  /**
+   * A second way out, shown only while it IS a way out — the register reveals it
+   * when a category is what narrowed the list. Hidden by default.
+   */
+  recovery?: { label: string; href: string };
   hidden?: boolean;
 }
-const { id, title, why, action, hidden = false } = Astro.props;
+const { id, title, why, action, recovery, hidden = false } = Astro.props;
 ---
 
 <div class="empty" id={id} hidden={hidden} role="status" aria-live="polite">
@@ -20,6 +25,7 @@ const { id, title, why, action, hidden = false } = Astro.props;
   {action && (action.href
     ? <a class="btn btn-ghost btn-sm" href={action.href}>{action.label}</a>
     : <button class="btn btn-ghost btn-sm" type="button" data-empty-reset>{action.label}</button>)}
+  {recovery && <a class="recovery" href={recovery.href} data-empty-recovery hidden>{recovery.label}</a>}
 </div>
 
 <style>
@@ -28,4 +34,7 @@ const { id, title, why, action, hidden = false } = Astro.props;
   .ttl { font-family: var(--font-display); font-size: var(--step-1); letter-spacing: -0.02em; line-height: 1.15; }
   .why { font-size: var(--step--1); max-width: 44ch; }
   .btn { margin-top: var(--space-2xs); }
+  .recovery { font-size: var(--step--1); color: var(--text-muted); border-bottom: 1px solid var(--rule); }
+  .recovery:hover { color: var(--ink); border-bottom-color: var(--ink); }
+  .recovery[hidden] { display: none; }
 </style>

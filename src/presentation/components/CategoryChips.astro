@@ -1,0 +1,49 @@
+---
+// The category chips. One row, live counts, the register's own vocabulary.
+//
+// Same markup on both pages, different job: on `/` a chip is navigation — a
+// real link into the narrowed register — and on `/offers` the page script
+// intercepts the same link and narrows in place. Nothing here knows which; the
+// hooks (`data-chip`, `data-value`, `.cn`) are what the register binds to.
+import { categoryHref, registerHref } from '@domain/offers/routes';
+
+interface Category { slug: string; name: string; n: number }
+interface Props {
+  categories: Category[];
+  /** The whole-register count on the "All" chip. */
+  total: number;
+  class?: string;
+}
+const { categories, total, class: cls } = Astro.props;
+---
+
+<nav class:list={['chips', cls]} aria-label="Categories">
+  <a class="chip is-all" href={registerHref()} data-chip="all">All <span class="cn">{total}</span></a>
+  {categories.map((c) => (
+    <a class="chip" href={categoryHref(c.slug)} data-chip="cat" data-value={c.slug}>{c.name} <span class="cn">{c.n}</span></a>
+  ))}
+</nav>
+
+<style>
+  .chips { display: flex; flex-wrap: wrap; gap: var(--space-3xs) var(--space-2xs); }
+  .chip {
+    display: inline-flex; align-items: baseline; gap: 0.4em; white-space: nowrap;
+    font-size: var(--step--1); color: var(--ink);
+    padding: 0.3em 0.7em; border: 1px solid var(--rule-control); border-radius: 2px;
+  }
+  .chip .cn { font-family: var(--font-mono); font-size: var(--step--2); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .chip:hover { border-color: var(--ink); }
+  .chip.is-on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .chip.is-on .cn { color: var(--bg); }
+  .chip[hidden] { display: none; }
+
+  @media (max-width: 900px) {
+    /* the row scrolls sideways rather than stacking: the register stays reachable */
+    .chips {
+      flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+      margin-inline: calc(-1 * clamp(1rem, 0.5rem + 2vw, 2.25rem));
+      padding-inline: clamp(1rem, 0.5rem + 2vw, 2.25rem);
+    }
+    .chips::-webkit-scrollbar { display: none; }
+  }
+</style>

@@ -5,9 +5,10 @@
 
 import { createSupabaseBuild } from '@core/supabase';
 import { mapOfferRow, type OfferView, type OfferRow, type AttrRow } from './offer-mapping';
+import type { CheckRow, HistorySources, VerificationRow } from '@domain/verification/history';
 
 const OFFER_COLUMNS =
-  'id,slug,title,provider,category,summary,value,body,offer_type,discount_percent,url,affiliate,sponsored,featured,proof_method,eligibility,tags,score,status,expires_at,last_checked';
+  'id,slug,title,provider,category,summary,value,body,offer_type,discount_percent,url,affiliate,sponsored,featured,proof_method,eligibility,tags,score,status,expires_at,last_checked,last_check_result,last_check_note,updated_at';
 
 async function loadOffers(): Promise<OfferView[]> {
   const db = createSupabaseBuild();
@@ -57,6 +58,56 @@ async function loadOffers(): Promise<OfferView[]> {
   }
 
   return offerRows.map((r) => mapOfferRow(r, byOffer.get(r.id) ?? [], verifiedBy.get(r.id)));
+}
+
+/**
+ * The record's history, by slug. Two reads the directory never needs, so they
+ * are kept out of loadOffers: the checks (public since 0015 — four columns, and
+ * only for published offers) and the human verifications. Cached per build like
+ * the offers themselves.
+ */
+async function loadHistories(): Promise<Map<string, HistorySources>> {
+  const db = createSupabaseBuild();
+  const offers = await getAllOffers();
+  // getAllOffers maps id → slug, so go back to the row ids to join on them.
+  const { data: rows, error } = await db.from('offers').select('id,slug').eq('visibility', 'published');
+  if (error) throw new Error(`Failed to load offer ids: ${error.message}`);
+  const slugById = new Map((rows ?? []).map((r) => [(r as { id: string }).id, (r as { slug: string }).slug]));
+
+  const ids = [...slugById.keys()];
+  const [checks, verifications] = await Promise.all([
+    // Ordered here as well as in recordHistory: an unordered read is a
+    // different list on every request, and the merge should not be the only
+    // thing standing between that and the page.
+    db.from('link_checks').select('offer_id,checked_at,result,note').in('offer_id', ids).order('checked_at', { ascending: false }),
+    db.from('verifications').select('id,offer_id,checked_at,result,note,evidence_url').in('offer_id', ids).order('checked_at', { ascending: false }),
+  ]);
+  if (checks.error) throw new Error(`Failed to load link_checks: ${checks.error.message}`);
+  if (verifications.error) throw new Error(`Failed to load verifications: ${verifications.error.message}`);
+
+  const out = new Map<string, HistorySources>();
+  for (const offer of offers) {
+    out.set(offer.slug, { checks: [], verifications: [], updatedAt: offer.data.updatedAt, expires: offer.data.expires });
+  }
+  for (const row of (checks.data ?? []) as { offer_id: string; checked_at: string; result: CheckRow['result']; note: CheckRow['note'] }[]) {
+    const slug = slugById.get(row.offer_id);
+    // `id` is not public on link_checks (0016), so the tie-break key is built
+    // from what is: one check per offer per instant.
+    if (slug) out.get(slug)?.checks!.push({ id: `${row.checked_at}`, checked_at: row.checked_at, result: row.result, note: row.note });
+  }
+  for (const row of (verifications.data ?? []) as (VerificationRow & { offer_id: string })[]) {
+    const slug = slugById.get(row.offer_id);
+    if (slug) out.get(slug)?.verifications!.push(row);
+  }
+  return out;
+}
+
+let historyCache: Promise<Map<string, HistorySources>> | null = null;
+
+/** Everything dated that has happened to one offer, newest first. */
+export async function getOfferHistory(slug: string): Promise<HistorySources> {
+  const all = await (historyCache ??= loadHistories());
+  return all.get(slug) ?? {};
 }
 
 let cache: Promise<OfferView[]> | null = null;

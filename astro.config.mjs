@@ -16,6 +16,15 @@ const SITE =
 
 export default defineConfig({
   site: SITE,
+  // /categories was an index of an index: the register's chips already carry
+  // every category with a live count, and nothing has linked to the page since
+  // the front index was rebuilt. It is retired rather than deleted — the URL is
+  // in the sitemap and may be indexed, so it keeps its link equity by pointing
+  // at what replaced it. 301, not 308: this is a permanent move of a GET page.
+  // (/category/<slug> is a separate legacy route and still redirects itself.)
+  redirects: {
+    '/categories': { status: 301, destination: '/offers' },
+  },
   // Every page is prerendered by default and served as static HTML — the whole
   // public directory stays fast and free to serve. Only the routes that opt out
   // with `export const prerender = false` (admin, API, auth) run on demand.

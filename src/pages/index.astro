@@ -1,25 +1,33 @@
 ---
-import { getAllOffers } from '@domain/offers/offers-source';
+// The front index (Visual Direction v3 §1, plan §4). Not a homepage with a
+// register attached: the head of the register itself. It orients in one screen
+// — what this is, how to narrow it, what the words mean — and hands over.
+//
+// Everything an entry says is decided in the register's own model, so the five
+// rows here are literally the first five of /offers. No second ranking, no
+// "featured" block, and no home-only presentation of an offer.
 import Layout from '@ui/layouts/Layout.astro';
-import CategoryExplorer from '@ui/components/CategoryExplorer.astro';
-import Pipeline from '@ui/components/Pipeline.astro';
-import OfferPreview from '@ui/components/OfferPreview.astro';
-import AdSlot from '@ui/components/AdSlot.astro';
-import HeroField from '@ui/components/HeroField.astro';
+import EntryRow from '@ui/components/EntryRow.astro';
+import CategoryChips from '@ui/components/CategoryChips.astro';
+import { getAllOffers } from '@domain/offers/offers-source';
+import { entryRowModel } from '@ui/entry-row';
+import { registerStatus } from '@ui/register-status';
+import { defaultRegisterOrder } from '@domain/offers/order';
+import { categories } from '@domain/offers/categories';
+import { ATTRIBUTES } from '@domain/offers/attributes';
+import { isExpired } from '@domain/offers/offers';
+import { registerHref } from '@domain/offers/routes';
 import { site } from '@core/config/site';
-import { sortOffers, isExpired } from '@domain/offers/offers';
+
+const SAMPLE = 5;
 
 const all = (await getAllOffers()).filter((o) => !isExpired(o));
-const counts = new Map<string, number>();
-for (const o of all) counts.set(o.data.category, (counts.get(o.data.category) ?? 0) + 1);
+const status = registerStatus(all);
+const sample = [...all].sort(defaultRegisterOrder).slice(0, SAMPLE);
 
-const featured = sortOffers(all.filter((o) => o.data.featured || o.data.sponsored)).slice(0, 6);
-const isCurated = featured.length >= 3;
-const featuredList = isCurated ? featured : sortOffers(all).slice(0, 6);
-// Name the section for what it actually is: with too few flagged offers this
-// falls back to the highest-scored ones, and calling that "featured" (let alone
-// "this week", a cadence nothing enforces) would be a claim we can't back.
-const featuredHeading = isCurated ? 'Featured offers' : 'Top-scored offers';
+const catFacets = categories
+  .map((c) => ({ ...c, n: all.filter((o) => o.data.category === c.slug).length }))
+  .filter((c) => c.n > 0);
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -30,100 +38,82 @@ const jsonLd = {
 };
 ---
 
-<Layout jsonLd={jsonLd} hero>
-  <!-- Hero — MONOLOG-style: centered mission over drifting smoke, giant wordmark -->
-  <section class="hero hero-mono">
-    <HeroField tone="hero" />
-    <div class="wrap hero-inner" data-hero>
-      <svg class="hero-mark" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true" data-reveal>
-        <circle cx="24" cy="24" r="15" />
-        <ellipse cx="24" cy="24" rx="15" ry="6" />
-        <ellipse class="meridian" cx="24" cy="24" rx="6" ry="15" />
-        <line x1="9" y1="24" x2="39" y2="24" />
-      </svg>
-      <h1 class="hero-title" data-split>Student benefits, scored against clear criteria.</h1>
-      <p class="hero-sub" data-reveal>Free tools, credits and courses for students. See why each offer earned its Studely score.</p>
-      <div class="hero-cta" data-reveal>
-        <a href="/offers" class="btn btn-primary">Browse all offers ↗</a>
-        <a href="/methodology" class="btn btn-ghost">How we score</a>
+<Layout
+  title="Student benefits, scored and dated"
+  description="A register of student offers: what each one is worth, how you prove you qualify, and when we last confirmed the link."
+  jsonLd={jsonLd}
+>
+  <section class="front">
+    <div class="wrap">
+      <header class="head">
+        <h1>Student benefits</h1>
+        <p class="status">{status.text}</p>
+      </header>
+
+      <p class="instruction">
+        Find what you're eligible for. Every entry shows how you prove it, what it is worth,
+        and when we last confirmed the link.
+      </p>
+
+      <CategoryChips categories={catFacets} total={all.length} />
+
+      <div class="rows">
+        {sample.map((offer, i) => <EntryRow entry={entryRowModel(offer, i)} />)}
       </div>
-    </div>
-    <div class="hero-wordmark" aria-hidden="true">{site.name}</div>
-  </section>
 
-  <!-- Categories -->
-  <section id="categories" class="section">
-    <div class="wrap">
-      <header class="sec-head" data-reveal>
-        <h2 data-split>Browse by department</h2>
-        <a href="/categories" class="btn btn-ghost">All categories ↗</a>
-      </header>
-      <CategoryExplorer counts={counts} />
-    </div>
-  </section>
+      <p class="handover">
+        <a href={registerHref()}>All {all.length} offers in the register →</a>
+      </p>
 
-  <div class="wrap"><AdSlot format="leaderboard" /></div>
-
-  <!-- Featured -->
-  <section class="section">
-    <div class="wrap">
-      <header class="sec-head" data-reveal>
-        <h2 data-split>{featuredHeading}</h2>
-        <a href="/offers" class="btn btn-ghost">See all {all.length} ↗</a>
-      </header>
-      <div class="grid grid-offers" data-reveal-group>
-        {featuredList.map((o) => <OfferPreview offer={o} />)}
-      </div>
-    </div>
-  </section>
-
-  <!-- Pipeline: how every offer gets here -->
-  <section class="section">
-    <div class="wrap">
-      <header class="sec-head" data-reveal>
-        <div>
-          <h2 data-split>How we assess an offer</h2>
-          <p class="muted">Clear criteria, visible reasoning, and no inflated promises.</p>
-        </div>
-      </header>
-      <Pipeline />
+      <!-- What the two words on every row actually mean. Both are written from
+           what the data can support: the criteria count is the registry's own
+           length, and the verification sentence disappears the day a human
+           check lands rather than being edited by hand. -->
+      <aside class="notes" aria-label="How to read the register">
+        <section class="note">
+          <h2>How a score is made</h2>
+          <p>
+            Every offer starts at 5. {ATTRIBUTES.length} named criteria add or subtract points,
+            and the reasons are printed on every entry.
+          </p>
+          <p class="note-link"><a href="/methodology">The full list of criteria →</a></p>
+        </section>
+        <section class="note">
+          <h2>What “checked” means</h2>
+          <p>
+            A weekly job fetches each offer's page. “Checked” means the link answered — it is not
+            a human review{status.verified === 0 ? ', and no entry here is marked verified yet' : ''}.
+          </p>
+          <p class="note-link"><a href="/about">How we work →</a></p>
+        </section>
+      </aside>
     </div>
   </section>
 </Layout>
 
 <style>
-  .hero-mono {
-    position: relative; isolation: isolate; overflow: hidden;
-    /* decision 1: the brand opening stays, but the first offer must not sit
-       two screens down — 58svh, floor 520px so the wordmark still clears */
-    min-height: max(58svh, 520px); display: grid; align-items: center;
-    background: #080807; color: var(--ink);
-    border-bottom: 1px solid var(--border);
-  }
-  /* dark scrim keeps the centered text readable over the dot field */
-  .hero-mono::after {
-    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-    background: radial-gradient(58% 54% at 50% 52%, rgba(8, 8, 7, 0.85), rgba(8, 8, 7, 0.4) 54%, transparent 80%);
-  }
-  .hero-inner { position: relative; z-index: 2; text-align: center; padding-block: clamp(4rem, 3rem + 6vw, 8rem); }
-  .hero-mark { width: 46px; height: 46px; margin: 0 auto 1.75rem; color: var(--text-muted); opacity: 0.9; }
-  .hero-title {
-    max-width: 20ch; margin: 0.6rem auto 0; font-weight: 500;
-    font-size: clamp(1.9rem, 1.3rem + 2.6vw, 3.1rem); letter-spacing: -0.025em; line-height: 1.12;
-    color: #f6f3ee;
-  }
-  .hero-sub { max-width: 46ch; margin: 1.4rem auto 0; color: var(--text-muted); font-size: var(--step-0); }
-  .hero-cta { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin-top: 2rem; }
-  /* giant clipped wordmark — the MONOLOG signature */
-  .hero-wordmark {
-    position: absolute; left: 50%; bottom: -0.06em; transform: translateX(-50%); z-index: 1;
-    font-family: var(--font-display); font-weight: 500; letter-spacing: -0.05em; white-space: nowrap;
-    font-size: clamp(5rem, 27vw, 24rem); line-height: 0.78;
-    color: rgba(232, 232, 227, 0.17); pointer-events: none; user-select: none;
-  }
+  .front { padding-block: var(--space-l) var(--space-m); }
+  /* the rule runs the full width under the heading, as the register's does */
+  .head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-xs); padding-bottom: var(--space-s); border-bottom: 1px solid var(--rule-strong); }
+  h1 { font-size: var(--step-3); }
+  .status { font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
 
-  .cat-index { border-top: 1px solid var(--border); }
-  .sec-head { display: flex; align-items: end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.9rem; }
-  .sec-head p { max-width: 42ch; }
-  .sec-head p.muted { margin-top: 0.5rem; }
+  .instruction { max-width: 62ch; margin-top: var(--space-s); font-size: var(--step-1); line-height: 1.4; }
+
+  .rows { margin-top: var(--space-m); border-bottom: 1px solid var(--rule); }
+
+  .handover { margin-top: var(--space-s); font-size: var(--step-0); }
+  .handover a { border-bottom: 1px solid var(--rule-strong); padding-bottom: 0.15em; }
+  .handover a:hover { border-bottom-color: var(--ink); }
+
+  .notes {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    gap: var(--space-m); margin-top: var(--space-2xl);
+    padding-top: var(--space-s); border-top: 1px solid var(--rule-strong);
+  }
+  .note h2 { font-family: var(--font-mono); font-size: var(--step--2); font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
+  .note p { max-width: 54ch; margin-top: var(--space-2xs); font-size: var(--step--1); color: var(--text-muted); }
+  .note-link { margin-top: var(--space-2xs); }
+  .note-link a { color: var(--ink); border-bottom: 1px solid var(--rule); }
+  .note-link a:hover { border-bottom-color: var(--ink); }
 </style>
