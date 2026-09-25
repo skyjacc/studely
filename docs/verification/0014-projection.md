@@ -119,3 +119,109 @@ end $$;
 
 After any migration that touches `link_checks`, `offers.last_check_*` or
 `record_link_check_batch` — and paste the new result line above.
+
+---
+
+# Verifying the public check surface (0015 · 0016 · 0017)
+
+The record shows a dated history, so `link_checks` had to become readable — but
+only its published facts, and only for published offers. Two things were learned
+doing it, and both are worth re-checking after any grant or policy change.
+
+## What the rules are
+
+| Role | May read | May not read | May write |
+|---|---|---|---|
+| `anon`, `authenticated` | `offer_id`, `checked_at`, `result`, `note` — for published offers | `ok`, `status_code`, `error`, `final_url`, `id` | nothing |
+| `service_role` | everything | — | through `record_link_check_batch` only |
+
+## Why a column grant was not enough
+
+Postgres takes the **union** of table-level and column-level privileges. This
+database was created with blanket grants (`SELECT/INSERT/UPDATE/DELETE/TRUNCATE`)
+to `anon` and `authenticated` on every public table, held back only by RLS. So
+0015's column grant changed nothing on its own: the moment its read policy
+allowed the rows, every column came with them. 0016 revokes the blanket grant
+first, which is what makes the column list real.
+
+## Why TRUNCATE was the serious one
+
+**RLS does not apply to TRUNCATE.** It filters SELECT, INSERT, UPDATE and DELETE;
+TRUNCATE is permitted by the privilege alone. With `anon` holding it on every
+table — and the anon key published in the site's client bundle by design — the
+whole register could have been emptied by a single statement, with every policy
+in this project intact and irrelevant. 0017 revokes it everywhere (plus TRIGGER
+and REFERENCES) and changes the schema's default privileges so new tables do not
+inherit it.
+
+## The block
+
+Run as the `anon` role inside a transaction that ends in a deliberate `raise`,
+so nothing is committed.
+
+```sql
+do $$
+declare oks text[] := '{}'; errs text[] := '{}'; t record; n integer;
+begin
+  set local role anon;
+
+  -- 1. the four published facts are readable, the diagnostics are not
+  begin perform offer_id, checked_at, result, note from public.link_checks limit 1;
+    oks := oks || array['four public columns readable'];
+  exception when others then errs := errs || array['public columns blocked']; end;
+  begin perform error from public.link_checks limit 1; errs := errs || array['error READABLE'];
+  exception when insufficient_privilege then oks := oks || array['error blocked']; end;
+  begin perform status_code from public.link_checks limit 1; errs := errs || array['status_code READABLE'];
+  exception when insufficient_privilege then oks := oks || array['status_code blocked']; end;
+  begin perform final_url from public.link_checks limit 1; errs := errs || array['final_url READABLE'];
+  exception when insufficient_privilege then oks := oks || array['final_url blocked']; end;
+  begin perform * from public.link_checks limit 1; errs := errs || array['select * READABLE'];
+  exception when insufficient_privilege then oks := oks || array['select * blocked']; end;
+
+  -- 2. nothing public writes a check
+  begin
+    insert into public.link_checks (offer_id, ok, result, checked_at)
+      select id, true, 'pass', now() from public.offers limit 1;
+    errs := errs || array['anon can INSERT'];
+  exception when others then oks := oks || array['insert refused']; end;
+
+  -- 3. no table in the schema can be truncated
+  for t in select tablename from pg_tables where schemaname='public' order by tablename
+  loop
+    begin
+      execute format('truncate public.%I', t.tablename);
+      errs := errs || array[t.tablename || ' STILL TRUNCATABLE'];
+    exception when insufficient_privilege then oks := oks || array['no truncate: ' || t.tablename];
+              when others then oks := oks || array['no truncate: ' || t.tablename]; end;
+  end loop;
+
+  -- 4. the site still reads what it renders
+  select count(*) into n from public.offers where visibility = 'published';
+  oks := oks || array[format('offers readable: %s', n)];
+  select count(*) into n from public.link_checks;
+  oks := oks || array[format('checks readable: %s', n)];
+
+  reset role;
+  raise exception 'ROLLBACK (intentional) | PASS: % | FAIL: %',
+    array_to_string(oks, ' · '), coalesce(nullif(array_to_string(errs, ' · '), ''), 'none');
+end $$;
+```
+
+## Last run
+
+2026-09-25, against `myehxcjcdjxjysoeiynq` (production), after 0017:
+
+```text
+PASS: four public columns readable · error blocked · status_code blocked ·
+final_url blocked · select * blocked · insert refused ·
+no truncate: categories, comments, link_checks, offer_attributes, offer_clicks,
+offers, profiles, submissions, verifications ·
+offers readable: 14 · checks readable: 56 | FAIL: none
+```
+
+## Still open
+
+`anon` keeps table-level INSERT/UPDATE/DELETE on most public tables. RLS *does*
+cover those, and today no policy lets an anonymous visitor through — but the
+grants are wider than the app needs. Narrowing them requires a per-table audit
+of what the site and the admin actually write, and belongs to its own change.
