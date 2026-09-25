@@ -53,6 +53,28 @@ export const STALE_AFTER_DAYS = 14;
 const DAY = 86_400_000;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+/**
+ * Has the offer's own date passed? A Postgres `date` means the offer is valid
+ * THROUGH that day, so the comparison is between calendar days and not
+ * instants, and "ongoing" is the absence of a date rather than a far one.
+ *
+ * This is the definition of expired. `offers.status` is the checker's opinion
+ * of it, written on its last run, and the two disagree whenever the checker has
+ * not run since the day passed — so nothing reads the column for this.
+ */
+export function hasExpired(expires: string, now: Date = new Date()): boolean {
+  return ISO_DATE.test(expires) && expires < now.toISOString().slice(0, 10);
+}
+
+/**
+ * Is the newest check old enough to stop vouching for anything? One rule, one
+ * threshold, every surface: the register row, the record and the admin
+ * dashboard all ask here rather than each keeping a number.
+ */
+export function isStale(lastChecked: Date | null, now: Date = new Date()): boolean {
+  return Boolean(lastChecked && now.getTime() - lastChecked.getTime() > STALE_AFTER_DAYS * DAY);
+}
+
 function validDate(d: Date | null | undefined): Date | null {
   return d instanceof Date && Number.isFinite(d.getTime()) ? d : null;
 }
@@ -63,12 +85,11 @@ export function deriveTrust(offer: OfferView, now: Date = new Date()): TrustFact
   const lastChecked = validDate(d.lastChecked);
 
   const problems: OfferProblem[] = [];
-  // Expired: a calendar date that has passed (compare as dates, not instants).
-  if (ISO_DATE.test(d.expires) && d.expires < now.toISOString().slice(0, 10)) problems.push('expired');
+  if (hasExpired(d.expires, now)) problems.push('expired');
   // Dead: the checker demoted the offer after a real failure (link-check.ts).
   if (d.status === 'unverified') problems.push('dead');
   // Stale: a real check date, older than the threshold. Never from a missing date.
-  if (lastChecked && now.getTime() - lastChecked.getTime() > STALE_AFTER_DAYS * DAY) problems.push('stale');
+  if (isStale(lastChecked, now)) problems.push('stale');
 
   // The automated layer's own verdict, reported whatever else is true.
   const warning: CheckWarning | null =

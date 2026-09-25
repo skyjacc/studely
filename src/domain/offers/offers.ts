@@ -1,4 +1,5 @@
 import type { OfferView } from './offer-mapping';
+import { hasExpired } from '@domain/verification/trust';
 
 export type Offer = OfferView;
 
@@ -10,9 +11,9 @@ export function daysUntil(expires: string): number | null {
   return Math.ceil((t - Date.now()) / 86_400_000);
 }
 
+/** One definition, shared with the trust layer and the admin metrics. */
 export function isExpired(offer: Offer): boolean {
-  const d = daysUntil(offer.data.expires);
-  return d !== null && d < 0;
+  return hasExpired(offer.data.expires);
 }
 
 export const offerTypeLabel: Record<string, string> = {
