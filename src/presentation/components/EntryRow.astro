@@ -15,13 +15,17 @@ import type { EntryRowModel } from '@ui/entry-row';
 
 interface Props {
   entry: EntryRowModel;
-  /** Spread onto the row for the client-side filter/sort (data-cat, data-score…). */
+  /**
+   * Spread onto the row by the register for its client-side filter and sort
+   * (data-cat, data-score…). A page that only lists rows passes nothing; the
+   * row still marks itself as an entry.
+   */
   facets?: Record<string, string>;
 }
 const { entry: e, facets = {} } = Astro.props;
 ---
 
-<article class="entry" {...facets}>
+<article class="entry" data-entry {...facets}>
   <span class="n" aria-hidden="true">{e.n}</span>
 
   <div class="id">

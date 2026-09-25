@@ -7,6 +7,7 @@ import { getAllOffers } from '@domain/offers/offers-source';
 import Layout from '@ui/layouts/Layout.astro';
 import EntryRow from '@ui/components/EntryRow.astro';
 import SegmentedControl from '@ui/components/SegmentedControl.astro';
+import CategoryChips from '@ui/components/CategoryChips.astro';
 import EmptyState from '@ui/components/EmptyState.astro';
 import Sheet from '@ui/components/Sheet.astro';
 import AdSlot from '@ui/components/AdSlot.astro';
@@ -14,13 +15,13 @@ import { entryRowModel } from '@ui/entry-row';
 import { categories } from '@domain/offers/categories';
 import { isExpired, daysUntil, verifyGroup, offerTypeLabel } from '@domain/offers/offers';
 import { adAfterIndexes } from '@domain/ads/ads';
+import { defaultRegisterOrder } from '@domain/offers/order';
+import { registerStatus } from '@ui/register-status';
 import { site } from '@core/config/site';
 
 const all = (await getAllOffers()).filter((o) => !isExpired(o));
-// Default order = score high→low, then most recently checked.
-const sorted = [...all].sort(
-  (a, b) => b.data.score - a.data.score || b.data.lastChecked.getTime() - a.data.lastChecked.getTime(),
-);
+const sorted = [...all].sort(defaultRegisterOrder);
+const status = registerStatus(all);
 const entries = sorted.map((o, i) => ({ offer: o, row: entryRowModel(o, i) }));
 
 // In-feed interruptions for the default order; the script keeps them in place
@@ -43,20 +44,11 @@ const verifyFacets = [...new Set(all.map((o) => verifyGroup(o.data.proofMethod))
 // card_required silently vouched for every offer nobody had scored on that axis.
 const noCardCount = all.filter((o) => o.attributes.some((a) => a.key === 'no_card_required')).length;
 
-// The status line states the newest check the register holds — not a claim that
-// every entry was checked that day.
-const lastCheck = all.reduce<Date | null>((newest, o) => {
-  const d = o.data.lastChecked;
-  return Number.isFinite(d.getTime()) && (!newest || d > newest) ? d : newest;
-}, null);
-const lastCheckLabel = lastCheck?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-
 const daysLeft = (o: (typeof sorted)[number]) => {
   const d = daysUntil(o.data.expires);
   return d === null ? 999999 : d; // ongoing sorts last
 };
 const facetsOf = (o: (typeof sorted)[number]) => ({
-  'data-entry': '',
   'data-cat': o.data.category,
   'data-type': o.data.offerType,
   'data-verify': verifyGroup(o.data.proofMethod),
@@ -74,7 +66,7 @@ const facetsOf = (o: (typeof sorted)[number]) => ({
     <div class="wrap">
       <header class="head">
         <h1>The register</h1>
-        <p class="status">{all.length} offers{lastCheckLabel && <> · last checked {lastCheckLabel}</>}</p>
+        <p class="status">{status.text}</p>
       </header>
 
       <!-- narrowing: search · sort · view -->
@@ -97,13 +89,8 @@ const facetsOf = (o: (typeof sorted)[number]) => ({
         </div>
       </div>
 
-      <!-- categories: chips, live counts, filtering in place. Real links without JS. -->
-      <nav class="chips" aria-label="Categories">
-        <a class="chip is-all" href="/offers" data-chip="all">All <span class="cn">{all.length}</span></a>
-        {catFacets.map((c) => (
-          <a class="chip" href={`/offers?cat=${c.slug}`} data-chip="cat" data-value={c.slug}>{c.name} <span class="cn">{c.n}</span></a>
-        ))}
-      </nav>
+      <!-- categories: the shared chip row. Here the script narrows in place. -->
+      <CategoryChips categories={catFacets} total={all.length} />
 
       <div class="morebar">
         <details class="more" id="more">
@@ -177,7 +164,7 @@ const facetsOf = (o: (typeof sorted)[number]) => ({
           </thead>
           <tbody>
             {entries.map(({ offer, row }) => (
-              <tr {...facetsOf(offer)}>
+              <tr data-entry {...facetsOf(offer)}>
                 <td class="c-n">{row.n}</td>
                 <td class="t-prov">{row.provider}</td>
                 <td class="t-title"><a href={row.href}>{row.title}</a></td>
@@ -451,18 +438,8 @@ const facetsOf = (o: (typeof sorted)[number]) => ({
   .ctl-label { font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
   .select { font: inherit; font-size: var(--step--1); color: var(--ink); background: var(--bg); border: 1px solid var(--rule-control); border-radius: 2px; padding: 0.4em 0.5em; }
   .select:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
-
-  .chips { display: flex; flex-wrap: wrap; gap: var(--space-3xs) var(--space-2xs); margin-top: var(--space-s); }
-  .chip {
-    display: inline-flex; align-items: baseline; gap: 0.4em; white-space: nowrap;
-    font-size: var(--step--1); color: var(--ink);
-    padding: 0.3em 0.7em; border: 1px solid var(--rule-control); border-radius: 2px;
-  }
-  .chip .cn { font-family: var(--font-mono); font-size: var(--step--2); color: var(--text-muted); font-variant-numeric: tabular-nums; }
-  .chip:hover { border-color: var(--ink); }
-  .chip.is-on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-  .chip.is-on .cn { color: var(--bg); }
-  .chip[hidden] { display: none; }
+  /* the chip row is CategoryChips; only its place in this page's rhythm is here */
+  :global(.chips) { margin-top: var(--space-s); }
 
   .morebar { display: flex; align-items: center; gap: var(--space-s); margin-top: var(--space-s); }
   .more summary { display: inline-flex; align-items: center; gap: 0.5em; cursor: pointer; font-size: var(--step--1); color: var(--text-muted); list-style: none; }
@@ -536,8 +513,6 @@ const facetsOf = (o: (typeof sorted)[number]) => ({
     .sheet-only { display: flex; }
     /* search and chips stay put while the register scrolls under them */
     .controls { position: sticky; top: var(--nav-h); z-index: 20; background: var(--bg); margin-top: var(--space-s); padding-bottom: var(--space-2xs); }
-    .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * clamp(1rem, 0.5rem + 2vw, 2.25rem)); padding-inline: clamp(1rem, 0.5rem + 2vw, 2.25rem); }
-    .chips::-webkit-scrollbar { display: none; }
     .facets { grid-template-columns: 1fr; }
   }
 </style>

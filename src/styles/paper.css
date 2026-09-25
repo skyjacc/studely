@@ -92,16 +92,12 @@ html.js-motion [data-split].is-in .split-word { transform: none; }
 }
 
 
-/* hero intro — MONOLOG: bg zooms out (1.25→1) + giant wordmark rises from below */
+/* the 404's backdrop settles on load; the home's giant wordmark it used to
+   accompany is gone with the hero (Package 3) */
 @media (prefers-reduced-motion: no-preference) {
   html.js-motion .hero-field { animation: hero-zoom 2s var(--ease-intro) both; }
-  html.js-motion .hero-wordmark { animation: hero-word-rise 1.4s var(--ease-intro) 0.25s both; }
 }
 @keyframes hero-zoom { from { transform: scale(1.18); } to { transform: scale(1); } }
-@keyframes hero-word-rise {
-  from { transform: translateX(-50%) translateY(22%); opacity: 0; }
-  to   { transform: translateX(-50%) translateY(0);   opacity: 1; }
-}
 
 /* grid */
 .grid { display: grid; gap: var(--gap); }
@@ -179,9 +175,3 @@ html.js-motion [data-split].is-in .split-word { transform: none; }
 .split-mask { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.06em; }
 .split-word { display: inline-block; will-change: transform; }
 
-/* animated wireframe globe (meridian sweeps like it's rotating) */
-.hero-mark .meridian { transform-box: fill-box; transform-origin: center; }
-@media (prefers-reduced-motion: no-preference) {
-  .hero-mark .meridian { animation: meridian-spin 7s ease-in-out infinite; }
-}
-@keyframes meridian-spin { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(0.08); } }

@@ -19,3 +19,13 @@
 export function recordHref(slug: string): string {
   return `/offers/${slug}`;
 }
+
+/** The full register. `/` shows its head and hands over here. */
+export function registerHref(): string {
+  return '/offers';
+}
+
+/** The register, narrowed to one category — what a chip points at. */
+export function categoryHref(slug: string): string {
+  return `/offers?cat=${slug}`;
+}
