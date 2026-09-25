@@ -37,6 +37,13 @@ describe('one derivation', () => {
     }
   });
 
+  it('leaves the record URL to the route contract', () => {
+    // one source for where a row goes; the page and the row both ask for it
+    for (const [name, src] of [['page', page], ['row', row]] as const) {
+      expect(src, name).not.toContain('/offers/${');
+    }
+  });
+
   it('keeps the register on the domain contracts it must not bypass', () => {
     expect(page).toMatch(/from '@domain\/offers\/directory-state'/);
     expect(page).toMatch(/adAfterIndexes/);

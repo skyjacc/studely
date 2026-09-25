@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { entryRowModel, problemWords } from './entry-row';
+import { recordHref } from '@domain/offers/routes';
 import type { OfferView } from '@domain/offers/offer-mapping';
 
 // The entry row is the register's only offer representation (Visual Direction
@@ -56,6 +57,25 @@ describe('entryRowModel — the slots', () => {
     expect(keys).not.toContain('category');
     expect(keys).not.toContain('summary');
     expect(keys).not.toContain('logo');
+  });
+});
+
+describe('entryRowModel — destination policy', () => {
+  // One policy, stated once: a row leads to the record, everywhere. /go is the
+  // transport and appears only as the explicit action, which desktop shows and
+  // mobile drops (VD v3 §3; Wireframes v3 screen 4 — "the whole row is the link
+  // to the record … the action lives on the record"). The two are never mixed,
+  // so the same row cannot mean different things on different widths.
+  it('sends the row to the record and reserves /go for the explicit action', () => {
+    const r = entryRowModel(offer(), 0, NOW);
+    expect(r.href).toBe(recordHref('github-student-pack'));
+    expect(r.href).not.toMatch(/^\/go\//);
+    expect(r.action.href).toBe('/go/github-student-pack');
+  });
+
+  it('builds that record link from the route contract, not by hand', () => {
+    expect(recordHref('a-slug')).toBe('/offers/a-slug');
+    expect(entryRowModel(offer(), 0, NOW).href).toBe(recordHref(offer().slug));
   });
 });
 
