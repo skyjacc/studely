@@ -3,6 +3,15 @@ export const prerender = false;
 
 import AdminLayout from '@ui/layouts/AdminLayout.astro';
 import { createSupabaseServer } from '@core/supabase';
+import { dashboardMetrics, type ClickRow, type MetricOffer } from '@domain/admin/metrics';
+import { recordHistory, type VerificationRow } from '@domain/verification/history';
+
+// The overview answers one question: what state is the catalogue in, and what
+// needs me? Every number comes from dashboardMetrics — this page reads rows,
+// hands them over and renders what comes back. It decides nothing: no threshold
+// of its own, no second reading of `status`, no counting in the template.
+//
+// Contract: studely-vault/Design/Dashboard metric contract.md
 
 // The middleware guarantees a staff profile before this page renders, but the type
 // is optional because it is genuinely unset on the sign-out side of the gate. If it
@@ -12,110 +21,187 @@ const { profile } = Astro.locals;
 if (!profile) return Astro.redirect('/admin/login', 302);
 const supabase = createSupabaseServer(Astro.request, Astro.cookies);
 
-const countOf = async (
-  table: string,
-  build: (q: any) => any = (q) => q,
-): Promise<number | null> => {
-  const { count, error } = await build(supabase.from(table).select('*', { count: 'exact', head: true }));
-  return error ? null : (count ?? 0);
-};
+const WINDOW_DAYS = 30;
+const since = new Date(Date.now() - WINDOW_DAYS * 86_400_000).toISOString();
 
-const staleCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-
-const [pendingSubs, pendingComments, drafts, published, expired, stale] = await Promise.all([
-  countOf('submissions', (q) => q.eq('status', 'pending')),
-  countOf('comments', (q) => q.eq('status', 'pending')),
-  countOf('offers', (q) => q.eq('visibility', 'draft')),
-  countOf('offers', (q) => q.eq('visibility', 'published')),
-  countOf('offers', (q) => q.eq('status', 'expired')),
-  countOf('offers', (q) => q.lt('last_checked', staleCutoff)),
+const [offerRows, verificationRows, clickRows] = await Promise.all([
+  supabase
+    .from('offers')
+    .select('id,slug,provider,title,visibility,expires_at,last_checked,last_check_result,last_check_note,status'),
+  supabase.from('verifications').select('id,offer_id,checked_at,result,note,evidence_url').order('checked_at', { ascending: false }),
+  supabase.from('offer_clicks').select('created_at').gte('created_at', since),
 ]);
 
-// null means the query failed — almost always "tables not created yet".
-const schemaMissing = pendingSubs === null && published === null;
+// A failed read is a fault, not an empty catalogue: say so rather than render
+// zeroes that look like facts.
+const readFailed = offerRows.error?.message ?? verificationRows.error?.message ?? clickRows.error?.message ?? null;
 
-// Queues first: these are things a human must act on. Library stats come after.
-const queues = [
-  { label: 'Submissions waiting', n: pendingSubs },
-  { label: 'Comments to moderate', n: pendingComments },
-  { label: 'Drafts unpublished', n: drafts, href: '/admin/offers?visibility=draft' },
-  { label: 'Not checked in 7 days', n: stale, href: '/admin/offers?stale=1' },
-];
-const library = [
-  { label: 'Published offers', n: published },
-  { label: 'Expired', n: expired },
-];
+type OfferRecord = {
+  id: string; slug: string; provider: string; title: string; visibility: string;
+  expires_at: string | null; last_checked: string | null;
+  last_check_result: MetricOffer['lastCheckResult']; last_check_note: MetricOffer['lastCheckNote'];
+  status: string;
+};
+const offers = (offerRows.data ?? []) as unknown as OfferRecord[];
+const verifications = (verificationRows.data ?? []) as unknown as (VerificationRow & { offer_id: string })[];
+const clicks = (clickRows.data ?? []) as unknown as ClickRow[];
+
+// Verified means the LATEST human check passed — the same rule offers-source
+// applies for the public site, applied to the same rows.
+const latestVerification = new Map<string, VerificationRow>();
+for (const row of verifications) if (!latestVerification.has(row.offer_id)) latestVerification.set(row.offer_id, row);
+
+const metricOffers: MetricOffer[] = offers.map((o) => ({
+  slug: o.slug,
+  provider: o.provider,
+  title: o.title,
+  visibility: o.visibility,
+  expires: o.expires_at ?? 'ongoing',
+  lastChecked: o.last_checked ? new Date(o.last_checked) : null,
+  lastCheckResult: o.last_check_result ?? null,
+  lastCheckNote: o.last_check_note ?? null,
+  verified: latestVerification.get(o.id)?.result === 'pass',
+  status: o.status,
+}));
+
+const metrics = dashboardMetrics({ offers: metricOffers, clicks });
+
+// The activity list is the register's own history, over the whole catalogue:
+// the events that were written down, never an interpretation of updated_at.
+const slugById = new Map(offers.map((o) => [o.id, o.slug]));
+const activity = recordHistory({ verifications }).slice(0, 8)
+  .map((event) => ({ event, slug: slugById.get((verifications.find((v) => v.id === event.id)?.offer_id) ?? '') ?? '' }));
+
+const dateOf = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 ---
 
 <AdminLayout
-  title={`Overview`}
+  title="Overview"
   subtitle={`Signed in as ${profile.handle}`}
   handle={profile.handle}
   role={profile.role}
 >
-  {schemaMissing && (
-    <p class="setup">
-      Connected to Supabase, but the tables are missing. Run
-      <code>supabase/migrations/0001_init.sql</code> in the SQL editor.
+  {readFailed && (
+    <p class="fault">
+      Could not read the catalogue: <code>{readFailed}</code>. The numbers below are not the state of anything.
     </p>
   )}
 
-  <h2 class="hd">Needs attention</h2>
-  <div class="tiles">
-    {queues.map((q) =>
-      q.href ? (
-        <a class:list={['tile', { 'is-hot': (q.n ?? 0) > 0 }]} href={q.href}>
-          <span class="n">{q.n ?? '—'}</span>
-          <span class="l">{q.label}</span>
-        </a>
-      ) : (
-        <div class:list={['tile', 'is-quiet', { 'is-hot': (q.n ?? 0) > 0 }]}>
-          <span class="n">{q.n ?? '—'}</span>
-          <span class="l">{q.label} · queue UI not built</span>
-        </div>
-      ),
-    )}
-  </div>
+  <section class="band">
+    <h2 class="hd">Catalogue</h2>
+    <div class="tiles">
+      <div class="tile"><span class="n">{metrics.catalogue.published}</span><span class="l">Published</span></div>
+      <div class="tile"><span class="n">{metrics.catalogue.drafts}</span><span class="l">Drafts</span></div>
+      <div class="tile"><span class="n">{metrics.catalogue.expired}</span><span class="l">Expired</span></div>
+      <div class="tile"><span class="n">{metrics.verification.verified}</span><span class="l">Verified</span></div>
+    </div>
+  </section>
 
-  <h2 class="hd">Library</h2>
-  <div class="tiles">
-    {library.map((s) => (
-      <div class="tile is-quiet">
-        <span class="n">{s.n ?? '—'}</span>
-        <span class="l">{s.label}</span>
-      </div>
-    ))}
-  </div>
+  <section class="band">
+    <h2 class="hd">Link health</h2>
+    <div class="tiles">
+      <div class="tile"><span class="n">{metrics.health.pass}</span><span class="l">Pass</span></div>
+      <div class:list={['tile', { 'is-hot': metrics.health.warn > 0 }]}><span class="n">{metrics.health.warn}</span><span class="l">Warn</span></div>
+      <div class:list={['tile', { 'is-hot': metrics.health.fail > 0 }]}><span class="n">{metrics.health.fail}</span><span class="l">Fail</span></div>
+      <div class="tile"><span class="n">{metrics.health.unchecked}</span><span class="l">Unchecked</span></div>
+    </div>
+    <p class="note">
+      <span>{metrics.health.warnings.blocked} blocked · {metrics.health.warnings.unreachable} unreachable · {metrics.health.warnings.unconfirmed} unconfirmed</span>
+      <span class="sep" aria-hidden="true">·</span>
+      <span>Stale {metrics.health.stale}</span>
+      <span class="sep" aria-hidden="true">·</span>
+      <span>Last check {metrics.health.lastCheck ? dateOf(metrics.health.lastCheck) : 'never'}</span>
+    </p>
+  </section>
+
+  <section class="band">
+    <h2 class="hd">Needs attention</h2>
+    {metrics.health.needsAttention.length === 0 ? (
+      <p class="empty">Nothing needs attention.</p>
+    ) : (
+      <ul class="attention">
+        {metrics.health.needsAttention.map((item) => (
+          <li>
+            <a class="who" href={`/admin/offers/${item.slug}`}>{item.provider}</a>
+            <span class="what">{item.text}</span>
+          </li>
+        ))}
+      </ul>
+    )}
+  </section>
+
+  <section class="band">
+    <h2 class="hd">Activity</h2>
+    {activity.length === 0 ? (
+      <p class="empty">Nothing recorded yet. Human verifications appear here as they are made.</p>
+    ) : (
+      <ul class="events">
+        {activity.map(({ event, slug }) => (
+          <li>
+            <time datetime={event.at.toISOString()}>{dateOf(event.at)}</time>
+            <span class="what">{slug || 'offer'} — human verification — {event.kind === 'verification' && event.result === 'pass' ? 'passed' : 'did not pass'}</span>
+          </li>
+        ))}
+      </ul>
+    )}
+  </section>
+
+  <section class="band">
+    <h2 class="hd">Outbound requests</h2>
+    <div class="tiles">
+      <div class="tile"><span class="n">{metrics.outbound.today}</span><span class="l">Today</span></div>
+      <div class="tile"><span class="n">{metrics.outbound.week}</span><span class="l">7 days</span></div>
+      <div class="tile"><span class="n">{metrics.outbound.requests}</span><span class="l">{metrics.outbound.days} days</span></div>
+    </div>
+    <p class="note">
+      Requests to <code>/go</code>, counted as they were logged. Nothing here distinguishes a reader
+      from a crawler, so this is a sign the exit works — not a measure of demand.
+    </p>
+  </section>
 </AdminLayout>
 
 <style>
+  .band { margin-top: 1.8rem; }
+  .band:first-of-type { margin-top: 0; }
   .hd {
     font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.14em;
     text-transform: uppercase; color: var(--text-muted); font-weight: 500;
-    margin: 1.6rem 0 0.75rem;
+    margin-bottom: 0.75rem;
   }
-  .hd:first-of-type { margin-top: 0; }
-  .tiles { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); }
+
+  .tiles { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); }
   .tile {
     display: flex; flex-direction: column; gap: 0.3rem;
     padding: 1rem 1.1rem; border-radius: 12px;
     border: 1px solid var(--border); background: var(--surface);
-    transition: border-color 0.2s var(--ease-out), background 0.2s var(--ease-out);
   }
-  a.tile:hover { border-color: var(--ink); background: var(--surface-2); }
-  /* a queue with work in it should look different from an empty one at a glance */
+  /* a number that wants a human should look different at a glance from one that does not */
   .tile.is-hot { border-color: var(--border-strong); }
-  .tile.is-hot .n { color: var(--ink); }
   .tile .n {
     font-family: var(--font-display); font-weight: 500; font-size: 1.9rem;
-    line-height: 1; letter-spacing: -0.03em; color: var(--text-muted);
+    line-height: 1; letter-spacing: -0.03em; color: var(--ink);
     font-variant-numeric: tabular-nums;
   }
-  .tile.is-quiet .n { color: var(--ink); }
   .tile .l { font-size: var(--step--1); color: var(--text-muted); }
-  .setup {
+
+  .note { margin-top: 0.7rem; font-size: var(--step--1); color: var(--text-muted); line-height: 1.5; max-width: 70ch; }
+  .note .sep { margin: 0 0.5em; }
+  .empty { font-size: var(--step--1); color: var(--text-muted); }
+
+  .attention, .events { list-style: none; margin: 0; padding: 0; }
+  .attention li, .events li {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.9rem;
+    padding: 0.55rem 0; border-top: 1px solid var(--border); font-size: var(--step--1);
+  }
+  .attention li:first-child, .events li:first-child { border-top: 0; }
+  .who { min-width: 9rem; color: var(--ink); font-weight: 500; }
+  .who:hover { text-decoration: underline; }
+  .what { color: var(--text-muted); }
+  .events time { min-width: 9rem; font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-muted); }
+
+  .fault {
     padding: 0.8rem 1rem; margin-bottom: 1.4rem; border-radius: 10px;
-    border: 1px solid var(--border-strong); background: var(--surface-2);
+    border: 1px solid var(--state-bad-ink); background: var(--surface-2);
     font-size: var(--step--1); color: var(--ink);
   }
   code { font-family: var(--font-mono); font-size: 0.9em; }
