@@ -19,10 +19,8 @@ describe('offerCta', () => {
     expect(offerCta(base, 'detail').label).toBe('Continue to GitHub ↗');
   });
 
-  // 'card' is the retired name for the same placement. It stays until the last
-  // card-model consumer is deleted, and it must not drift from 'row'.
-  it('keeps the retired card placement identical to a row', () => {
-    expect(offerCta(base, 'card')).toEqual(offerCta(base, 'row'));
+  it('defaults to the row, the only placement the register has', () => {
+    expect(offerCta(base)).toEqual(offerCta(base, 'row'));
   });
 
   it('carries the analytics attributes the click event reads', () => {

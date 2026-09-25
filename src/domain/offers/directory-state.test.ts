@@ -22,7 +22,7 @@ describe('parseState / serializeState (URL is the source of truth)', () => {
   it('ignores unknown sort and view values', () => {
     const s = parseState(new URLSearchParams('sort=bogus&view=grid'));
     expect(s.sort).toBe('score');
-    expect(s.view).toBe('cards');
+    expect(s.view).toBe('index');
   });
 
   it('serialises only what differs from the defaults, in a stable order', () => {
