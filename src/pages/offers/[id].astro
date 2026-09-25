@@ -1,18 +1,22 @@
 ---
+// The record (Visual Direction v3 §4). Six questions, fixed order, opening with
+// the same row the register shows so the reader never re-learns the offer.
+//
+// Everything it prints comes from recordModel: the score and its reasons as the
+// database recorded them, the two trust layers side by side, the outbound
+// action through /go, and a history built only from rows that exist.
 import { marked } from 'marked';
-import { getAllOffers } from '@domain/offers/offers-source';
+import { getAllOffers, getOfferHistory } from '@domain/offers/offers-source';
 import Layout from '@ui/layouts/Layout.astro';
-import OfferPreview from '@ui/components/OfferPreview.astro';
-import Score from '@ui/components/Score.astro';
-import TrustRow from '@ui/components/TrustRow.astro';
-import OfferCTA from '@ui/components/OfferCTA.astro';
+import EntryRow from '@ui/components/EntryRow.astro';
+import RecordBox from '@ui/components/RecordBox.astro';
 import AdSlot from '@ui/components/AdSlot.astro';
-import Badge from '@ui/components/Badge.astro';
-import StateBadge from '@ui/components/StateBadge.astro';
-import Logo from '@ui/components/Logo.astro';
+import { recordModel } from '@ui/record';
 import { getCategory } from '@domain/offers/categories';
+import { defaultRegisterOrder } from '@domain/offers/order';
+import { categoryHref, registerHref } from '@domain/offers/routes';
 import { site } from '@core/config/site';
-import { offerTypeLabel, isExpiringSoon, isExpired, sortOffers } from '@domain/offers/offers';
+import { isExpired } from '@domain/offers/offers';
 
 export async function getStaticPaths() {
   const offers = await getAllOffers();
@@ -24,21 +28,24 @@ const d = offer.data;
 const cat = getCategory(d.category);
 const bodyHtml = await marked.parse(offer.body);
 
-const related = sortOffers(
-  (await getAllOffers()).filter(
-    (o) => o.data.category === d.category && o.id !== offer.id && !isExpired(o),
-  ),
-).slice(0, 3);
+// One register order for the whole site: the record's number, and the numbers
+// on the related rows, are positions in the same list /offers shows.
+const register = (await getAllOffers()).filter((o) => !isExpired(o)).sort(defaultRegisterOrder);
+const rankOf = new Map(register.map((o, i) => [o.slug, i + 1]));
+const related = register
+  .filter((o) => o.data.category === d.category && o.slug !== offer.slug)
+  .slice(0, 3)
+  .map((o) => ({ offer: o, rank: rankOf.get(o.slug) ?? 0 }));
 
+const record = recordModel({
+  offer,
+  rank: rankOf.get(offer.slug) ?? register.length,
+  total: register.length,
+  related,
+  history: await getOfferHistory(offer.slug),
+});
 
-// Score breakdown, strongest reasons first — every point is attributable.
-const scoreAttrs = [...offer.attributes].sort((a, b) => b.points - a.points);
-
-// Long ledger values stack (label above, value full-width left) on mobile so
-// they don't wrap ragged against the right edge; short ones stay inline.
-const STACK_AT = 20;
-
-const pageUrl = new URL(`/offers/${offer.id}`, site.url).href;
+const pageUrl = new URL(record.entry.href, site.url).href;
 // Product + nested Offer is an eligible rich result (a bare Offer is not); add a BreadcrumbList.
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -60,108 +67,114 @@ const jsonLd = {
     {
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Offers', item: new URL('/offers', site.url).href },
-        { '@type': 'ListItem', position: 2, name: cat?.name ?? d.category, item: new URL(`/offers?cat=${d.category}`, site.url).href },
+        { '@type': 'ListItem', position: 1, name: 'The register', item: new URL(registerHref(), site.url).href },
+        { '@type': 'ListItem', position: 2, name: cat?.name ?? d.category, item: new URL(categoryHref(d.category), site.url).href },
         { '@type': 'ListItem', position: 3, name: d.title, item: pageUrl },
       ],
     },
   ],
 };
+
+const HISTORY_LABEL = {
+  check: 'Automated link check',
+  verification: 'Human verification',
+  ends: 'Offer ends',
+} as const;
 ---
 
 <Layout title={d.title} description={d.summary} jsonLd={jsonLd} noindex={isExpired(offer)}>
-  <article class="section">
-    <div class="wrap layout">
-      <div class="identity">
-        <nav class="crumbs muted">
-          <a href="/offers">Offers</a> <span aria-hidden="true">›</span>{' '}
-          <a href={`/offers?cat=${d.category}`}>{cat?.name ?? d.category}</a>
-        </nav>
+  <article class="record-page">
+    <div class="wrap">
+      <nav class="back" aria-label="Breadcrumb">
+        <a href={registerHref()}>← Register</a>
+        <span class="sep" aria-hidden="true">·</span>
+        <a href={categoryHref(d.category)}>{cat?.name ?? d.category}</a>
+        <span class="position">{record.position}</span>
+      </nav>
 
-        <div class="head" style={`--cat:${cat?.accent ?? 'var(--accent)'}`}>
-          <span class="logo logo-tile"><Logo provider={d.provider} /></span>
-          <div>
-            <p class="provider muted" data-enter>{d.provider}</p>
-            <h1 data-split>{d.title}</h1>
+      <!-- 1. what is it — the register row, then the one-line summary -->
+      <header class="head" data-q="what is it">
+        <p class="provider">{record.entry.provider}</p>
+        <h1>{record.entry.title}</h1>
+        <p class="score" aria-label={record.entry.score.label}>
+          <span class="num" aria-hidden="true">{record.entry.score.text}</span>
+          <span class="word" aria-hidden="true">{record.entry.score.word}</span>
+        </p>
+        <p class="summary">{record.summary}</p>
+      </header>
+
+      <div class="columns">
+        <div class="main">
+          <!-- 2. what do I get -->
+          <section class="block" data-q="what do I get">
+            <h2>What you get</h2>
+            <p class="value">{record.whatYouGet.value}<span class="sep" aria-hidden="true"> · </span><span class="type">{record.whatYouGet.typeWord}</span></p>
+          </section>
+
+          {record.why.reasons.length > 0 && (
+            <section class="block why" aria-label="Why this score">
+              <h2>{record.why.heading}</h2>
+              <ul class="reasons">
+                {record.why.reasons.map((r) => (
+                  <li><span class="rl">{r.label}</span><b class={r.points >= 0 ? 'pos' : 'neg'}>{r.points >= 0 ? `+${r.points}` : r.points}</b></li>
+                ))}
+              </ul>
+              <p class="base">{record.why.base} <a href={record.why.methodologyHref}>How every criterion works →</a></p>
+            </section>
+          )}
+        </div>
+
+        <!-- 3. who qualifies · 4. why trust it · 5. what do I do · 6. where does it go -->
+        <div class="side">
+          <RecordBox box={record.box} action={record.action} />
+        </div>
+      </div>
+
+      <section class="block account">
+        <h2>The account</h2>
+        <div class="prose body" set:html={bodyHtml}></div>
+      </section>
+
+      {site.adsense.slots.inArticle && (
+        <aside class="ad" aria-label="Advertisement">
+          <p class="ad-label">ADVERTISEMENT</p>
+          <AdSlot format="in-article" slot={site.adsense.slots.inArticle} />
+        </aside>
+      )}
+
+      {record.history.length > 0 && (
+        <section class="block history">
+          <h2>Record history</h2>
+          <ol class="events">
+            {record.history.map((e) => (
+              <li>
+                <time datetime={e.at.toISOString()}>{e.at.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })}</time>
+                <span class="what">
+                  {HISTORY_LABEL[e.kind]}
+                  {e.kind === 'check' && <span class="outcome"> · {e.result === 'pass' ? 'passed' : e.note ? `could not confirm (${e.note})` : 'could not confirm'}</span>}
+                  {e.kind === 'verification' && <span class="outcome"> · {e.result === 'pass' ? 'passed' : 'did not pass'}</span>}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {record.related.length > 0 && (
+        <section class="block related">
+          <h2>More in {cat?.name ?? d.category}</h2>
+          <div class="rows">
+            {record.related.map((entry) => <EntryRow entry={entry} />)}
           </div>
-        </div>
-
-        <div class="badges" data-enter>
-          {d.discountPercent && <Badge variant="discount" label={`${d.discountPercent}% off`} />}
-          {d.sponsored && <StateBadge state="sponsored" />}
-          {isExpiringSoon(offer) && <Badge variant="expiring" label="Ending soon" />}
-        </div>
-
-        <p class="lead summary" data-enter>{d.summary}</p>
-      </div>
-
-      <aside class="side">
-        <div class="card hero-cta" data-enter>
-          <p class="hc-lbl">Student value</p>
-          <p class="hc-value" style={`--cat:${cat?.accent ?? 'var(--accent)'}`}>{d.value}<span class="hc-type muted"> · {offerTypeLabel[d.offerType] ?? d.offerType}</span></p>
-          <OfferCTA offer={offer} placement="detail" />
-        </div>
-      </aside>
-
-      <div class="content">
-        {scoreAttrs.length > 0 && (
-          <section class="scoreproof" aria-label="Why this score" data-reveal>
-            <div class="sp-head">
-              <Score score={d.score} variant="block" describedBy="sp-breakdown" />
-              <div class="sp-cap">
-                <span class="sp-t">Why this score</span>
-                <span class="sp-s">Every point is a named reason — not a gut feeling.</span>
-              </div>
-            </div>
-            <ul class="sp-breakdown" id="sp-breakdown" data-reveal-group>
-              {scoreAttrs.map((a) => (
-                <li>
-                  <span class="sp-bl">{a.label}</span>
-                  <b class={a.points >= 0 ? 'pos' : 'neg'}>{a.points >= 0 ? `+${a.points}` : a.points}</b>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        <section class="rec" aria-label="Offer record" data-reveal>
-          <h2 class="sec-h">Offer record</h2>
-          <TrustRow offer={offer} variant="full" />
-          <dl class="rec-list">
-            <div class:list={[{ stack: `Official ${d.provider} page`.length > STACK_AT }]}><dt>Source</dt><dd><a class="rec-link" href={d.url} target="_blank" rel="nofollow noopener">Official {d.provider} page ↗</a></dd></div>
-          </dl>
         </section>
-
-        <div class="prose body" set:html={bodyHtml} data-reveal></div>
-
-        {site.adsense.slots.inArticle && (
-          <div class="in-article"><AdSlot format="in-article" slot={site.adsense.slots.inArticle} /></div>
-        )}
-
-        <section class="rec" aria-label="Terms" data-reveal>
-          <h2 class="sec-h">Terms</h2>
-          <dl class="rec-list" data-reveal-group>
-            <div><dt>Offer duration</dt><dd>{d.expires === 'ongoing' ? 'Ongoing' : d.expires}</dd></div>
-          </dl>
-        </section>
-
-
-        {related.length > 0 && (
-          <section class="related">
-            <h2 class="rel-h" data-reveal>More in {cat?.name ?? d.category}</h2>
-            <div class="grid grid-offers" data-reveal-group>
-              {related.map((o) => <OfferPreview offer={o} />)}
-            </div>
-          </section>
-        )}
-      </div>
+      )}
     </div>
   </article>
 </Layout>
 
 <script>
-  // One event on the money path. No-op until an analytics tool (Plausible/PostHog)
-  // is added; the durable record is the offer_clicks row written by /go.
+  // One event on the money path. No-op until an analytics tool is added; the
+  // durable record is the offer_clicks row written by /go.
   for (const a of document.querySelectorAll<HTMLAnchorElement>('a[data-go]')) {
     a.addEventListener('click', () => {
       const d = a.dataset;
@@ -173,75 +186,70 @@ const jsonLd = {
 </script>
 
 <style>
-  /* three zones: identity (top-left), value+CTA (right, sticky), content (below
-     identity). On desktop the CTA card sits top-right, aligned with the title;
-     on mobile the order is identity → value+CTA → content (title before CTA,
-     CTA still high on the page). */
-  .layout {
-    display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 2rem 2.5rem;
-    grid-template-areas: "identity side" "content side"; align-items: start;
-  }
-  .identity { grid-area: identity; }
-  .content { grid-area: content; min-width: 0; }
-  .side { grid-area: side; position: sticky; top: 84px; }
+  /* the height the mobile action bar occupies (button + destination + money,
+     measured at 390px). Declared on the root so the reservation below can be
+     made on <body> — the footer sets its own padding, and competing with it
+     for the last line of the page is a fight this would lose quietly. */
+  :global(:root) { --record-bar: 7rem; }
+  .record-page { padding-block: var(--space-l) var(--space-2xl); }
 
-  .crumbs { font-size: var(--step--1); margin-bottom: 1rem; }
-  .crumbs a:hover { color: var(--accent-ink); }
-  .head { display: flex; gap: 1rem; align-items: center; }
-  .head .logo {
-    width: 66px; height: 66px; flex: none; color: var(--ink);
-    border-radius: 16px; background: color-mix(in srgb, var(--cat) 14%, var(--surface));
-  }
-  .head h1 { font-size: clamp(1.7rem, 1.2rem + 2.2vw, 2.55rem); line-height: 1.05; letter-spacing: -0.03em; }
-  .provider { font-weight: 600; letter-spacing: 0.02em; }
-  .badges { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1.1rem; }
-  .summary { margin-top: 1rem; max-width: 60ch; }
+  .back { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5em; font-size: var(--step--1); color: var(--text-muted); }
+  .back a { color: var(--ink); border-bottom: 1px solid var(--rule); }
+  .back a:hover { border-bottom-color: var(--ink); }
+  .position { margin-left: auto; font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.12em; text-transform: uppercase; }
 
-  /* hero value + CTA card */
-  .hero-cta { padding: 1.5rem 1.4rem; }
-  .hc-lbl { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
-  .hc-value { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.5rem, 1.2rem + 1.3vw, 1.95rem); letter-spacing: -0.02em; color: var(--ink); margin-top: 0.25rem; }
-  .hero-cta :global(.cta-block) { margin-top: 1.1rem; }
-  .hero-cta :global(.go) { width: 100%; justify-content: center; }
-  .hc-type { font-size: 0.72em; font-weight: 400; }
+  .head { margin-top: var(--space-s); padding-bottom: var(--space-s); border-bottom: 1px solid var(--rule-strong); position: relative; }
+  .provider { font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
+  h1 { font-size: var(--step-3); margin-top: 0.1em; max-width: 24ch; }
+  .score { position: absolute; top: 0; right: 0; text-align: right; }
+  .score .num { display: block; font-family: var(--font-display); font-weight: 600; font-size: var(--step-1); font-variant-numeric: tabular-nums; }
+  .score .word { display: block; font-size: var(--step--1); color: var(--text-muted); }
+  .summary { margin-top: var(--space-2xs); max-width: 66ch; font-size: var(--step-0); color: var(--text-muted); }
 
-  /* Why this score — the main proof, first in the content flow */
-  .scoreproof { border: 1px solid var(--border-strong); border-radius: 14px; padding: 1.1rem 1.25rem; background: var(--surface); }
-  .sp-head { display: flex; align-items: center; gap: 14px; }
-  .sp-cap { display: flex; flex-direction: column; gap: 2px; }
-  .sp-t { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); }
-  .sp-s { font-size: var(--step--1); color: var(--ink); }
-  .sp-breakdown { list-style: none; margin: 1rem 0 0; padding: 1rem 0 0; border-top: 1px dashed var(--border); display: grid; gap: 0.45rem; }
-  .sp-breakdown li { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: var(--step--1); }
-  .sp-bl { color: var(--ink); }
-  .sp-breakdown b { font-variant-numeric: tabular-nums; font-weight: 600; flex: none; }
-  .sp-breakdown b.pos { color: var(--ink); }
-  .sp-breakdown b.neg { color: var(--state-warn-ink); }
+  .columns { display: grid; grid-template-columns: minmax(0, 1fr) 22rem; gap: var(--space-m); align-items: start; margin-top: var(--space-m); }
+  .side { position: sticky; top: calc(var(--nav-h) + var(--space-s)); }
 
-  /* record ledgers — Offer record + Terms. Rows appear only for facts we hold. */
-  .rec { margin-top: 2rem; }
-  .sec-h { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 0.4rem; }
-  .rec-list { margin: 0; border-top: 1px solid var(--border); }
-  .rec-list > div { display: flex; align-items: baseline; justify-content: space-between; gap: 1.25rem; padding: 0.72rem 0; border-bottom: 1px solid var(--border-soft); }
-  .rec-list dt { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); flex: none; }
-  .rec-list dd { font-weight: 500; text-align: right; min-width: 0; }
-  /* long values stack on mobile — label above, value full-width left (no ragged
-     right-aligned wrapping). Short values stay inline. */
-  @media (max-width: 640px) {
-    .rec-list > div.stack { flex-direction: column; align-items: flex-start; gap: 0.15rem; }
-    .rec-list > div.stack dd { text-align: left; }
-  }
-  .rec-link { color: var(--ink); border-bottom: 1px solid var(--border-strong); white-space: nowrap; }
-  .rec-link:hover { color: var(--accent-ink); border-color: var(--accent-ink); }
+  .block { margin-top: var(--space-l); }
+  .block:first-child { margin-top: 0; }
+  .block h2 { font-family: var(--font-mono); font-size: var(--step--2); font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
+  .value { margin-top: var(--space-2xs); font-size: var(--step-1); }
+  .value .type { color: var(--text-muted); }
 
+  .why { margin-top: var(--space-m); }
+  .reasons { list-style: none; margin: var(--space-2xs) 0 0; padding: 0; max-width: 46ch; }
+  .reasons li { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-s); padding: 0.45em 0; border-top: 1px solid var(--rule); font-size: var(--step--1); }
+  .reasons li:first-child { border-top: 0; }
+  .reasons b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .reasons .neg { color: var(--state-warn-ink); }
+  .base { margin-top: var(--space-2xs); max-width: 46ch; font-size: var(--step--2); color: var(--text-muted); }
+  .base a { color: var(--ink); border-bottom: 1px solid var(--rule); }
 
-  .body { margin-top: 2rem; }
-  .in-article { margin: 2.5rem 0; }
-  .related { margin-top: 2.5rem; }
-  .rel-h { font-size: var(--step-1); letter-spacing: -0.02em; margin-bottom: 1rem; }
+  .account { margin-top: var(--space-xl); }
+  .body { margin-top: var(--space-xs); max-width: 70ch; }
+
+  .ad { margin-top: var(--space-xl); padding-top: var(--space-s); border-top: 1px solid var(--rule); }
+  .ad-label { font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: var(--space-2xs); }
+
+  .events { list-style: none; margin: var(--space-2xs) 0 0; padding: 0; max-width: 60ch; }
+  .events li { display: flex; gap: var(--space-s); padding: 0.5em 0; border-top: 1px solid var(--rule); font-size: var(--step--1); }
+  .events time { flex: none; width: 9rem; font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-muted); }
+  .events .outcome { color: var(--text-muted); }
+
+  .related .rows { margin-top: var(--space-2xs); border-bottom: 1px solid var(--rule); }
 
   @media (max-width: 900px) {
-    .layout { grid-template-columns: 1fr; grid-template-areas: "identity" "side" "content"; gap: 1.75rem; }
+    /* the record box comes right after the header, so the trust layers are read
+       before the account; the action itself is a fixed bar (RecordBox), and
+       this is the space reserved for it — at the end of the page and under the
+       footer, so the bar never sits on top of anything */
+    :global(body) { padding-bottom: calc(var(--record-bar) + var(--space-s)); }
+    .columns { grid-template-columns: 1fr; gap: var(--space-s); }
     .side { position: static; }
+    .main { order: 2; }
+    .score { position: static; margin-top: var(--space-2xs); text-align: left; }
+    .score .num, .score .word { display: inline; }
+    .score .word { margin-left: 0.5em; }
+    .events li { flex-direction: column; gap: 0.15em; }
+    .events time { width: auto; }
   }
 </style>

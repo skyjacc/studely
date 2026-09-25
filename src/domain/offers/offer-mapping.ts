@@ -40,6 +40,8 @@ export interface OfferData {
   lastCheckNote: CheckNote | null;
   status: OfferStatus;
   tags: string[];
+  /** When the entry itself was last edited — the record's history shows it. */
+  updatedAt: string | null;
 }
 
 /** A real verification signal — the latest human check from the verifications table. */
@@ -88,6 +90,7 @@ export interface OfferRow {
   last_checked: string;
   last_check_result?: CheckResult | null;
   last_check_note?: CheckNote | null;
+  updated_at?: string | null;
 }
 
 /** One row of `select offer_id,key,label,points from offer_attributes`. */
@@ -130,6 +133,7 @@ export function mapOfferRow(
       lastCheckNote: row.last_check_note ?? null,
       status: row.status,
       tags: row.tags ?? [],
+      updatedAt: row.updated_at ?? null,
     },
   };
 }
