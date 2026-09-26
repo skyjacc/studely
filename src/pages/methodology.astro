@@ -1,6 +1,7 @@
 ---
 import Layout from '@ui/layouts/Layout.astro';
 import { site } from '@core/config/site';
+import MoneyNote from '@ui/components/MoneyNote.astro';
 ---
 
 <Layout title="How Studely scores offers" description="How Studely scores student offers against fixed, visible criteria — with every point explained.">
@@ -21,8 +22,8 @@ import { site } from '@core/config/site';
       <p>A weekly job re-fetches every offer link; anything it cannot reach is reviewed by hand. That is a backstop against rot, not a guarantee: we don’t claim an offer is live at the moment you click it, and a provider that blocks automated requests will always need a human to look.</p>
 
       <h2>4. Honesty about money</h2>
-      <p>{site.affiliateDisclosure}</p>
-      <p>There are no sponsored placements on Studely today. If one ever runs it will carry a <strong>Sponsored</strong> label on the offer itself, and it will still be scored by the same criteria as everything else — payment can buy a position, never a point.</p>
+      <MoneyNote />
+      <p>A sponsored placement, if one ever runs, carries a <strong>Sponsored</strong> label on the offer itself and is scored by the same criteria as everything else — payment can buy a position, never a point. The line above says what is actually running today.</p>
 
       <h2>Found something wrong?</h2>
       <p>Offers change fast. If a deal is dead or the terms moved, tell us and we’ll review it. Always confirm current terms on the provider’s own site before relying on an offer.</p>

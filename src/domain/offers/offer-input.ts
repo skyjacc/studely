@@ -133,12 +133,20 @@ export function validateOfferInput(raw: OfferFormRaw, opts: { requireSlug: boole
     errors.discount_percent = 'Only discount offers carry a percentage';
   }
 
-  // A partner link without the disclosure flag would be an undisclosed affiliate
-  // link on the public page. The flag is the operator's explicit choice — it is
-  // never set for them — so the save is refused instead.
+  // The partner link and the disclosure that goes with it are one decision, so
+  // only two states are allowed: both, or neither.
+  //
+  // A URL without the flag is an undisclosed partner link on a public page. The
+  // flag without a URL is the opposite lie and the worse one: the record would
+  // read "Partner link. Studely may earn a commission" over a /go that resolves
+  // to the plain destination and earns nothing. Neither is set for the operator
+  // — the save is refused and they choose.
   const affiliate_url = str(raw.affiliate_url) || null;
   if (affiliate_url && !raw.affiliate && !errors.affiliate_url) {
     errors.affiliate_url = 'Affiliate URL is set. Enable "Affiliate link" before saving.';
+  }
+  if (!affiliate_url && raw.affiliate && !errors.affiliate) {
+    errors.affiliate = '“Affiliate link” is ticked but no Affiliate URL is set.';
   }
 
   // slug: prefilled from the title on create; format-checked; uniqueness in IO.

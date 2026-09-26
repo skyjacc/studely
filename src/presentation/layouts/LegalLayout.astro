@@ -1,5 +1,6 @@
 ---
 import Layout from './Layout.astro';
+import MoneyNote from '@ui/components/MoneyNote.astro';
 
 // Wraps a legal Markdown page in the public site chrome with a readable prose
 // column. The `.md` pages under src/pages/legal/ point their `layout:`
@@ -7,6 +8,8 @@ import Layout from './Layout.astro';
 // into <slot>. Kept deliberately plain — a policy page is for reading.
 interface FrontMatter {
   title: string;
+  /** Set on the disclosure policy: renders the live money position above the body. */
+  money?: boolean;
   description?: string;
   /** Shown under the title; the body may also cite the effective date. */
   updated?: string;
@@ -16,7 +19,7 @@ interface FrontMatter {
 }
 
 const { frontmatter } = Astro.props as { frontmatter: FrontMatter };
-const { title, description, updated, draft = true } = frontmatter;
+const { title, description, updated, draft = true, money = false } = frontmatter;
 ---
 
 <Layout title={title} description={description} noindex={draft}>
@@ -33,6 +36,12 @@ const { title, description, updated, draft = true } = frontmatter;
           <h1>{title}</h1>
           {updated && <p class="legal-updated">Last updated: {updated}</p>}
         </header>
+        {money && (
+          <section class="legal-money" aria-label="What Studely earns today">
+            <h2 class="legal-money-h">In one line</h2>
+            <MoneyNote />
+          </section>
+        )}
         <article class="prose"><slot /></article>
       </div>
     </div>
@@ -77,6 +86,8 @@ const { title, description, updated, draft = true } = frontmatter;
     text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.8rem;
   }
   .legal-head h1 { font-size: clamp(1.9rem, 1.4rem + 2.2vw, 3rem); letter-spacing: -0.02em; line-height: 1.05; }
+  .legal-money { margin-bottom: var(--space-m); padding-bottom: var(--space-s); border-bottom: 1px solid var(--rule); }
+  .legal-money-h { font-family: var(--font-mono); font-size: var(--step--2); font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: var(--space-2xs); }
   .legal-updated { margin-top: 0.7rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); }
 
   /* the global .prose class styles headings/lists/links but not tables */

@@ -1,0 +1,29 @@
+---
+// What Studely earns, said in one place. Every surface that states the money
+// position renders this: the footer, /about, /methodology and the disclosure
+// policy. The words come from moneyDisclosure, the facts from the published
+// catalogue — so the first partner link changes all four at once, and none of
+// them can be left behind saying something that stopped being true.
+import { getAllOffers } from '@domain/offers/offers-source';
+import { moneyPosition } from '@domain/affiliate/position';
+import { moneyDisclosure } from '@ui/money';
+import { isExpired } from '@domain/offers/offers';
+import { site } from '@core/config/site';
+
+interface Props {
+  /** `prose` for a paragraph in running text, `note` for the footer's line. */
+  tone?: 'prose' | 'note';
+  class?: string;
+}
+const { tone = 'prose', class: cls } = Astro.props;
+
+const offers = (await getAllOffers()).filter((o) => !isExpired(o));
+const disclosure = moneyDisclosure(moneyPosition(offers.map((o) => o.data), site.adsense));
+---
+
+<p class:list={['money', `tone-${tone}`, cls]} data-money-state={disclosure.state}>{disclosure.text}</p>
+
+<style>
+  .money { max-width: 72ch; }
+  .tone-note { font-size: var(--step--1); color: var(--text-muted); }
+</style>

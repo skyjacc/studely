@@ -33,7 +33,8 @@ const { entry: e, facets = {} } = Astro.props;
     <h3 class="title"><a href={e.href}>{e.title}</a></h3>
     <p class="value">
       {e.value}<span class="sep" aria-hidden="true"> · </span><span class="type">{e.typeWord}</span>
-      {e.sponsored && <span class="spon">Sponsored</span>}
+      {e.sponsored && <span class="flag spon">Sponsored</span>}
+      {e.affiliate && <span class="flag partner">Partner link</span>}
     </p>
   </div>
 
@@ -83,7 +84,10 @@ const { entry: e, facets = {} } = Astro.props;
   .title a { color: var(--ink); }
   .value { margin-top: 0.15em; font-size: var(--step--1); line-height: 1.3; color: var(--text-muted); }
   .value .type { color: var(--ink); }
-  .spon { margin-left: 0.6em; font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.1em; text-transform: uppercase; padding: 0.1em 0.5em; background: var(--spon-bg); color: var(--spon-ink); }
+  .flag { margin-left: 0.6em; font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.1em; text-transform: uppercase; padding: 0.1em 0.5em; white-space: nowrap; }
+  /* the paid position is the loud one; a partner link is a disclosure, not a badge */
+  .spon { background: var(--spon-bg); color: var(--spon-ink); }
+  .partner { border: 1px solid var(--rule-strong); color: var(--text-muted); }
 
   .score { grid-area: score; text-align: right; white-space: nowrap; }
   .num { display: block; font-family: var(--font-display); font-weight: 600; font-size: var(--step-0); line-height: 1.2; font-variant-numeric: tabular-nums; }

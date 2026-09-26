@@ -167,7 +167,7 @@ governed by **their** policies, not only ours:
 | **Cloudflare** | DNS | Not expected on-page | DNS only; no first-party page cookie expected |
 | **Google (AdSense)** | Advertising | **Yes — the tag loads on every page** | No ad unit is configured, so no ad is served; the tag may still set Google cookies. Consent-gated in the EEA/UK/CH by Google's CMP |
 | **Resend** | Transactional email delivery | No (not on-page) | Delivers the magic-link email; sets no cookies in your browser |
-| **Vendor sites** | Outbound offer links (**none is an affiliate link today**) | On the vendor's own site | Clicking an offer takes you to a third-party site that may set its own cookies |
+| **Vendor sites** | Outbound offer links; which are partner links is stated on the [Disclosure](/legal/disclosure) page | On the vendor's own site | Clicking an offer takes you to a third-party site that may set its own cookies |
 
 > **Affiliate outbound links**
 > Studely's catalogue links out to third-party vendors. None of those links is an affiliate

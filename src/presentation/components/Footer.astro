@@ -3,6 +3,7 @@
 // sentence on the left, the utility links on the right. No navigation — the
 // register above is the navigation; no category list — the chips carry it.
 import { site } from '@core/config/site';
+import MoneyNote from './MoneyNote.astro';
 
 const year = new Date().getFullYear();
 const links = [
@@ -18,7 +19,7 @@ const links = [
 
 <footer class="site-footer">
   <div class="wrap">
-    <p class="disclosure">{site.affiliateDisclosure}</p>
+    <MoneyNote tone="note" class="disclosure" />
     <div class="line">
       <p class="who">
         <span class="name">{site.name}</span>
@@ -38,7 +39,7 @@ const links = [
 
 <style>
   .site-footer { margin-top: var(--space-2xl); border-top: 1px solid var(--rule-strong); padding: var(--space-m) 0 var(--space-l); font-size: var(--step--1); color: var(--text-muted); }
-  .disclosure { max-width: 72ch; margin: 0 0 var(--space-s); }
+  :global(.disclosure) { margin: 0 0 var(--space-s); }
   .line { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-xs) var(--space-m); }
   .who { display: flex; flex-wrap: wrap; gap: 0.5em; margin: 0; }
   .name { color: var(--ink); font-weight: 500; }

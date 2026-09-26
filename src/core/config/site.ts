@@ -24,18 +24,6 @@ export const site = {
     enabled: true,
     slots: { inFeed: '', inArticle: '', leaderboard: '' },
   },
-  /**
-   * Site-wide monetisation disclosure. Must describe what is true TODAY, not the
-   * business model we intend. It previously said "some links are partner or
-   * referral links" while no offer carried one and no ad had ever served — a
-   * claim about ourselves that the data did not back, on every page.
-   *
-   * When the first affiliate link or ad unit goes live, switch this to the
-   * present tense the same day, and set `affiliate: true` on the offers it
-   * applies to so the per-offer label appears alongside it.
-   */
-  affiliateDisclosure:
-    'Studely earns nothing today: no offer here is an affiliate link and no advertising is running. We intend to add both, and will say so plainly here and on the offer itself when we do. Payment will never buy a better score.',
   /** Contact address shown in the footer. Swap for your real inbox. */
   email: 'hello@studely.app',
   /** Short status line shown in the footer bottom bar. Must stay a fact we can

@@ -1,6 +1,7 @@
 ---
 import Layout from '@ui/layouts/Layout.astro';
 import { site } from '@core/config/site';
+import MoneyNote from '@ui/components/MoneyNote.astro';
 import { getAllOffers } from '@domain/offers/offers-source';
 import { categories } from '@domain/offers/categories';
 
@@ -79,7 +80,7 @@ const categoryCount = categories.filter((c) => offers.some((o) => o.data.categor
       </ul>
 
       <h2>How it is funded</h2>
-      <p>{site.affiliateDisclosure}</p>
+      <MoneyNote />
       <p>
         The intention is affiliate links and advertising, because a directory that costs
         nothing to read has to pay for itself somehow. When either starts earning, it will

@@ -45,12 +45,12 @@ Always confirm the current terms on the Provider's own site before relying on an
 
 ## 4. Affiliate relationship disclosure
 
-No outbound link on the Service is currently an **affiliate link**, and we earn no commission from any Provider today. Some links are expected to become affiliate links: from that point, if you click through and take a qualifying action with a Provider, we may earn a commission or referral fee at no additional cost to you.
+Where an outbound link is a **partner link**, clicking through and taking a qualifying action with a Provider may earn us a commission or referral fee, at no additional cost to you. Which links are partner links today — and whether any are — is stated on the [Disclosure](/legal/disclosure) page, which is written from the catalogue itself rather than kept by hand, and on each offer.
 
 > **This does not change what we list or how we rank it**
 > Offers are selected and scored editorially. An affiliate relationship does not determine whether an Offer appears, and it does not change the price you pay. Where an Offer is monetised, we aim to make that transparent.
 
-We plan to run both affiliate links and Google AdSense advertising. **Neither earns anything today:** no link is an affiliate link, and although the AdSense tag loads on every page, no ad unit is configured, so no advertisement is served. Advertising and cookie details are covered in the [Privacy Policy](/legal/privacy) and [Cookie Notice](/legal/cookies).
+We run, or intend to run, both partner links and Google AdSense advertising. What is actually earning at any moment is stated on the [Disclosure](/legal/disclosure) page. Advertising and cookie details are covered in the [Privacy Policy](/legal/privacy) and [Cookie Notice](/legal/cookies).
 
 ---
 

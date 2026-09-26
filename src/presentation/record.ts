@@ -34,8 +34,14 @@ export const RECORD_SECTIONS = [
 export const NOT_VERIFIED =
   'Not yet. No one at Studely has walked through this offer. We say so rather than guess.';
 
+/**
+ * The money line under the action, about THIS link. It used to say "Studely
+ * earns nothing" — a claim about the whole site inside a sentence about one
+ * offer, which stops being true the day any other offer becomes a partner link.
+ * What the site earns overall is said once, by moneyDisclosure.
+ */
 const MONEY = {
-  plain: 'Not a partner link. Studely earns nothing.',
+  plain: 'Not a partner link. Studely earns nothing if you use it.',
   partner: 'Partner link. Studely may earn a commission; it never changes the score.',
 } as const;
 

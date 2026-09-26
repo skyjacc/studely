@@ -52,9 +52,9 @@ We do **not** sell your personal data for money, and we do not currently "share"
 
 ## 4. Outbound links to vendors
 
-**No outbound link on Studely is an affiliate link today, and we earn no commission from any vendor.** Clicking an offer sends you to the provider's own site, where that site's privacy policy applies.
+Clicking an offer sends you to the provider's own site, where that site's privacy policy applies. Which outbound links are partner links — and whether any are — is stated on the [Disclosure](/legal/disclosure) page and on each offer.
 
-We intend to add affiliate links. From the point one exists, the vendor may set a tracking cookie or append a tracking parameter so it can attribute a sign-up to Studely — always **on the vendor's site, under the vendor's privacy policy**, never on Studely. Any such offer will be labelled, per FTC guidance and equivalent norms. Monetisation will never change whether an offer is listed or how it is scored.
+Where a link is a partner link, the vendor may set a tracking cookie or append a tracking parameter so it can attribute a sign-up to Studely — always **on the vendor's site, under the vendor's privacy policy**, never on Studely. Every such offer is labelled where it appears, per FTC guidance and equivalent norms. Monetisation never changes whether an offer is listed or how it is scored.
 
 ---
 

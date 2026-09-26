@@ -56,6 +56,12 @@ export interface EntryRowModel {
   action: OfferCta;
   /** Commercial, not trust. Disclosed where policy requires it. */
   sponsored: boolean;
+  /**
+   * The outbound link is a partner link. A different fact from `sponsored` — one
+   * is money earned on the click, the other a paid position — and both may be
+   * true. The row discloses it because the reader can leave from the row.
+   */
+  affiliate: boolean;
 }
 
 /**
@@ -140,5 +146,6 @@ export function entryRowModel(offer: OfferView, index: number, now: Date = new D
       'row',
     ),
     sponsored: d.sponsored,
+    affiliate: d.affiliate,
   };
 }

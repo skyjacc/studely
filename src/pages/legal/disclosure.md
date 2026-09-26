@@ -3,17 +3,8 @@ layout: ../../presentation/layouts/LegalLayout.astro
 title: "Affiliate & Advertising Disclosure"
 description: "How Studely uses affiliate links and advertising while keeping its scoring editorially independent."
 draft: false
+money: true
 ---
-
-## In one line
-
-**Right now, Studely earns nothing.** No link on the site is an affiliate link, and no
-advertising is being served.
-
-We intend to add both. When we do, any affiliate link will earn us a commission **at no
-extra cost to you**, it will be labelled on the offer itself, and this page will say so in
-the present tense. It will never change how we rate an offer. Advertising, when it starts,
-will be served by Google.
 
 ---
 
@@ -21,12 +12,12 @@ will be served by Google.
 
 ### Affiliate links
 
-Studely is a free directory of tools, cloud credits, courses and discounts for students. **None of the outbound links is an affiliate link at present**, so no vendor pays us anything when you click through.
+Studely is a free directory of tools, cloud credits, courses and discounts for students. The line at the top of this page states what is earning today; it is written from the catalogue itself rather than kept by hand, so it cannot fall behind.
 
-We expect that to change. When a link does become an affiliate link, the vendor may pay Studely a commission if you sign up or buy afterwards, and the following will apply:
+Where a link is a partner link, the vendor may pay Studely a commission if you sign up or buy afterwards, and the following applies:
 
 - You never pay more because a link is an affiliate link. The price is the same as going to the vendor directly.
-- Not every link will be an affiliate link — we do not always know in advance which vendors run a programme.
+- Not every link is a partner link — we do not always know which vendors run a programme.
 - A commission can be earned whether or not the product is free; some vendors pay for a qualified sign-up.
 - The offer itself will carry a label, and this page will say so in the present tense.
 
@@ -64,8 +55,8 @@ The only personal data Studely collects directly is your **email address**, used
 
 | Party | Role | What it means for you |
 |---|---|---|
-| Vendor sites | Destination of outbound links — **none is an affiliate link today, and no vendor pays us** | Once you arrive, the vendor may set its own cookies under its own policy |
-| Google AdSense | Advertising. **The tag loads on every page; no ad unit is configured, so no ad is served** | Google may set cookies or read device identifiers; in the EEA/UK/CH its consent platform asks you first |
+| Vendor sites | Destination of outbound links. Which of them are partner links is stated in the line at the top of this page, and on each offer | Once you arrive, the vendor may set its own cookies under its own policy |
+| Google AdSense | Advertising. The tag loads on every page; whether an ad is actually being served is stated in the line at the top of this page | Google may set cookies or read device identifiers; in the EEA/UK/CH its consent platform asks you first |
 | Supabase, Vercel, Cloudflare, Resend | Our processors (hosting, auth, email, DNS) | Handle site operation and sign-in email delivery |
 
 Full detail lives in the [Privacy Policy](/legal/privacy) and [Cookie Notice](/legal/cookies).
