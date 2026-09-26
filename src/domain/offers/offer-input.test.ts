@@ -136,6 +136,20 @@ describe('affiliate_url', () => {
     const r = validateOfferInput({ ...base, affiliate_url: 'https://partner.example/x' }, { requireSlug: false });
     expect(r.errors.affiliate_url).toBe('Affiliate URL is set. Enable "Affiliate link" before saving.');
   });
+
+  // …and the mirror of it. A flag with no partner link makes the record say
+  // "Partner link. Studely may earn a commission" over a /go that resolves to
+  // the plain destination and earns nothing — a false claim in the direction
+  // that matters most. Only two states are allowed: both, or neither.
+  it('refuses the disclosure flag without a partner link', () => {
+    const r = validateOfferInput({ ...base, affiliate: true }, { requireSlug: false });
+    expect(r.errors.affiliate).toBe('“Affiliate link” is ticked but no Affiliate URL is set.');
+  });
+
+  it('accepts neither, and accepts both', () => {
+    expect(validateOfferInput({ ...base }, { requireSlug: false }).errors).toEqual({});
+    expect(validateOfferInput({ ...base, affiliate: true, affiliate_url: 'https://partner.example/x' }, { requireSlug: false }).errors).toEqual({});
+  });
 });
 
 describe('proof_method', () => {

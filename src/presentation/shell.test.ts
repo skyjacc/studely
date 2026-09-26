@@ -101,7 +101,9 @@ describe('footer', () => {
     for (const href of ['/about', '/contact', '/legal/privacy', '/legal/terms', '/legal/cookies', '/legal/disclosure']) {
       expect(footer, href).toContain(`href: '${href}'`);
     }
-    expect(footer).toMatch(/site\.affiliateDisclosure/);
+    // the money line is no longer a constant in the config: it is derived from
+    // the catalogue by MoneyNote, so the footer renders the component
+    expect(footer).toMatch(/MoneyNote/);
     expect(footer).not.toMatch(/categories\.map|topCats|f-nav|footer-logo/);
     expect(footer).not.toMatch(/data-reveal/);
   });

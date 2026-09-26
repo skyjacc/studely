@@ -115,7 +115,10 @@ describe('what do I do, and where does it go', () => {
   });
 
   it('states the money plainly, both ways', () => {
-    expect(model().action.money).toBe('Not a partner link. Studely earns nothing.');
+    // about THIS link, not about the site: what Studely earns overall is said
+    // once, by moneyDisclosure, and would be wrong in a per-offer sentence the
+    // day any other offer became a partner link
+    expect(model().action.money).toBe('Not a partner link. Studely earns nothing if you use it.');
     expect(model(offer({ affiliate: true })).action.money)
       .toBe('Partner link. Studely may earn a commission; it never changes the score.');
   });
